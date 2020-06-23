@@ -4,10 +4,12 @@
 \alias{setup.alternative}
 \title{Alternative Models}
 \usage{
-setup.alternative(class = "2PL")
+setup.alternative(class = "2PL", diftype = "all")
 }
 \arguments{
 \item{class}{Type of alternative model. 2PL or DIF currently}
+
+\item{diftype}{Type of DIF: "all" All items have different pars, alternatively an integer specifying the number of items with DIF.}
 }
 \value{
 Function to initialize model with given effect size, function to create dataset from model parameters

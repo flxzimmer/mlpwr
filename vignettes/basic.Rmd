@@ -53,7 +53,7 @@ power(model = model, altmodel=altmodel, test = test1, effect.size = .01,alpha = 
 
 ```
 
-Other example: Testing for DIF with the M2 Test
+Testing for DIF with the M2 Test
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -62,6 +62,34 @@ model <- setup.model(architecture = "Rasch", n.items= 20, beta = rnorm(20), pers
 altmodel <- setup.alternative(class="DIF")
 
 test1 <- setup.test(type = "M2")
+
+power(model = model, altmodel=altmodel, test = test1, effect.size = .02,alpha = .05, n.pers=100,runs=5)
+
+```
+
+Single Item DIF: 2PL Baseline, DIF on a single item, Wald Test)
+
+```{r message=FALSE, warning=FALSE}
+
+model <- setup.model(architecture = "2PL", n.items= 20, alpha = rlnorm(n=20,sdlog=.05), beta = rnorm(20), pers.dist = "normal")
+
+altmodel <- setup.alternative(class="DIF",diftype=1)
+
+test1 <- setup.test(type = "Wald",waldtype = "single")
+
+power(model = model, altmodel=altmodel, test = test1, effect.size = .02,alpha = .05, n.pers=100,runs=5)
+
+```
+
+DIF in some items
+
+```{r message=FALSE, warning=FALSE}
+
+model <- setup.model(architecture = "2PL", n.items= 20, alpha = rlnorm(n=20,sdlog=.05), beta = rnorm(20), pers.dist = "normal")
+
+altmodel <- setup.alternative(class="DIF",diftype=5)
+
+test1 <- setup.test(type = "Wald",waldtype = "any")
 
 power(model = model, altmodel=altmodel, test = test1, effect.size = .02,alpha = .05, n.pers=100,runs=5)
 

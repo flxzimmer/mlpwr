@@ -7,6 +7,7 @@
 setup.model(
   architecture = "Rasch",
   n.items = 20,
+  alpha = c(),
   beta = c(),
   pers.dist = "normal"
 )

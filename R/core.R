@@ -17,11 +17,20 @@
 #' @export
 #'
 #' @examples
-setup.model <- function(architecture = "Rasch", n.items= 20, beta = c(), pers.dist = "normal") {
+setup.model <- function(architecture = "Rasch", n.items= 20, alpha = c(), beta = c(), pers.dist = "normal") {
 
   if (architecture=="Rasch") {
     items = data.frame(
       alpha = rep(1,n.items),
+      beta = beta,
+      gamma = rep(0,n.items)
+    )
+
+  }
+
+  if (architecture=="2PL") {
+    items = data.frame(
+      alpha = alpha,
       beta = beta,
       gamma = rep(0,n.items)
     )
@@ -48,12 +57,13 @@ setup.model <- function(architecture = "Rasch", n.items= 20, beta = c(), pers.di
 #'
 #'
 #' @param class Type of alternative model. 2PL or DIF currently
+#' @param diftype Type of DIF: "all" All items have different pars, alternatively an integer specifying the number of items with DIF.
 #'
 #' @return Function to initialize model with given effect size, function to create dataset from model parameters
 #' @export
 #'
 #' @examples
-setup.alternative <- function(class="2PL") {
+setup.alternative <- function(class="2PL",diftype="all") {
 
   if (class=="2PL") {
     instance <- function(model,effect.size) {
@@ -85,14 +95,18 @@ setup.alternative <- function(class="2PL") {
   if (class=="DIF") {
     instance <- function(model,effect.size) {
       items.true = model$items
-      error = rnorm(nrow(items.true),0,.05)
+      if (diftype == "all") {
+        error = rnorm(nrow(items.true), 0, .05)
+      } else {
+        error = c(rnorm(diftype, 0, .05),rep(0,nrow(items.true)-diftype))
+      }
 
       opt.func <- function(x) {
         temp = items.true
         temp$beta = items.true$beta + error*x
         kl(items.true,temp,order=5)/2-effect.size
       }
-      errorfactor = uniroot(opt.func,c(0,100))$root
+      errorfactor = uniroot(opt.func,c(0,1000))$root
 
       items.alt = model$items
       items.alt$beta = items.alt$beta+error*errorfactor
@@ -125,7 +139,7 @@ setup.alternative <- function(class="2PL") {
 #' @export
 #'
 #' @examples
-setup.test <- function(type = "AndersenLR") {
+setup.test <- function(type = "AndersenLR",waldtype="any") {
 
   if (type == "AndersenLR") {
   re = function(df) {
@@ -141,6 +155,23 @@ setup.test <- function(type = "AndersenLR") {
       df = clean.data(df)
       rm = mirt(as.data.frame(df),1,"Rasch")
       re1 = M2(rm)$p
+      return(re1)
+    }
+  }
+
+  if (type == "Wald") {
+    re = function(df) {
+      df = clean.data(df)
+#      browser()
+      group = c(rep("a", round(nrow(df)/2) ), rep("b", nrow(df) - round(nrow(df)/2)))
+      model <- multipleGroup(df, 1, group, SE = TRUE)
+      a = DIF(model, 'd',Wald=TRUE,p.adjust = 'fdr')
+      if (waldtype =="any") {
+        re1 = min(a$adj_pvals)
+      } else if (waldtype == "single") {
+        re1 = a$adj_pvals[[1]]
+      }
+
       return(re1)
     }
   }
