@@ -10,6 +10,7 @@ logi.pred(
   cost = function(x) sum(x),
   trans = TRUE,
   design = NULL,
+  greedy = TRUE,
   ...
 )
 }

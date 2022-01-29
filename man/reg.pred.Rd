@@ -4,7 +4,14 @@
 \alias{reg.pred}
 \title{Title}
 \usage{
-reg.pred(dat, goal = 0.8, cost = function(x) sum(x), design = NULL, ...)
+reg.pred(
+  dat,
+  goal = 0.8,
+  cost = function(x) sum(x),
+  design = NULL,
+  greedy = TRUE,
+  ...
+)
 }
 \arguments{
 \item{fun}{}

@@ -2,10 +2,10 @@
 folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
 
 # less packages
-packages = c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" ,  "pwrml", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","pso","optimr","spatstat","pwr")
+packages = c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" , "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","pso","optimr","spatstat","pwr")
 
 # more packages
-packages2= c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" ,  "pwrml", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","plotly","pso","optimr","spatstat","pwr")
+packages2= c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","plotly","pso","optimr","spatstat","pwr")
 
 
 #' Title
@@ -37,30 +37,16 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
     runfun = runfun.ttest(delta = .4)
     design = list(n = c(50,200))
     budgets = c(1000,2000,4000)
-    # goal.cis = c(.025,.02,.015)
     goal.cis = c(.05,.04,.03)
   }
 
-  # if(fun_nr==2) { # T-test 2D
-  #   runfun = runfun.wilson2()
-  #   design = list(n = c(100,1200),k=c(5,30))
-  #   cost = function(x) x[1]*5+x[2]*100
-  #   budgets = c(2000,4000,8000)
-  #   # budgets = c(1000,2000,4000)
-  #   goal.cis = c(.06,.05,.04)
-  #   fixed_cost = 3500
-  # }
   if(fun_nr==2) { # ANOVA
     runfun = runfun.anova()
     design = list(n = c(20,90),k=c(5,25))
-    # cost = function(x) x[1]*x[2]*5+x[2]*100
-    # cost = function(x) x[1]*1+x[2]*6
     cost = function(x) x[1]*1.9+x[2]*6
 
-    budgets = c(2000,4000,8000)
-    # budgets = c(1000,2000,4000)
+    budgets = c(1000,3000,9000)
     goal.cis = c(.06,.05,.04)
-    # fixed_cost = 150
     fixed_cost = 174
   }
 
@@ -76,10 +62,6 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
     itempars = runfun.irt.itempars(delta=.3,n.items = 20,seed=1)
     runfun = runfun.irt(itempars)
     design = list(n = c(50,250))
-    # hyp <- setup_hypothesis(type = "1PLvs2PL", altpars = itempars)
-    # ncps <- calculate_ncps(hyp=hyp,sampling=TRUE,sampling.npers = 10^5,approx.npers=10^5)
-    # analytical = ssize(hyp=hyp,ncp=ncps["LR"],alpha=.05,power=goal)
-    # analytical = 1336
     analytical = 150
     budgets = c(1000,2000,4000)
     goal.cis = c(.05,.04,.03)
@@ -97,30 +79,14 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
     runfun = runfun.simr2()
     design = list(n = c(5,50),k=c(3,30))
     cost = function(x) x[1]*10+x[2]*5
-    # cost = function(x) x[1]*x[2]*5+x[1]*100
-    # analytical is not available here
-    # budgets = c(1000,2000,4000)
-    budgets = c(2000,8000,16000)
+    budgets = c(1000,3000,9000)
     goal.cis = c(.05,.04,.03)
     fixed_cost = 320
   }
 
 
-  # if(task=="A") {
-  #   # fixed_cost=NULL
-  #   # goal.ci = NULL
-  #   if(budget=="low")budget = budgets[1]
-  #   if(budget=="mid")budget = budgets[2]
-  #   if(budget=="high")budget = budgets[3]
-  # }
-
   if(task=="B") {
     fixed_cost=NULL
-    # budget = NULL
-
-    # if(is.na(goal.ci)){
-    #   goal.ci=.025
-    # }
 
     if(!is.na(budget)) {
 
@@ -140,11 +106,6 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
 
   if(task=="C") {
     goal = NULL
-    # budget = NULL
-
-    # if(is.na(goal.ci)){
-    #   goal.ci=.025
-    # }
 
     if(!is.na(budget)) {
 
@@ -347,23 +308,12 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 
   if(is.null(weight.type)) return(NULL)
 
-  # if(weight.type=="relevance"& is.null(predfun)) weight.type= "freq"
-
-  # if(weight.type=="relevance"& !is.null(predfun)) {
-  #   datx = todataframe(dat,aggregate=TRUE)
-  #   xvars = datx[,1:(length(datx)-1),drop=FALSE]
-  #   lastpred = apply(xvars,2,mean)
-  #
-  #   cost=function(x)sum(x)
-  #   fn = function(x)abs(predfun(x)-.8)^(2)*10^5+cost(x)/cost(lastpred)
-  #   }
-
   fun = function(vec,weight.type) {
     vec = as.numeric(vec)
     p = mean(vec)
-    # if (is.na(p)) browser()
     n = length(vec)
       if (correct_zero) {
+        if (is.na(p==0)) browser()
         if (p==0) vec = c(vec,1)
         if (p==1) vec = c(vec,0)
         p = mean(vec)
@@ -376,15 +326,6 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
     if (weight.type == "sd") return(sqrt(variance))
     if (weight.type == "inv_sd") return(1/sqrt(variance))
   }
-
-
-  # if (weight.type == "relevance"& !is.null(predfun)) {
-  #
-  #   fun= function(x) 1/fn(as.numeric(x))
-  #   w = sapply(dat,function(v) fun(v$x))
-  #
-  #   return(w)
-  #   }
 
   w = sapply(dat,function(v) fun(v$y,weight.type))
   return(w)
@@ -483,8 +424,7 @@ addval = function(runfun,design,dat=NULL,points=NULL,each=1,minrun=F,n.points=10
       resx = dat[[ind]]$y
     }
     a = as.numeric(points[i,])
-    # print(a)
-    # if(a>1500) browser()
+
     resx = c(resx,replicate(each,runfun(as.numeric(points[i,]))))
 
     while(minrun && length(resx)> 1 && var(resx) == 0) {

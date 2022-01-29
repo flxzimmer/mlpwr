@@ -13,6 +13,7 @@ svm.pred(
   epsil = FALSE,
   design = NULL,
   fixed_cost = NULL,
+  greedy = TRUE,
   ...
 )
 }

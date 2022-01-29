@@ -50,30 +50,24 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
   pred=NULL
   new.n.sd = NULL
   n.iter = 0
+  failed.predictions = 0
 
   ##############################################################################
-  repeat{
-
-    # if (n.iter >1 ) break
+  repeat{ # start the search
 
     # generate prediction
-    pred = tryCatch(learner(dat = dat,goal=goal,carryover = pred$carryover,design=design,fixed_cost=fixed_cost,cost=cost,...),error=function(x) {
+    pred = tryCatch(learner(dat = dat,goal=goal,carryover = pred$carryover,design=design,fixed_cost=fixed_cost,cost=cost,greedy=TRUE,...),error=function(x) {
       print(x)
       return(x)
     })
 
-# browser()
-    # print(pred$new.n)
-    # print(pred$points)
-    # if(pred$new.n>1500) browser()
-
-    # if(is.null(pred$new.n)) browser()
     useprediction = FALSE
     if (is.null(pred$new.n)) {
       warning("no predicted value")
     } else {
       useprediction = !pred$toofar
       print(pred$new.n)
+      print(pred$new.n.y)
       # check if prediction lies within design
       for (i in 1:length(pred$new.n)) {
         if (pred$new.n[i]<design[[i]][1]|pred$new.n[i]>design[[i]][2]) useprediction = FALSE
@@ -86,7 +80,7 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
       if (use_data_sd) new.n.sd = get.sd(dat,pred$new.n)
 
       # if (is.na(new.n.sd)) browser()
-      print(new.n.sd)
+      # print(new.n.sd)
 
 
       if (!use_data_sd) { #Use SD from the learner
@@ -121,11 +115,19 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
       datx = todataframe(dat)
       points = datx[,1:(length(datx)-1),drop=FALSE]
       dat = addval(runfun=runfun,design=design,dat=dat,points=points,each=round(setsize/nrow(datx)))
+      failed.predictions = failed.predictions + 1
     }
 
     n.iter = n.iter + 1
   }
   ##############################################################################
+
+  # Fit learner a final time for adjustments (nonGreedy run)
+  pred = tryCatch(learner(dat = dat,goal=goal,carryover = pred$carryover,design=design,fixed_cost=fixed_cost,cost=cost,greedy=FALSE,...),error=function(x) {
+    print(x)
+    return(x)
+  })
+
 
   # Get Final SD if not yet there
   if (is.null(new.n.sd)) {
@@ -140,18 +142,11 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
       }
     }
 }
-  # # Get Final SD from GP if not yet there
-  # if(is.na(pred$new.n.sd)){
-  #   pred2 = tryCatch(gauss.pred(dat = dat,goal=goal,carryover = pred$carryover,design=design,...),error=function(x) {return(x)})
-  #   # if(is.null(pred$new.n))return(pred)
-  #   if(is.null(pred$new.n))stop("no predicted value")
-  #   pred$new.n.sd = pred2$fun.sd(pred$new.n)
-  # }
 
   # Stop the clock
   time_used = timer(time_temp,detailled=T)
 
-  re = list(value=pred$new.n,value.sd = new.n.sd,data = dat,budget=usedruns(dat),fun=pred$fun,fun.sd = pred$fun.sd,time_used=time_used,exact=pred$exact,value.y=pred$fun(pred$new.n),n.iter = n.iter,cost.y=cost(pred$new.n))
+  re = list(value=pred$new.n,value.sd = new.n.sd,data = dat,budget=usedruns(dat),fun=pred$fun,fun.sd = pred$fun.sd,time_used=time_used,exact=pred$exact,value.y=pred$fun(pred$new.n),n.iter = n.iter,failed.predictions = failed.predictions,cost.y=cost(pred$new.n))
 
   return(re)
 }
@@ -174,7 +169,7 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
 #' @export
 #'
 #' @examples
-reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,...) {
+reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,greedy=TRUE,...) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -191,7 +186,7 @@ reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,...) {
     predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
 
   # generate prediction
-  res = get.pred(xvars,predfun,goal,cost,Ntry=3,design=design)
+  res = get.pred(xvars,predfun,goal,cost,Ntry=3,design=design,dat=dat,greedy=greedy)
 
   re=list(new.n = res$new.n,new.n.sd = predfun.sd(res$new.n),new.n.y=predfun(res$new.n),fun=predfun,fun.sd = predfun.sd,toofar=res$toofar,exact=res$exact)
   return(re)
@@ -217,7 +212,7 @@ reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,...) {
 #' @export
 #'
 #' @examples 1
-logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,...) {
+logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,greedy=TRUE,...) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -249,7 +244,7 @@ logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,.
     predict(mod,newdata=data.frame(t(x)),type="response",se.fit=TRUE)$se.fit}
 
   # generate prediction
-  res = get.pred(xvars,predfun,goal,cost,Ntry=3,design=design)
+  res = get.pred(xvars,predfun,goal,cost,Ntry=3,design=design,dat=dat,greedy=greedy)
 
   re=list(new.n = res$new.n,new.n.sd = predfun.sd(res$new.n),new.n.y=predfun(res$new.n),fun=predfun,fun.sd = predfun.sd,toofar=res$toofar,exact=res$exact)
 
@@ -278,7 +273,7 @@ logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,.
 #' @export
 #'
 #' @examples
-svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRUE,epsil=FALSE,design=NULL,fixed_cost=NULL,...) {
+svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRUE,epsil=FALSE,design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
 
   datx = todataframe(dat,aggregate=TRUE,pseudo=FALSE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -356,7 +351,7 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
   if (isplane) {warning("Plane predicted")}
 
   # generate prediction
-  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost)
+  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
 
   re=list(new.n = res$new.n,new.n.sd = NA,new.n.y=predfun(res$new.n),fun=predfun,fun.sd = NA,carryover=list(pars_history = pars_history),toofar=res$toofar,exact=res$exact,points=res$points)
 
@@ -384,23 +379,12 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
 #' @export
 #'
 #' @examples
-gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cost=NULL,...) {
+gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   weight = getweight(dat,weight.type="var")
 
-  # #Setup Anchor
-  # anchor = c(rep(0,nrow(xvars)),0)
-  # datx = rbind(datx,anchor)
-  # weight = c(weight,min(weight)/100)
-  # xvars = datx[,1:(length(datx)-1),drop=FALSE]
-  #
-  # # Setup High Anchor
-  # anchor = c(apply(xvars,2,max)*2,1)
-  # datx = rbind(datx,anchor)
-  # weight = c(weight,min(weight)/100)
-  # xvars = datx[,1:(length(datx)-1),drop=FALSE]
 
   n.try = 0
   mins = apply(xvars,2,min)
@@ -410,18 +394,11 @@ gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cos
 
   while (n.try<100 & isflat) {
 
-  # repeat{
     n.try = n.try+1
-    # print(n.try)
+
     mod = tryCatch(DiceKriging::km(design=xvars, response=datx$y,noise.var=weight,control=list(trace=FALSE)),error=function(x) {return(NULL)})
-    # print("error but trying again!")
-      # mod = DiceKriging::km(design=xvars, response=datx$y,noise.var=weight,control=list(trace=FALSE))
-      # return(mod)
 
-    # if (is.null(mod)) browser()
     if (is.null(mod)) next
-
-    # mod = DiceKriging::km(design=xvars, response=datx$y,noise.var=weight,control=list(trace=FALSE))
 
     predfun = function(x) {
       names(x) = names(xvars)
@@ -430,8 +407,6 @@ gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cos
 
     isflat = abs(predfun(mins-.5)-predfun(maxs+.5))<.001
 
-    # if (!isflat) break
-    # if (n.try>100) {warning("model not converged");break}
   }
 
   if (n.try==100) warning("model not converged")
@@ -447,10 +422,13 @@ gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cos
 
   # generate prediction
 
-  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost)
-  # print(res$new.n)
+  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
+
 
   re=list(new.n = res$new.n,new.n.sd = predfun.sd(res$new.n),new.n.y=predfun(res$new.n),fun=predfun,fun.sd = predfun.sd,toofar=res$toofar,exact=res$exact,points=res$points)
+
+  # if(is.na(re$new.n.sd)) browser()
+
 
   return(re)
 }

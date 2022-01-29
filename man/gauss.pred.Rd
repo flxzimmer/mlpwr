@@ -10,6 +10,7 @@ gauss.pred(
   cost = function(x) sum(x),
   design = NULL,
   fixed_cost = NULL,
+  greedy = TRUE,
   ...
 )
 }
