@@ -44,7 +44,7 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
     cands = unique(cands)
     out1 = apply(cands,1,function(x) any(x<boundmins))
     out2 = apply(cands,1,function(x) any(x>boundmaxs))
-    cands=cands[!out1&!out2,]
+    cands=cands[!out1&!out2,,drop = F]
 
     cost_vals = apply(cands,1,function(x) (cost(x)))
     acceptable = cands[which(cost_vals<=fixed_cost),]
@@ -81,7 +81,7 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
     cands = unique(cands)
     out1 = apply(cands,1,function(x) any(x<boundmins))
     out2 = apply(cands,1,function(x) any(x>boundmaxs))
-    cands=cands[!out1&!out2,]
+    cands=cands[!out1&!out2,,drop = F]
 
     aq_vals = apply(cands,1,fn)
     pw_vals = apply(cands,1,function(x) (predfun(x)-goal))
@@ -113,7 +113,6 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
 
     re = list(new.n=new.n, exact=exact,toofar=toofar,points=NULL)
   }
-
 
   return(re)
 }

@@ -30,7 +30,7 @@ nohup nice -n 11 Rscript simulationstudy_dummy.R > run1.out &
 
 nohup nice -n 11 Rscript simulationstudy_anova.R > run1.out &
 
-nohup nice -n 11 Rscript simulationstudy1.R > run1.out &
+nohup nice -n 11 Rscript simulationstudy.R > run1.out &
 
 
 pkill -u fzimmer

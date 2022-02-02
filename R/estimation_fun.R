@@ -54,6 +54,7 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
 
   ##############################################################################
   repeat{ # start the search
+    print("################################")
 
     # generate prediction
     pred = tryCatch(learner(dat = dat,goal=goal,carryover = pred$carryover,design=design,fixed_cost=fixed_cost,cost=cost,greedy=TRUE,...),error=function(x) {
@@ -97,6 +98,9 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
 
     # check budget
     used = usedruns(dat)
+
+    # if (used==480) browser()
+
     if (limitmaxbudget& used>15000) {warning("max budget used, didn't converge?");break}
     if (!is.na(budget)){
       budget.remaining = budget - used
@@ -114,11 +118,18 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
     if (!useprediction) {
       datx = todataframe(dat)
       points = datx[,1:(length(datx)-1),drop=FALSE]
-      dat = addval(runfun=runfun,design=design,dat=dat,points=points,each=round(setsize/nrow(datx)))
+      each = max(round(setsize/nrow(datx)),1) # make sure at least one point is added
+      dat = addval(runfun=runfun,design=design,dat=dat,points=points,each=each)
       failed.predictions = failed.predictions + 1
     }
 
     n.iter = n.iter + 1
+
+
+    print(useprediction)
+    print(used)
+    print(budget.remaining)
+
   }
   ##############################################################################
 

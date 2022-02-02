@@ -4,7 +4,7 @@ load.libs()
 
 # Load Results ------------------------------------------------------------
 
-restag = "45"
+restag = "31"
 
 folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
 # folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
@@ -12,6 +12,32 @@ folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
 load(file= paste0(folder,"res_",restag,".Rdata"))
 
 load(file= paste0(folder,"at.Rdata"))
+
+
+# Get results for funs 2 + 6 from another file
+
+fns = sapply(res,function(x) x[[1]]$fun_nr) #delete fns 2 and 6
+ind = !fns %in% c(2,6)
+res = res[ind]
+res1 = res
+
+load(file= paste0(folder,"res_",37,".Rdata"))
+# attach
+res = c(res,res1)
+
+
+
+#Replace results for function 2 with new results
+
+fns = sapply(res,function(x) x[[1]]$fun_nr) #delete fns 2 and 6
+ind = !fns %in% c(2)
+res = res[ind]
+res1 = res
+
+load(file= paste0(folder,"res_",40,".Rdata"))
+# attach
+res = c(res,res1)
+
 
 
 # Manual input ------------------------------------------------------------
@@ -97,8 +123,7 @@ resx = do.call(rbind,resx)
 
 resx$budget = as.factor(resx$budget)
 resx$goal.ci = as.factor(resx$goal.ci)
-
-resx$fun_nr = factor(resx$fun_nr, labels=funlabels[which(1:6 %in% resx$fun_nr)])
+resx$fun_nr = factor(resx$fun_nr, labels=funlabels)
 
 resx = resx[!is.na(resx$fun_nr),]
 

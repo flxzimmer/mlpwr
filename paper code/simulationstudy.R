@@ -4,13 +4,11 @@ install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
 library(simpackage)
 load.libs()
 
-CLUSTERSIZE = 120
-n.runs = 100
+CLUSTERSIZE = 32
+n.runs = 25
 
-fun_nr = c(2,6)
+fun_nr = 1:6
 task = c("B")
-# budget = "NULL"
-# goal.ci = c("low","mid","high")
 budget = c("low","mid","high")
 goal.ci = NA
 sim2 = expand.grid(run=1:n.runs,fun_nr=fun_nr,task=task,budget = budget,goal.ci = goal.ci)
@@ -18,24 +16,34 @@ sim2 = sim2  %>% split(., seq(nrow(.))) %>% lapply(.,as.list)
 
 fun_nr = c(2,6)
 task = c("C")
-# budget = "NULL"
-# goal.ci = c("low","mid","high")
 budget = c("low","mid","high")
 goal.ci = NA
 sim3 = expand.grid(run=1:n.runs,fun_nr=fun_nr,task=task,budget = budget,goal.ci = goal.ci)
 sim3 = sim3  %>% split(., seq(nrow(.))) %>% lapply(.,as.list)
 
 sim = c(sim2,sim3)
-# sim = c(sim3)
 
+
+# set random seed
+
+systime = Sys.time()
+file_string = paste0("time_",systime,".Rdata")
+save(systime,file= file_string)
+
+set.seed(as.integer(systime))
+# set.seed(1643483500) # f2
+# set.seed(1643483513) # f4
+
+
+# add seeds
 for (i in 1:length(sim)){
-  sim[[i]]$seed = i
+  sim[[i]]$seed = sample(1:10^8, 1)
 }
 
-load("missing.Rdata")
+#shuffle conditions
+sim = sim[sample(1:length(sim))]
 
-sim = sim[missing]
-print(length(sim))
+
 
 # Run on the server -------------------------------------------------------
 
@@ -43,12 +51,12 @@ cl <- makeCluster(CLUSTERSIZE)
 
 clusterExport(cl, objects(), envir=environment())
 
-res =  parLapply(cl,X = sim,fun = function(x){
+res =  parLapplyLB(cl,X = sim,chunk.size =1,fun = function(x){
 
   library(simpackage)
   load.libs()
 
-  # x = sim[[1]]
+  # x = sim[[119]]
 
   fun_nr = x$fun_nr
   task = x$task
@@ -212,36 +220,134 @@ if (F) {
 
 if (F) {
 
-files=list.files("Y:/seeds/")
+  # fold = "Y:/seeds/"
+  fold = "C:/Users/admin/switchdrive/4 irt/paper 2/temp/"
+  files=list.files(fold)
 
-res =list()
-#Save run"Y:"
-for (i in 1:length(files)) {
-load(file= paste0("Y:/seeds/",files[i]))
-res[[i]] = re
-}
+  res =list()
+  #Save run"Y:"
+  for (i in 1:length(files)) {
+    load(file= paste0(fold,files[i]))
+    res[[i]] = re
+  }
 
-#Save result in new file
-# res_string=paste0("Y:/res_",simcond,"_")
-# i = 1
-# file_string =paste0(res_string,i,".Rdata")
-# while(file.exists(file_string)) {
-#   i=i+1
-#   file_string =paste0(res_string,i,".Rdata")
-# }
-# save(res,file= file_string)
 
-res_string=paste0("Y:/res_")
-i = 24
-file_string =paste0(res_string,i,".Rdata")
-while(file.exists(file_string)) {
-  i=i+1
+  # res_string=paste0("Y:/res_")
+  res_string = paste0("C:/Users/admin/switchdrive/4 irt/paper 2/temp/res_")
+  i = 51
   file_string =paste0(res_string,i,".Rdata")
+  while(file.exists(file_string)) {
+    i=i+1
+    file_string =paste0(res_string,i,".Rdata")
+  }
+
+  save(res,file= file_string)
+
 }
 
-save(res,file= file_string)
+
+# save only required seeds (not ghost) ------------------------------------
+
+if (F) {
+
+
+  # res_ object contains everything according to expectation
+  # seeds folder contains 606 instead of 600 files
+
+  #seeds that should be used on server:
+  should = sapply(sim,function(x) x$seed)
+
+
+  #seeds that have actually been used in the seeds folder :
+
+  fold = "C:/Users/admin/switchdrive/4 irt/paper 2/temp/"
+  files=list.files(fold)
+
+  res =list()
+  #Save run"Y:"
+  for (i in 1:length(files)) {
+    load(file= paste0(fold,files[i]))
+    res[[i]] = re
+  }
+
+  actually =  sapply(res,function(x) x[[1]]$seed)
+
+  sum(should %in% actually)
+  all(actually %in% should)
+  all(should %in% actually)
+  all(sort(actually)==sort(should)) # completely identical
+
+  ghost = which(!(actually %in% should)) # ghost seeds
+  ghost
+  res = res[-ghost]
+
 
 }
 
 
 
+# investigate weird seeds -------------------------------------------------
+
+if (F) {
+
+
+  # res_ object contains everything according to expectation
+  # seeds folder contains 606 instead of 600 files
+
+  #seeds that should be used on server:
+  should = sapply(sim,function(x) x$seed)
+
+
+  #seeds that have actually been used in the res_ object:
+
+  restag = c("49")
+
+  folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
+  # folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
+
+  rest = list()
+  for (i in restag) {
+    load(file= paste0(folder,"res_",i,".Rdata"))
+    rest = c(rest,res)
+  }
+  res = rest
+
+  actually =  sapply(res,function(x) x[[1]]$seed)
+
+  any(should %in% actually)
+  all(actually %in% should)
+  all(should %in% actually)
+  all(sort(actually)==sort(should)) # completely identical
+
+
+  #seeds that have actually been used in the seeds folder :
+
+  fold = "C:/Users/admin/switchdrive/4 irt/paper 2/temp/"
+  files=list.files(fold)
+
+  res =list()
+  #Save run"Y:"
+  for (i in 1:length(files)) {
+    load(file= paste0(fold,files[i]))
+    res[[i]] = re
+  }
+
+  actually =  sapply(res,function(x) x[[1]]$seed)
+
+  sum(should %in% actually)
+  all(actually %in% should)
+  all(should %in% actually)
+
+  which(!(actually %in% should))
+  # -> some seeds have been calculated that should not have been!
+  # e.g. 19993511
+  View(res[[122]])
+
+  which(!(should %in% actually))
+  # 3 seeds fehlen 119 136 328
+  missing =  which(!(should %in% actually))
+  should[missing]
+
+
+
+}
