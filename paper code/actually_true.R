@@ -1,13 +1,18 @@
 
-library(simpackage)
-load.libs()
+# calculating the actual power corresponding to the design parameter sets in the different DGFs
+
+# The results are used in the analysis of the simulation study
 
 # the "actually true" value is the value that implies the lowest cost among values with power > .8
 
 # the actual power is the power of the actually true parameter set
 
+# some DGFs needed larger simulations for this, the files for these are noted there.
 
-# load(file= paste0(folder,"at_1.Rdata"))
+library(simpackage)
+load.libs()
+
+folder = getwd() # File Location
 
 
 # Function 1 --------------------------------------------------------------
@@ -21,8 +26,6 @@ actual_cost = actually_true
 
 actual_power = true_power.fun(actually_true)
 
-# true_power.fun = function() {true_power.fun = runfun.ttest.true(delta=.4)
-# ;return(true_power.fun)}
 true_power.fun = runfun.ttest.true(delta=.4)
 
 at1 = list(actually_true=actually_true,actual_power = actual_power,actual_cost=actual_cost,true_power.fun=true_power.fun)

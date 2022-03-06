@@ -24,16 +24,20 @@ sim3 = sim3  %>% split(., seq(nrow(.))) %>% lapply(.,as.list)
 sim = c(sim2,sim3)
 
 
-# set random seed
+# set random seed (systime)
+# systime = Sys.time()
+# file_string = paste0("time_",systime,".Rdata")
+# save(systime,file= file_string)
+# set.seed(as.integer(systime))
 
-systime = Sys.time()
-file_string = paste0("time_",systime,".Rdata")
-save(systime,file= file_string)
 
-set.seed(as.integer(systime))
-# set.seed(1643483500) # f2
-# set.seed(1643483513) # f4
+# set seed
+seed = 1643483479 # f1
+# seed = 1643483500 # f2
+# seed = 1643483526 # f3
+# seed = 1643483513 # f4
 
+set.seed(seed)
 
 # add seeds
 for (i in 1:length(sim)){
@@ -43,6 +47,14 @@ for (i in 1:length(sim)){
 #shuffle conditions
 sim = sim[sample(1:length(sim))]
 
+
+print(seed)
+
+# x = sim[[94]]
+#
+# save(x,file= "problemcondition.Rdata")
+
+# seedsx = sapply(sim,function(x) x$seed)
 
 
 # Run on the server -------------------------------------------------------
@@ -56,7 +68,7 @@ res =  parLapplyLB(cl,X = sim,chunk.size =1,fun = function(x){
   library(simpackage)
   load.libs()
 
-  # x = sim[[119]]
+  # x = sim[[40]]
 
   fun_nr = x$fun_nr
   task = x$task
@@ -221,7 +233,7 @@ if (F) {
 if (F) {
 
   # fold = "Y:/seeds/"
-  fold = "C:/Users/admin/switchdrive/4 irt/paper 2/temp/"
+  fold = "C:/Users/felix/switchdrive/4 irt/simpackage/paper code/temp/"
   files=list.files(fold)
 
   res =list()
@@ -233,7 +245,7 @@ if (F) {
 
 
   # res_string=paste0("Y:/res_")
-  res_string = paste0("C:/Users/admin/switchdrive/4 irt/paper 2/temp/res_")
+  res_string = paste0("C:/Users/felix/switchdrive/4 irt/paper 2/res_")
   i = 51
   file_string =paste0(res_string,i,".Rdata")
   while(file.exists(file_string)) {

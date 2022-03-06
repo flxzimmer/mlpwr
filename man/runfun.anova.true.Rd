@@ -7,7 +7,7 @@
 runfun.anova.true(delta = 0.16298)
 }
 \arguments{
-\item{within.var}{}
+\item{delta}{}
 }
 \value{
 

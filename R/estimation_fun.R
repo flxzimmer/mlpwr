@@ -68,7 +68,7 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
     } else {
       useprediction = !pred$toofar
       print(pred$new.n)
-      print(pred$new.n.y)
+      print(as.numeric(pred$new.n.y))
       # check if prediction lies within design
       for (i in 1:length(pred$new.n)) {
         if (pred$new.n[i]<design[[i]][1]|pred$new.n[i]>design[[i]][2]) useprediction = FALSE
@@ -126,9 +126,9 @@ ss.find = function(learner,runfun,design,goal=NULL,goal.ci=NA,CI=.95,budget = NU
     n.iter = n.iter + 1
 
 
-    print(useprediction)
-    print(used)
-    print(budget.remaining)
+    # print(useprediction)
+    # print(used)
+    # print(budget.remaining)
 
   }
   ##############################################################################
@@ -284,26 +284,20 @@ logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,g
 #' @export
 #'
 #' @examples
-svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRUE,epsil=FALSE,design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
+svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRUE,design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
 
   datx = todataframe(dat,aggregate=TRUE,pseudo=FALSE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   weight = getweight(dat,weight.type="freq")
 
   #Treat the case of equal power values in the data [especially the case of zero variance]- add (some tiny amount of) random noise
-  if(any(ind <- duplicated(datx$y))) datx$y[ind] = datx$y[ind] + rnorm(length(datx$y[ind]),sd=.0000001)
-
-  # #Setup Low Anchor
-  # anchor = c(rep(0,nrow(xvars)),0)
-  # datx = rbind(datx,anchor)
-  # weight = c(weight,max(weight))
-  # xvars = datx[,1:(length(datx)-1),drop=FALSE]
-  #
-  # # Setup High Anchor
-  # anchor = c(apply(xvars,2,max)*2,1)
-  # datx = rbind(datx,anchor)
-  # weight = c(weight,max(weight))
-  # xvars = datx[,1:(length(datx)-1),drop=FALSE]
+  if(any(ind <- duplicated(datx$y))) {
+    a = datx$y[ind]
+    a = a + rnorm(length(a),sd=.0000001)
+    a[a>1] = 1-(a[a>1]-1)
+    a[a<0] = -a[a<0]
+    datx$y[ind] = a
+  }
 
   # Determine if first round
   firstround = is.null(carryover$pars_history)
@@ -311,8 +305,11 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
   if (firstround) {
     pars_history = list()
     pars = list(cost=100,epsilon=.1,gamma=.05) # Default Pars
-    tunepars = list(cost=10^seq(-1,2),gamma=10^seq(-4,1),epsilon=min(getweight(dat,"sd")))
-    if(epsil) tunepars$epsilon = 10^seq(-4,-1)
+
+    # tunepars = list(cost=10^seq(-1,2),gamma=10^seq(-4,1),epsilon=min(getweight(dat,"sd")))
+
+    tunepars = list(cost=c(10^seq(-1,2),2*10^seq(-1,2),5*10^seq(-1,2)),gamma=10^seq(-4,1),epsilon=min(getweight(dat,"sd")))
+
     }
 
     if (!firstround) {
@@ -320,23 +317,32 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
     n_previous = length(pars_history)
     pars = pars_history[[n_previous]]
     TUNEFACTORS = seq(.75,1.25,.25)
-    tunepars = list(cost=pars$cost*TUNEFACTORS,gamma=pars$gamma*TUNEFACTORS,epsilon= pars$epsilon * TUNEFACTORS)
+    tunepars = list(cost=pars$cost*TUNEFACTORS,gamma=pars$gamma*TUNEFACTORS,epsilon= min(getweight(dat,"sd")))
 
-    # if (n_previous %% 10 == 0) {
-    #   tunepars = list(cost=c(tunepars$cost,10^seq(-1,2)),gamma=c(tunepars$gamma,10^seq(-4,1)),epsilon=c(tunepars$epsilon,min(getweight(dat,"sd"))))
-    # }
-    if (n_previous %% 10 == 0) {
-      tunepars = list(cost=c(tunepars$cost,10^seq(-1,2)),gamma=c(tunepars$gamma,10^seq(-4,1)),epsilon=min(getweight(dat,"sd")))
+    # n_previous = 10 #
+    if (n_previous %% 10 == 0) { # Wider Search every 10 Iterations
+      tunepars = list(cost=c(tunepars$cost,10^seq(-1,2)),gamma=c(tunepars$gamma,10^seq(-4,1)),epsilon=tunepars$epsilon)
     }
     }
 
   if (tune) {
-    tunepars$epsilon = min(getweight(dat,"sd"))
-    ctrl = tune.control(cross=min(10,nrow(datx)))
+
+    ctrl = tune.control(cross=min(10,nrow(datx)),error.fun=logloss)
     a = tune_wsvm(y ~ .,data = datx,weight=weight,ranges=tunepars,tunecontrol=ctrl)
-    pars= a$best.parameters
+    pars= a$best.parameter
     mod = a$best.model
+
+    # #new strategy
+    # print(pars)
+    # top = 3
+    # order = order(a$performances$error)
+    # cost = weighted.mean(a$performances$cost[order][1:top],seq(top,1)^10)
+    # gamma = weighted.mean(a$performances$gamma[order][1:top],seq(top,1)^10)
+    # pars = data.frame(cost = cost, gamma = gamma, epsilon = min(getweight(dat,"sd")))
+    # mod = wsvm(y ~ .,data = datx,cost=pars$cost,epsilon=pars$epsilon,gamma=pars$gamma,weight=weight)
+    # print(pars)
   }
+
 
   if (!tune) {
     mod = wsvm(y ~ .,data = datx,cost=pars$cost,epsilon=pars$epsilon,gamma=pars$gamma,weight=weight)
@@ -349,23 +355,85 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)))}
 
-  # freqs = getweight(dat,"freq")
-  # predfun.sd = function(x) sum(colMeans((x - xvars)^2*freqs)) # pseudo SD fun
-
   if (!is.null(goal)) {
   difs = apply(xvars,1,function(x) predfun(x)-goal)
   isdumb = !any(difs>0) | !any(difs<0)   # Check if it predicts all values to be on one side of the plane
   if (isdumb) {warning("Weird Function")}
-}
+  }
+
   somevals = apply(xvars,1,function(x) predfun(x))
   isplane = summary(lm(y~.,cbind(xvars,y = somevals)))$r.squared>.999 #
   if (isplane) {warning("Plane predicted")}
+
 
   # generate prediction
   res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
 
   re=list(new.n = res$new.n,new.n.sd = NA,new.n.y=predfun(res$new.n),fun=predfun,fun.sd = NA,carryover=list(pars_history = pars_history),toofar=res$toofar,exact=res$exact,points=res$points)
 
+
+  # if(17 %in% res$new.n) browser()
+    # print(pars)
+  # print(pars)
+
+  if (F) {
+  predfun(c(17,30))
+  predfun(c(24,16))
+  predfun(c(27,10))
+
+  # try out random pars!
+  pars = list(cost=runif(1,0.01,.3),epsilon=runif(1,.001,.02),gamma=runif(1,0.05,.2)) # Default Pars
+  pars = list(cost=runif(1,0.01,.3),epsilon=0.008849558,gamma=runif(1,0.05,.2)) # Default Pars
+  0.008849558
+  mod = wsvm(y ~ .,data = datx,cost=pars$cost,epsilon=pars$epsilon,gamma=pars$gamma,weight=weight)
+  predfun = function(x) {
+    names(x) = names(xvars)
+    predict(mod,newdata=data.frame(t(x)))}
+  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
+  res
+  pars
+
+
+  # $cost
+  # [1] 0.1767822
+  #
+  # $epsilon
+  # [1] 0.008849558
+  #
+  # $gamma
+  # [1] 0.06396462
+  #
+  #
+  # $cost
+  # [1] 0.2835349
+  #
+  # $epsilon
+  # [1] 0.008849558
+  #
+  # $gamma
+  # [1] 0.05997454
+  #
+  #
+  # $cost
+  # [1] 0.1494608
+  #
+  # $epsilon
+  # [1] 0.008849558
+  #
+  # $gamma
+  # [1] 0.1176038
+  #
+  #
+  # $cost
+  # [1] 0.1897609
+  #
+  # $epsilon
+  # [1] 0.008849558
+  #
+  # $gamma
+  # [1] 0.1685515
+
+}
   return(re)
 }
 

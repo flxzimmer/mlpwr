@@ -34,6 +34,7 @@ nohup nice -n 11 Rscript simulationstudy.R > run1.out &
 
 
 pkill -u fzimmer
+pkill -u ubuntu
 
 
 # science cloud -----------------------------------------------------------

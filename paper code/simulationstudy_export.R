@@ -4,9 +4,11 @@ load.libs()
 
 # Load Results ------------------------------------------------------------
 
-restag = c("48","49","50","51")
+# restag = c("48","49","50","51")
+restag = c("52","53","54","55")
 
-folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
+
+folder = "C:/Users/felix/switchdrive/4 irt/paper 2/"
 # folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
 
 rest = list()
@@ -127,13 +129,9 @@ load(file = paste0(folder,"at.Rdata")) # at
 
 usetask = "B"
 resX = resx[resx$task==usetask,]
-# resX$budget = resX$budget |> as.numeric()
 resX = resX[!is.na(resX$cost),]
 
-# convert analytical to column
-# table(resx$cost[resx$learner=="Analytical"])
-# table(resx$true_power[resx$learner=="Analytical"])
-# View(resx[resx$learner=="Analytical",])
+# insert analytical results (wo kommen die her? am anfang importieren?)
 resX$analytical = NA
 resX$analytical[as.numeric(resX$fun_nr)==3] = 99.0805650087345
 resX$analytical[as.numeric(resX$fun_nr)==4] = 150
@@ -143,43 +141,60 @@ resX$analytical_power[as.numeric(resX$fun_nr)==4] = 0.787123625772207
 
 resX = resX[resX$learner!="Analytical",]
 
-# Boxplots
-p1 = ggplot(resX, aes(x= learner,y=cost,fill=budget)) + geom_violin(draw_quantiles = 0.5) + geom_hline(data= resX, aes(yintercept=actual_cost, linetype="Analytical cost"), color = "red") + geom_hline(data= resX, aes(yintercept=analytical, linetype="Optimal cost"), color = "black") + facet_wrap(~ fun_nr,  scales = "free") + scale_linetype_manual(name = "", values = c(2, 2),guide = guide_legend(override.aes = list(color = c("black", "red")))) + ylab("Cost")+ xlab("Surrogate Model")
-
-
-p2 = ggplot(resX, aes(x= learner,y=budget_used,fill=budget)) +  geom_boxplot() + facet_wrap(~ fun_nr, scales = "free_x")
-
-
-resX$CI = 1.96*resX$value.sd * 2
-p3 = ggplot(resX, aes(x= learner,y=CI,fill=budget)) +  geom_boxplot() + facet_wrap(~ fun_nr, scales = "free_x")+ ylab("95%CI width")
-
-# percent "no estimate" für value.sd
-no_sd = aggregate(resX$value.sd,list(resX$learner,resX$budget,resX$fun_nr),function(x) mean(is.na(x)))
-names(no_sd)=c("learner","budget","fun_nr","no_sd")
-p3.1 = ggplot(no_sd, aes(x= learner,y=no_sd,fill=budget)) +  geom_bar(position="dodge",stat="identity") + facet_wrap(~ fun_nr, scales = "free_x")
-
+# Power Plot
 resy = resX[!is.na(resX$true_power),]
-p4 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  geom_boxplot() + geom_hline(data= resX, aes(yintercept=actual_power, linetype="Analytical power"), color = "red") + geom_hline(data= resX, aes(yintercept=analytical_power, linetype="Optimal power"), color = "black") + facet_wrap(~ fun_nr,scales = "free_x") + scale_linetype_manual(name = "", values = c(2, 2),guide = guide_legend(override.aes = list(color = c("black", "red")))) + ylab("Power")+ xlab("Surrogate Model")
+p1 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  theme_bw() +
+  geom_hline(data= resX, aes(yintercept=actual_power, linetype="Optimal power"), color = "#2166AC") +
+  geom_hline(data= resX, aes(yintercept=analytical_power, linetype="Analytical power"), color = "black") +
+  geom_violin(draw_quantiles = 0.5) +
+  scale_fill_brewer(palette="Blues")+
+  facet_wrap(~ fun_nr,scales = "free_x") +
+  scale_linetype_manual(name = "", values = c(1, 1),guide = guide_legend(override.aes = list(color = c("black","#2166AC")))) +
+  ylab("Power")+ xlab("Surrogate Model") +
+  labs(fill='Budget')+theme(legend.position="bottom")
 
-# delete outlier
-resy = resy[resy$true_power>.7,]
-p41 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  geom_boxplot() + geom_hline(data= resX, aes(yintercept=actual_power, linetype="Analytical power"), color = "red") + geom_hline(data= resX, aes(yintercept=analytical_power, linetype="Optimal power"), color = "black") + facet_wrap(~ fun_nr,scales = "free_x") + scale_linetype_manual(name = "", values = c(2, 2),guide = guide_legend(override.aes = list(color = c("black", "red")))) + ylab("Power")+ xlab("Surrogate Model")
+pdf(paste0(folder,restag,"_plot1_",usetask,".pdf"),height=6,width=9.2);p1;dev.off()
 
 
-# p4 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  geom_boxplot() + geom_hline(data= resX, aes(yintercept=actual_cost, linetype="Analytical cost"), color = "red") + geom_hline(data= resX, aes(yintercept=analytical, linetype="Optimal cost"), color = "black") + facet_wrap(~ fun_nr,scales = "free_x") + scale_linetype_manual(name = "", values = c(2, 2),guide = guide_legend(override.aes = list(color = c("black", "red")))) + ylab("Power")
-#
-#
-# ggplot(resX, aes(x= learner,y=cost,fill=budget)) + geom_violin(draw_quantiles = 0.5) + geom_hline(data= resX, aes(yintercept=actual_cost, linetype="Analytical cost"), color = "red") + geom_hline(data= resX, aes(yintercept=analytical, linetype="Optimal cost"), color = "black") + facet_wrap(~ fun_nr,  scales = "free") + scale_linetype_manual(name = "", values = c(2, 2),guide = guide_legend(override.aes = list(color = c("black", "red")))) + ylab("Cost")
+# Power Plot / removed outliers
+sum(resy$true_power<.5) # how many?
+resy = resy[resy$true_power>=.5,]
+p11 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  theme_bw() +
+  geom_hline(data= resX, aes(yintercept=actual_power, linetype="Optimal power"), color = "#2166AC") +
+  geom_hline(data= resX, aes(yintercept=analytical_power, linetype="Analytical power"), color = "black") +
+  geom_violin(draw_quantiles = 0.5) +
+  scale_fill_brewer(palette="Blues")+
+  facet_wrap(~ fun_nr,scales = "free_x") +
+  scale_linetype_manual(name = "", values = c(1, 1),guide = guide_legend(override.aes = list(color = c("black","#2166AC")))) +
+  ylab("Power")+ xlab("Surrogate Model") +
+  labs(fill='Budget')+theme(legend.position="bottom")
+
+pdf(paste0(folder,restag,"_plot11_",usetask,".pdf"),height=6,width=9.2);p11;dev.off()
+
+
+# Cost Plot
+resy = resX[as.numeric(resX$fun_nr)%in%c(2,6),]
+p2 = ggplot(resy, aes(x= learner,y=cost,fill=budget)) + theme_bw() +
+  geom_hline(data= resy, aes(yintercept=actual_cost, linetype="Optimal cost"), color = "#B2182B") +
+  geom_violin(draw_quantiles = 0.5) +
+  scale_fill_brewer(palette="Reds")+
+  facet_wrap(~ fun_nr,  scales = "free") + scale_linetype_manual(name = "", values = c(1),guide = guide_legend(override.aes = list(color = c("#B2182B")))) + ylab("Cost")+ xlab("Surrogate Model")+
+  labs(fill='Budget')+theme(legend.position="bottom")
+
+pdf(paste0(folder,restag,"_plot2_",usetask,".pdf"),height=4 ,width=7);p2;dev.off()
+
+
 
 # Höhenlinien Plot Function 2
 fn_nr = 2
-# resX1 = resX[resX$budget=="low"& resX$fun_nr=="2 2D-t-test",]
 resX1 = resX[resX$fun_nr=="2 ANOVA",]
 
 atx = at[[fn_nr]]
 true_power.fun = atx$true_power.fun
 actual_power = atx$actual_power
 actual_cost = atx$actual_cost
+dat.at = data.frame(t(atx$actually_true))
+
 x1 = load.cond(fn_nr,usetask,budget=NA,goal.ci=NA)
 costfun=x1$cost
 design=x1$design
@@ -203,11 +218,26 @@ correct = sapply(1:nrow(eqcost),function(i) {
 })
 eqcost = eqcost[correct,]
 
-# p5 = ggplot(resX1, aes(x=X1, y=X2,col = learner)) + geom_point() + geom_line(data=eqpower,aes(x=X1, y=X2,col="Optimal power"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="Optimal cost"),size=1)
-# # +  scale_fill_brewer(palette="Set1",aesthetics = "col")
+eqpower = eqpower[eqpower$X2<=max(resX1$X2),]
+eqcost = eqcost[eqcost$X2<=max(resX1$X2),]
 
-p5 = ggplot(resX1, aes(x=X1, y=X2))  + geom_line(data=eqpower,aes(x=X1, y=X2,col="Minimal power"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="Optimal cost"),size=1)+ geom_point(aes(col = learner))+
-  scale_colour_manual(values = c("orange", "red","cyan",  "black"), guide = guide_legend(title="",override.aes = list(linetype = c("blank", "solid", "solid","blank"),shape = c(16,NA, NA,16)))) + xlab("Participants per group") + ylab("Number of groups")
+resX1$budget = recode(resX1$budget, "low" = 'Budget = 1000', "mid" = 'Budget = 3000', "high" =  'Budget = 9000' )
+
+
+p3 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
+  scale_colour_manual(values = c("#2166AC","#B2182B"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid"),shape = c(NA, NA)))) +
+  geom_ribbon(data=eqpower,aes(x=X1,ymin = X2, ymax = max(resX1$X2)), fill = "#92C5DE") +
+  geom_line(data=eqpower,aes(x=X1, y=X2,col="Desired power"),size=1)+
+  geom_line(data=eqcost,aes(x=X1, y=X2,col="Optimal cost"),size=1)+
+  geom_point(aes(shape = learner),size=2) +
+  geom_point(data=dat.at, aes(x=X1, y=X2,shape="Optimal set"),size=3,color="purple") +
+  xlab("Participants per group") +
+  ylab("Number of groups")+
+  facet_wrap(~ budget,scales = "fixed") +
+  scale_shape_manual(values = c(1,16,4), guide = guide_legend(title="",override.aes = list(shape = c(1,16,4),color=c("black","purple","black"),size=c(4,4,4))))+theme(legend.position="bottom")
+
+pdf(paste0(folder,restag,"_plot3_",usetask,".pdf"),height=6,width=9.2);p3;dev.off()
+
 
 # Höhenlinien Plot Function 6
 fn_nr = 6
@@ -217,6 +247,8 @@ atx = at[[fn_nr]]
 true_power.fun = atx$true_power.fun
 actual_power = atx$actual_power
 actual_cost = atx$actual_cost
+dat.at = data.frame(t(atx$actually_true))
+
 x1 = load.cond(fn_nr,usetask,budget=NA,goal.ci=NA)
 costfun=x1$cost
 design=x1$design
@@ -232,27 +264,39 @@ eqpower = data.frame(X1=xvals,X2=eqpower.y)
 
 eqcost.y = sapply(xvals,function(x) {
   fn = function(y) abs(costfun(c(x,y))-actual_cost)
-  optim(10,fn,method="Brent",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
+  optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
 eqcost = data.frame(X1=xvals,X2=eqcost.y)
+# ignore some wrong values
+correct = sapply(1:nrow(eqcost),function(i) {
+  costfun(eqcost[i,])==actual_cost
+})
+eqcost = eqcost[correct,]
 
-# p6 = ggplot(resX1, aes(x=X1, y=X2,col = learner)) + geom_point() + geom_line(data=eqpower,aes(x=X1, y=X2,col="power=.8"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="optimal cost"),size=1)
+eqpower = eqpower[eqpower$X2<=max(resX1$X2),]
+eqcost = eqcost[eqcost$X2<=max(resX1$X2),]
 
-p6 = ggplot(resX1, aes(x=X1, y=X2))  + geom_line(data=eqpower,aes(x=X1, y=X2,col="Minimal power"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="Optimal cost"),size=1)+ geom_point(aes(col = learner))+
-  scale_colour_manual(values = c("orange", "red","cyan", "black"), guide = guide_legend(title="",override.aes = list(linetype = c("blank", "solid", "solid","blank"),shape = c(16,NA, NA,16))))+ xlab("Participants per Cluster") + ylab("Number of Clusters")
+resX1$budget = recode(resX1$budget, "low" = 'Budget = 1000', "mid" = 'Budget = 3000', "high" =  'Budget = 9000' )
 
 
-p_time = ggplot(resX, aes(x= learner,y=time_used,fill=budget)) +  geom_boxplot() + facet_wrap(~ fun_nr, scales = "free_x")
+p4 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
+  scale_colour_manual(values = c("#2166AC","#B2182B"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid"),shape = c(NA, NA)))) +
+  geom_ribbon(data=eqpower,aes(x=X1,ymin = X2, ymax = max(resX1$X2)), fill = "#92C5DE") +
+  geom_line(data=eqpower,aes(x=X1, y=X2,col="Desired power"),size=1)+
+  geom_line(data=eqcost,aes(x=X1, y=X2,col="Optimal cost"),size=1)+
+  geom_point(aes(shape = learner),size=2) +
+  geom_point(data=dat.at, aes(x=X1, y=X2,shape="Optimal set"),size=3,color="purple") +
+  xlab("Participants per cluster") + ylab("Number of clusters")+
+  facet_wrap(~ budget,scales = "fixed") +
+  scale_shape_manual(values = c(1,16,4), guide = guide_legend(title="",override.aes = list(shape = c(1,16,4),color=c("black","purple","black"),size=c(4,4,4))))+theme(legend.position="bottom")
 
-# Export
-#old format: 9:16 and 6:11
-pdf(paste0(folder,restag,"_plot1_",usetask,".pdf"),height=6,width=11);p1;dev.off()
-pdf(paste0(folder,restag,"_plot2_",usetask,".pdf"),height=6 ,width=11);p2;dev.off()
-pdf(paste0(folder,restag,"_plot3_",usetask,".pdf"),height=6 ,width=11);p3;dev.off()
-pdf(paste0(folder,restag,"_plot31_",usetask,".pdf"),height=6 ,width=11);p3.1;dev.off()
-pdf(paste0(folder,restag,"_plot4_",usetask,".pdf"),height=6, width=11);p4;dev.off()
-pdf(paste0(folder,restag,"_plot41_",usetask,".pdf"),height=6, width=11);p41;dev.off()
-pdf(paste0(folder,restag,"_plot5_",usetask,".pdf"),height=4,width=7);p5;dev.off()
-pdf(paste0(folder,restag,"_plot6_",usetask,".pdf"),height=4, width=7);p6;dev.off()
+pdf(paste0(folder,restag,"_plot4_",usetask,".pdf"),height=6,width=9.2);p4;dev.off()
+
+
+# Boxplot Zeit
+p_time = ggplot(resX, aes(x= learner,y=time_used,fill=budget)) + theme_bw() +
+  geom_violin(draw_quantiles = 0.5) +scale_fill_brewer(palette="Greys")+ facet_wrap(~ fun_nr, scales = "free_x")+theme(legend.position="bottom") + labs(x="Surrogate Model",y="Time used",fill="Budget")
+
+
 pdf(paste0(folder,restag,"_plot_time_",usetask,".pdf"),height=4, width=7);p_time;dev.off()
 
 
@@ -263,105 +307,143 @@ usetask = "C"
 resX = resx[resx$task==usetask,]
 resX = resX[!is.na(resX$cost),]
 
-# resX2 = resx[resx$task==usetask&resx$fun_nr=="6 2D Mixed Model",]
-# table(resX2$cost)
-# resX = resX[!is.na(resX$value.sd),]
-
-# Boxplots
-p1 = ggplot(resX, aes(x= learner,y=cost,fill=budget)) + geom_violin(draw_quantiles = 0.5) + geom_hline(data= resX, aes(yintercept=actual_cost), linetype="dashed", color = "red") + facet_wrap(~ fun_nr,  scales = "free")
-
-p2 = ggplot(resX, aes(x= learner,y=budget_used,fill=budget)) +  geom_boxplot() + facet_wrap(~ fun_nr, scales = "free_x")
-
-# resX$value.sd_valid =
-p3 = ggplot(resX, aes(x= learner,y=value.sd,fill=budget)) +  geom_boxplot() + facet_wrap(~ fun_nr, scales = "free_x")
-
-# percent "no estimate" für value.sd
-no_sd = aggregate(resX$value.sd,list(resX$learner,resX$budget,resX$fun_nr),function(x) mean(is.na(x)))
-names(no_sd)=c("learner","budget","fun_nr","no_sd")
-p3.1 = ggplot(no_sd, aes(x= learner,y=no_sd,fill=budget)) +  geom_bar(position="dodge",stat="identity") + facet_wrap(~ fun_nr, scales = "free_x")
-
+# Power Plot
 resy = resX[!is.na(resX$true_power),]
-# p4 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  geom_boxplot() + geom_hline(data= resy, aes(yintercept=actual_power), linetype="dashed", color = "red") + facet_wrap(~ fun_nr,scales = "free_x")
+p1 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  theme_bw() +
+  geom_hline(data= resX, aes(yintercept=actual_power, linetype="Optimal power"), color = "#2166AC") +
+  geom_violin(draw_quantiles = 0.5) +
+  scale_fill_brewer(palette="Blues")+
+  facet_wrap(~ fun_nr,scales = "free_x") +
+  scale_linetype_manual(name = "", values = c(1),guide = guide_legend(override.aes = list(color = c("#2166AC")))) +
+  ylab("Power")+ xlab("Surrogate Model") +
+  labs(fill='Budget')+theme(legend.position="bottom")
 
-p4 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  geom_boxplot() + geom_hline(data= resX, aes(yintercept=actual_power, linetype="Optimal power"), color = "red") + facet_wrap(~ fun_nr,scales = "free_x") + scale_linetype_manual(name = "", values = c(2),guide = guide_legend(override.aes = list(color = c( "red")))) + ylab("Power") + xlab("Surrogate Model")
+
+pdf(paste0(folder,restag,"_plot1_",usetask,".pdf"),height=6,width=9.2);p1;dev.off()
+
+
+# Power Plot / removed outliers
+sum(resy$true_power<.7) # how many?
+resy = resy[resy$true_power>=.7,]
+p11 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  theme_bw() +
+  geom_hline(data= resX, aes(yintercept=actual_power, linetype="Optimal power"), color = "#2166AC") +
+  geom_violin(draw_quantiles = 0.5) +
+  scale_fill_brewer(palette="Blues")+
+  facet_wrap(~ fun_nr,scales = "free_x") +
+  scale_linetype_manual(name = "", values = c(1),guide = guide_legend(override.aes = list(color = c("#2166AC")))) +
+  ylab("Power")+ xlab("Surrogate Model") +
+  labs(fill='Budget')+theme(legend.position="bottom")
+
+pdf(paste0(folder,restag,"_plot11_",usetask,".pdf"),height=6,width=9.2);p11;dev.off()
 
 
 # Höhenlinien Plot Function 2
+
 fn_nr = 2
-# resX1 = resX[resX$budget=="low"& resX$fun_nr=="2 2D-t-test",]
 resX1 = resX[resX$fun_nr=="2 ANOVA",]
 
 atx = at[[fn_nr]]
 true_power.fun = atx$true_power.fun
-actual_power = atx$actual_powerC
-actual_cost = atx$actual_costC
+actual_power = atx$actual_power
+actual_cost = atx$actual_cost
+dat.at = data.frame(t(atx$actually_true))
+
 x1 = load.cond(fn_nr,usetask,budget=NA,goal.ci=NA)
 costfun=x1$cost
 design=x1$design
 
 xvals = seq(min(resX1$X1,na.rm=T),max(resX1$X1,na.rm=T),.5)
 eqpower.y = sapply(xvals,function(x) {
-    fn = function(y) abs(true_power.fun(c(x,y))-actual_power)
-    a = optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])
-    legit = a$value<.001
-    if(legit) return(a$par) else return(NA)
+  fn = function(y) abs(true_power.fun(c(x,y))-actual_power)
+  a = optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])
+  legit = a$value<.001
+  if(legit) return(a$par) else return(NA)
 })
 eqpower = data.frame(X1=xvals,X2=eqpower.y)
 
 eqcost.y = sapply(xvals,function(x) {
-    fn = function(y) abs(costfun(c(x,y))-actual_cost)
-    optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
+  fn = function(y) abs(costfun(c(x,y))-actual_cost)
+  optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
 eqcost = data.frame(X1=xvals,X2=eqcost.y)
 
-# p5 = ggplot(resX1, aes(x=X1, y=X2,col = learner)) + geom_point() + geom_line(data=eqpower,aes(x=X1, y=X2,col="power=.8"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="optimal cost"),size=1)
-# # +  scale_fill_brewer(palette="Set1",aesthetics = "col")
+eqpower = eqpower[eqpower$X2<=max(resX1$X2),]
+eqcost = eqcost[eqcost$X2<=max(resX1$X2),]
 
-p5 = ggplot(resX1, aes(x=X1, y=X2))  + geom_line(data=eqpower,aes(x=X1, y=X2,col="Optimal power"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="Maximal cost"),size=1)+ geom_point(aes(col = learner))+
-    scale_colour_manual(values = c("orange", "cyan", "red", "black"), guide = guide_legend(title="",override.aes = list(linetype = c("blank", "solid", "solid","blank"),shape = c(16,NA, NA,16))))+ xlab("Participants per group") + ylab("Number of groups")
+resX1$budget = recode(resX1$budget, "low" = 'Budget = 1000', "mid" = 'Budget = 3000', "high" =  'Budget = 9000' )
+
+
+p3 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
+  scale_colour_manual(values = c("#B2182B","#2166AC"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid"),shape = c(NA, NA)))) +
+  geom_ribbon(data=eqcost,aes(x=X1,ymin = 5, ymax = X2), fill = "#F4A582") +
+  geom_line(data=eqpower,aes(x=X1, y=X2,col="Optimal power"),size=1)+
+  geom_line(data=eqcost,aes(x=X1, y=X2,col="Cost Threshold"),size=1)+
+  geom_point(aes(shape = learner),size=2) +
+  geom_point(data=dat.at, aes(x=X1, y=X2,shape="Optimal set"),size=3,color="purple") +
+  xlab("Participants per group") +
+  ylab("Number of groups")+
+  facet_wrap(~ budget,scales = "fixed") +
+  scale_shape_manual(values = c(1,16,4), guide = guide_legend(title="",override.aes = list(shape = c(1,16,4),color=c("black","purple","black"),size=c(4,4,4))))+theme(legend.position="bottom")
+
+
+pdf(paste0(folder,restag,"_plot3_",usetask,".pdf"),height=6,width=9.2);p3;dev.off()
 
 
 # Höhenlinien Plot Function 6
+
 fn_nr = 6
 resX1 = resX[resX$fun_nr=="6 2D Mixed Model",]
 
 atx = at[[fn_nr]]
 true_power.fun = atx$true_power.fun
-actual_power = atx$actual_powerC
-actual_cost = atx$actual_costC
+actual_power = atx$actual_power
+actual_cost = atx$actual_cost
+dat.at = data.frame(t(atx$actually_true))
+
 x1 = load.cond(fn_nr,usetask,budget=NA,goal.ci=NA)
 costfun=x1$cost
 design=x1$design
 
 xvals = seq(min(resX1$X1,na.rm=T),max(resX1$X1,na.rm=T),.5)
 eqpower.y = sapply(xvals,function(x) {
-    fn = function(y) abs(true_power.fun(c(x,y))-actual_power)
-    a = optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])
-    legit = a$value<.001
-    if(legit) return(a$par) else return(NA)
+  fn = function(y) abs(true_power.fun(c(x,y))-actual_power)
+  a = optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])
+  legit = a$value<.001
+  if(legit) return(a$par) else return(NA)
 })
 eqpower = data.frame(X1=xvals,X2=eqpower.y)
 
 eqcost.y = sapply(xvals,function(x) {
-    fn = function(y) abs(costfun(c(x,y))-actual_cost)
-    optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
+  fn = function(y) abs(costfun(c(x,y))-actual_cost)
+  optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
 eqcost = data.frame(X1=xvals,X2=eqcost.y)
 
-# p6 = ggplot(resX1, aes(x=X1, y=X2,col = learner)) + geom_point() + geom_line(data=eqpower,aes(x=X1, y=X2,col="power=.8"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="optimal cost"),size=1)
+eqpower = eqpower[eqpower$X2<=max(resX1$X2),]
+eqcost = eqcost[eqcost$X2<=max(resX1$X2),]
 
-p6 = ggplot(resX1, aes(x=X1, y=X2))  + geom_line(data=eqpower,aes(x=X1, y=X2,col="Optimal power"),size=1)+ geom_line(data=eqcost,aes(x=X1, y=X2,col="Maximal cost"),size=1)+ geom_point(aes(col = learner)) +
-    scale_colour_manual(values = c("orange", "cyan", "red", "black"), guide = guide_legend(title="",override.aes = list(linetype = c("blank", "solid", "solid","blank"),shape = c(16,NA, NA,16))))+ xlab("Participants per Cluster") + ylab("Number of Clusters")
+resX1$budget = recode(resX1$budget, "low" = 'Budget = 1000', "mid" = 'Budget = 3000', "high" =  'Budget = 9000' )
 
-p_time = ggplot(resX, aes(x= learner,y=time_used,fill=budget)) +  geom_boxplot() + facet_wrap(~ fun_nr, scales = "free_x")
 
-# Export
-pdf(paste0(folder,restag,"_plot1_",usetask,".pdf"),height=6 ,width=11);p1;dev.off()
-pdf(paste0(folder,restag,"_plot2_",usetask,".pdf"),height=6 ,width=11);p2;dev.off()
-pdf(paste0(folder,restag,"_plot3_",usetask,".pdf"),height=6 ,width=11);p3;dev.off()
-pdf(paste0(folder,restag,"_plot31_",usetask,".pdf"),height=6 ,width=11);p3.1;dev.off()
-pdf(paste0(folder,restag,"_plot4_",usetask,".pdf"),height=6, width=11);p4;dev.off()
-pdf(paste0(folder,restag,"_plot5_",usetask,".pdf"),height=4, width=7);p5;dev.off()
-pdf(paste0(folder,restag,"_plot6_",usetask,".pdf"),height=4, width=7);p6;dev.off()
+p4 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
+  scale_colour_manual(values = c("#B2182B","#2166AC"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid"),shape = c(NA, NA)))) +
+  geom_ribbon(data=eqcost,aes(x=X1,ymin = 5, ymax = X2), fill = "#F4A582") +
+  geom_line(data=eqpower,aes(x=X1, y=X2,col="Optimal power"),size=1)+
+  geom_line(data=eqcost,aes(x=X1, y=X2,col="Cost Threshold"),size=1)+
+  geom_point(aes(shape = learner),size=2) +
+  geom_point(data=dat.at, aes(x=X1, y=X2,shape="Optimal set"),size=3,color="purple") +
+  xlab("Participants per cluster") + ylab("Number of clusters")+
+  facet_wrap(~ budget,scales = "fixed") +
+  scale_shape_manual(values = c(1,16,4), guide = guide_legend(title="",override.aes = list(shape = c(1,16,4),color=c("black","purple","black"),size=c(4,4,4))))+theme(legend.position="bottom")
+
+
+pdf(paste0(folder,restag,"_plot4_",usetask,".pdf"),height=6,width=9.2);p4;dev.off()
+
+
+# Plot Time
+p_time = ggplot(resX, aes(x= learner,y=time_used,fill=budget)) + theme_bw() +
+  geom_violin(draw_quantiles = 0.5) +scale_fill_brewer(palette="Greys")+ facet_wrap(~ fun_nr, scales = "free_x")+theme(legend.position="bottom")+ labs(x="Surrogate Model",y="Time used",fill="Budget")
+
 pdf(paste0(folder,restag,"_plot_time_",usetask,".pdf"),height=4, width=7);p_time;dev.off()
+
 
 
 
@@ -418,8 +500,6 @@ dat.at = data.frame(t(atx$actually_true))
 
 
 eqpower = eqpower[!is.na(eqpower$X2),]
-# eqpower = eqpower[eqpower$X2<=20,]
-# eqcost = eqcost[eqcost$X1>=40,]
 
 p7 = ggplot() + theme_bw()  + xlim(40, 80) + ylim(5,16) +
   scale_colour_manual(values = c("#B2182B", "#2166AC","black"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid","blank"),shape = c(NA, NA,3)))) +
@@ -455,17 +535,40 @@ g1 = grid.arrange(p7,p8, ncol=2)
 pdf(paste0(folder,"multi_true_2D.pdf"),height=4,width=7);grid.draw(g1);dev.off()
 
 
-# Version for Presentation
 
-p7 = ggplot(resX1, aes(x=X1, y=X2))  +
-    geom_line(data=eqcost,aes(x=X1, y=X2,col="Optimal cost"),size=1)+
-    geom_line(data=eqpower,aes(x=X1, y=X2,col="Power = .8"),size=1)+
-    scale_colour_manual(values = c("cyan", "black","red"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "blank","solid"),shape = c(NA, 3,NA)))) + xlab("Participants per Cluster") + ylab("Number of Clusters") +  geom_point(data=dat.at, aes(x=X1, y=X2,col="Optimal set"),shape=3,size=3)
+# comparison simr ----------------------------------------------------------
 
-pdf(paste0(folder,"multi_true_2Dx.pdf"),height=4,width=7);p7;dev.off()
+# relevant runs
+ind = sapply(res,function(x)
+  x[[1]]$fun_nr==5 & x[[1]]$budget=="mid"
+  )
+rel = res[ind]
+
+# sampled @n=16
+n = sapply(rel,function(x) {
+  a=x[[4]]
+  ind = sapply(a$data,function(y) y$x==16)
+  length(a$data[ind][[1]]$y)
+})
+mean(n)
 
 
 
+
+a = resx[as.numeric(resx$fun_nr)==5&resx$learner=="Logreg"&resx$budget=="mid",]
+
+
+p + qnorm(.975)*sd
+var = p*(1-p)/n
+sd = sqrt(var)
+n=1000
+p = .816
+
+
+
+
+
+# Additional Stuff --------------------------------------------------------
 
 
 # Diagnostics ------------------------------------------------------------

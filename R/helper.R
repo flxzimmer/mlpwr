@@ -1,14 +1,14 @@
 
-folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
-
 # less packages
-packages = c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" , "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","pso","optimr","spatstat","pwr")
+packages = c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" , "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","pso","optimr","spatstat","pwr","RColorBrewer","dplyr")
 
 # more packages
-packages2= c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","plotly","pso","optimr","spatstat","pwr")
+packages2= c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","plotly","pso","optimr","spatstat","pwr","RColorBrewer","dplyr")
 
 
 #' Title
+#'
+#' @param all
 #'
 #' @return
 #' @export
@@ -21,6 +21,11 @@ load.libs = function(all=FALSE) {
 
 
 #' Title
+#'
+#' @param fun_nr
+#' @param task
+#' @param budget
+#' @param goal.ci
 #'
 #' @return
 #' @export
@@ -126,18 +131,19 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
 }
 
 
+skeweddist = function(n,alpha = 4) {
+  #skeweddist: alpha = 0 entspricht normalverteilung.
+  # Wähle alpha = 4 und passe alle anderen Werte an, damit mean~0 und sd~1 gegeben ist.
+  delta = alpha/sqrt(1+alpha^2)
+  omega = sqrt(1/(1-2*delta^2/pi))
+  xi = -omega*delta*sqrt(2/pi)
+
+  skewness = (4-pi)/2*(delta*sqrt(2/pi))^3/(1-2*delta^2/pi)^(3/2)
+
+  return(as.numeric(sn::rsn(n=n, xi=xi, omega=omega, alpha=alpha)))
+}
 
 
-
-#' Title
-#'
-#' @param obj
-#' @param detailled
-#'
-#' @return
-#' @export
-#'
-#' @examples
 timer = function(obj=NULL,detailled = FALSE) {
   # usage:
   # a = timer()
@@ -162,6 +168,27 @@ timer = function(obj=NULL,detailled = FALSE) {
         return(timex)
       }
     }
+}
+
+
+relu = function(x) {
+
+  if (x<0) 0 else x
+
+}
+
+
+
+fixpred = function(x) { # get pred to [0,1] Interval
+  x[x>1] = 1 - 10^(-10)
+  x[x<0] = 10^(-10)
+  x
+}
+
+
+logloss = function(true.y,pred,true.w) { #y true value, p prediction
+  pred = fixpred(pred)
+  weighted.mean(-(true.y * log2(pred) + (1-true.y) * log2(1-pred)),true.w)
 }
 
 
@@ -205,6 +232,7 @@ usedruns = function(dat) {
 #'
 #' @param dat
 #' @param aggregate
+#' @param pseudo
 #'
 #' @return
 #' @export
@@ -338,6 +366,8 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 #'
 #' @param design
 #' @param n.points
+#' @param seed
+#' @param random
 #'
 #' @return
 #' @export
@@ -394,8 +424,10 @@ return(points)
 #' @param dat
 #' @param points
 #' @param each
+#' @param design
+#' @param n.points
+#' @param seed
 #' @param minrun
-#' @param ...
 #'
 #' @return
 #' @export
@@ -437,81 +469,5 @@ addval = function(runfun,design,dat=NULL,points=NULL,each=1,minrun=F,n.points=10
 }
 
 
-#
-# p_to_power = function(dat,alpha,min.tests=1) {
-#   # p_to_power = function(dat,alpha,min.tests=1,bins=FALSE) {
-#
-#   ns = sort(unique(dat$n))
-#
-#   power = c()
-#   h = c()
-#
-#   # if (isFALSE(bins)) {
-#
-#     for (i in ns) {
-#       power = c(power,as.numeric(mean(dat$p[dat$n==i]<alpha)))
-#       h = c(h,sum(dat$n==i))
-#     }
-#   # }
-#
-#   # if (isTRUE(bins)) {
-#   #   ns = seq(5,max(ns),5) #center values of the bins
-#   #
-#   #   for (i in ns) {
-#   #     ind = abs(dat$n-i)<=2
-#   #     power = c(power,as.numeric(mean(dat$p[ind]<alpha)))
-#   #     weight = c(weight,sum(ind))
-#   #   }
-#   #
-#   # }
-#
-#   sd = sqrt(power*(1-power)*h) / h
-#
-#   re = data.frame(
-#     n=ns,
-#     h = h,
-#     power = power,
-#     sd = sd
-#   )
-#
-#   re=re[re$h>=min.tests&re$sd>0,]
-#
-#
-#   return(re)
-# }
-
-
-# power_plot = function(dat,pred=NA,dat.true=NULL) {
-#
-#   p = ggplot(data=dat, aes(x=n, y=power)) +
-#     geom_point()+ geom_errorbar(aes(ymin = power-sd, ymax = power+sd)) +
-#     scale_y_continuous(breaks=seq(0,1,.1))
-#
-#   if (!is.na(pred)){
-#     p = p + geom_vline(xintercept = pred,color="red")
-#   }
-#   if (!is.null(dat.true)){
-#     p = p + geom_line(data=dat.true,aes(x=n, y=true.power),color="blue")
-#   }
-#   return(p)
-# }
-#
-# quant_plot = function(dat,pred=NA,dat.true=NULL,predfun=NULL) {
-#
-#   p = ggplot(data=dat, aes(x=n, y=quantiles)) +
-#     geom_point() +
-#     scale_y_continuous(breaks=seq(0,1,.1))
-#   if (!is.na(pred)){
-#     p = p + geom_vline(xintercept = pred,color="red")
-#   }
-#   if (!is.null(dat.true)){
-#     p = p + geom_line(data=dat.true,aes(x=n, y=true.quant),color="blue")
-#   }
-#   if (!is.null(predfun)){
-#     p = p + geom_line(data=predfun,aes(x=n, y=fun),color="red")
-#   }
-#
-#   return(p)
-# }
 
 

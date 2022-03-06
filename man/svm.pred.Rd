@@ -4,13 +4,12 @@
 \alias{svm.pred}
 \title{Title}
 \usage{
-svm.pred(
+\method{svm}{pred}(
   dat,
   goal = NULL,
   carryover = NULL,
   cost = function(x) sum(x),
   tune = TRUE,
-  epsil = FALSE,
   design = NULL,
   fixed_cost = NULL,
   greedy = TRUE,

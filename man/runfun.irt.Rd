@@ -7,7 +7,7 @@
 runfun.irt(itempars)
 }
 \arguments{
-\item{x}{}
+\item{itempars}{}
 }
 \value{
 
