@@ -22,7 +22,8 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
   boundmins = sapply(design,function(x) x[1])
   boundmaxs = sapply(design,function(x) x[2])
 
-  if (!is.null(fixed_cost)){
+
+  if (!is.null(fixed_cost)){ # Cost Threshold Task
 
     # Acquisition Function
     fn = function(x) ((cost(x)-fixed_cost)/fixed_cost)^2*10^5-predfun(x)
@@ -74,7 +75,8 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
   }
 
 
-  if (!is.null(goal)){
+
+  if (!is.null(goal)){ # Desired Power Task
 
     # Acquisition Function
     fn = function(x) (predfun(x)-goal)^2*10^5+cost(x)/cost(midpars)

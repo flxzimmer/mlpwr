@@ -7,12 +7,12 @@
 
 # the actual power is the power of the actually true parameter set
 
-# some DGFs needed larger simulations for this, the files for these are noted there.
+# some DGFs needed larger simulations for this, the files for these are respectively referred to.
 
 library(simpackage)
 load.libs()
 
-folder = getwd() # File Location
+folder = getwd() # File Location of Results
 
 
 # Function 1 --------------------------------------------------------------
@@ -34,55 +34,6 @@ save(at1,file= paste0(folder,"at_1.Rdata"))
 
 
 # Function 2 --------------------------------------------------------------
-
-# true_power.fun = runfun.wilson2.true()
-# design = list(n = c(1,1200),k=c(1,30))
-# cost = function(x) x[1]*5+x[2]*100
-#
-# # For Task B (Minimal Power = .8)
-# goal = .8
-# cands = list()
-# ks = seq(1,30)
-# for (i in 1:length(ks)) {
-#   k = ks[i]
-#   n = 1
-#   while (true_power.fun(c(n,k))<goal&n<=2000) n = n+1
-#   if (true_power.fun(c(n,k))>goal) cands[[i]] = c(n,k) else cands[[i]] = NA
-# }
-#
-# costs = sapply(cands,cost)
-# ind = which(costs == min(costs,na.rm=T))
-# actually_true = cands[[ind]]
-# actual_power = true_power.fun(actually_true)
-# actual_cost = cost(actually_true)
-#
-# # For Task C (Maximum Costs= 3500)
-# cands = list()
-# ks = seq(1,30)
-# for (i in 1:length(ks)) {
-#   k = ks[i]
-#   n = 1
-#   while (cost(c(n+1,k))<=3500&n<=2000) n = n+1
-#   cands[[i]] = c(n,k)
-# }
-#
-# powers = sapply(cands,true_power.fun)
-# ind = which(powers == max(powers))
-# actually_trueC = cands[[ind]]
-# actual_powerC = true_power.fun(actually_trueC)
-# actual_costC = cost(actually_trueC)
-#
-# # true_power.fun = function() {true_power.fun = runfun.wilson2.true()
-# # ;return(true_power.fun)}
-#
-# true_power.fun =  runfun.wilson2.true()
-#
-# at2 = list(actually_true=actually_true,actual_power = actual_power,actual_cost=actual_cost,true_power.fun=true_power.fun,actually_trueC=actually_trueC,actual_powerC=actual_powerC,actual_costC=actual_costC)
-#
-# save(at2,file= paste0(folder,"at_2.Rdata"))
-
-
-# Function 2 (new) --------------------------------------------------------------
 true_power.fun = runfun.anova.true()
 
 x1 = load.cond(2,"C",2000,.05)
@@ -90,11 +41,8 @@ design=x1$design
 cost=x1$cost
 fixed_cost=x1$fixed_cost
 
-# cost = function(x) x[1]*1.9+x[2]*6
-# fixed_cost = 174
 
-
-# For Task B (Minimal Power = .8)
+# For Task B (Minimal Power)
 goal = .8
 cands = list()
 ks = seq(design$k[1],design$k[2])
@@ -111,7 +59,8 @@ actually_true = cands[[ind]]
 actual_power = true_power.fun(actually_true)
 actual_cost = cost(actually_true)
 
-# For Task C (Maximum Costs= 4800)
+
+# For Task C (Maximum Costs)
 cands = list()
 ks = seq(design$k[1],design$k[2])
 for (i in 1:length(ks)) {
@@ -140,7 +89,7 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
   design=x1$design
   cost=x1$cost
 
-  # Simulation zur Ermittlung der Power in allen Integer Orten siehe fun6_sim.R
+  # Larger Simulation, see actually_true_fun3_sim.R
   load(file= paste0(folder,"res_fun3sim1.Rdata")) # loads "res"
 
   # calculate by surrogate model
@@ -173,36 +122,6 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
   save(at3,file= paste0(folder,"at_3.Rdata"))
 
 
-  # if (FALSE) { # Calculate Actually true value
-  #   runfun = runfun.skewed2(delta = .4,alpha =10)
-  #   goal = .8
-  #   goal.ci = .001
-  #   design = list(n = c(50,200))
-  #   setsize= 1000
-  #   n.startsets= 10
-  #
-  #   re1 =  ss.find(logi.pred,runfun=runfun,design=design,goal=goal,goal.ci=goal.ci,setsize=setsize,n.startsets=n.startsets,seed=1,limitmaxbudget=FALSE)
-  #   actually_true = re1$value |> as.numeric()
-  #
-  #   a_102 = replicate(10^6,runfun(102))
-  #   a_103 = replicate(10^6,runfun(103))
-  #
-  #   at_3_data = list(re1=re1,a_102=a_102,a103=a103)
-  #   save(at_3_data,file= paste0(folder,"at_3_data.Rdata"))
-  # }
-  #
-  #   load(file= paste0(folder,"at_3_data.Rdata"))
-  #
-  #   actually_true = 103
-  #   actual_power = mean(at_3_data$a_103)
-  #   actual_cost=actually_true
-  #
-  #   at3 = list(actually_true=actually_true,actual_power = actual_power,actual_cost=actual_cost)
-  #
-  #   save(at3,file= paste0(folder,"at_3.Rdata"))
-  #
-
-
 # Function 4 --------------------------------------------------------------
 
 
@@ -210,7 +129,7 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
   design=x1$design
   cost=x1$cost
 
-  # Simulation zur Ermittlung der Power in allen Integer Orten siehe fun6_sim.R
+  # Larger Simulation, see actually_true_fun4_sim.R
   load(file= paste0(folder,"res_fun4sim1.Rdata")) # loads "res"
 
   # calculate by surrogate model
@@ -243,42 +162,13 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
   save(at4,file= paste0(folder,"at_4.Rdata"))
 
 
-  # if (FALSE) { # Calculate Actually true value
-  #
-  # itempars = runfun.irt.itempars(delta=.1,n.items = 20,seed=1)
-  # runfun = runfun.irt(itempars)
-  # goal = .8
-  # goal.ci = .001
-  # design = list(n = c(1398,1402))
-  # setsize= 1000
-  # n.startsets= 5
-  #
-  # re1 =  ss.find(logi.pred,runfun=runfun,design=design,goal=goal,goal.ci=goal.ci,setsize=setsize,n.startsets=n.startsets,seed=1)
-  #
-  # at_4_data = list(re1=re1)
-  # save(at_4_data,file= paste0(folder,"at_4_data.Rdata"))
-  # }
-  #
-  # load(file= paste0(folder,"at_4_data.Rdata"))
-
-  # actually_true = at_4_data$re1$value
-  # actually_true = 1400
-  # actually_true = 150
-  # # actual_power = at_4_data$re1$value.y
-  # actual_power = .8
-  # actual_cost=actually_true
-#
-#   at4 = list(actually_true=actually_true,actual_power = actual_power,actual_cost=actual_cost)
-#
-#   save(at4,file= paste0(folder,"at_4.Rdata"))
-
 # Function 5 --------------------------------------------------------------
 
   x1 = load.cond(5,"B",2000,.05)
   design=x1$design
   cost=x1$cost
 
-  # Simulation zur Ermittlung der Power in allen Integer Orten siehe fun6_sim.R
+  # Larger Simulation, see actually_true_fun5_sim.R
   load(file= paste0(folder,"res_fun5sim1.Rdata")) # loads "res"
 
   # calculate by surrogate model
@@ -309,35 +199,6 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
   at5 = list(actually_true=actually_true,actual_power = actual_power,actual_cost=actual_cost,true_power.fun=true_power.fun)
 
   save(at5,file= paste0(folder,"at_5.Rdata"))
-
-
-  # if (FALSE) { # Calculate Actually true value
-  #
-  # runfun = runfun.simr()
-  # goal = .8
-  # goal.ci = .001
-  # design = list(n = c(10,20))
-  # setsize= 1000
-  # n.startsets= 10
-  #
-  # re1 =  ss.find(logi.pred,runfun=runfun,design=design,goal=goal,goal.ci=goal.ci,setsize=setsize,n.startsets=n.startsets,seed=1)
-  #
-  # at_5_data = list(re1=re1)
-  # save(at_5_data,file= paste0(folder,"at_5_data.Rdata"))
-  # }
-  #
-  # load(file= paste0(folder,"at_5_data.Rdata"))
-  #
-  # actually_true = at_5_data$re1$value
-  # # actually_true = 15.9298
-  # actually_true = 16
-  # # actual_power = at_5_data$re1$value.y
-  # actual_power = .8
-  # actual_cost = actually_true
-  #
-  # at5 = list(actually_true=actually_true,actual_power = actual_power,actual_cost=actual_cost)
-  #
-  # save(at5,file= paste0(folder,"at_5.Rdata"))
 
 
   # Function 6 --------------------------------------------------------------
@@ -473,8 +334,6 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
 
 
 # Save all in one file ----------------------------------------------------
-
-  # at3 = at5= "a"
 
 for (i in 1:6) {
   load(file= paste0(folder,"at_",i,".Rdata"))
