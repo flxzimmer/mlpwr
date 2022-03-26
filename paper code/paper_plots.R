@@ -1,14 +1,13 @@
 
-
-
-
+install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
+library(simpackage)
+load.libs()
+folder = paste0(getwd(),"/results data/") # File Location of Results
 
 # Initialization / Termination  ---------------------------
 
-devtools::load_all(".")
 load.libs(all=TRUE)
 set.seed(1)
-folder = "C:/Users/felix/switchdrive/4 irt/paper 2/"
 
 runfun = runfun.ttest(delta = .4)
 true_power.fun = runfun.ttest.true(delta=.4)
@@ -45,10 +44,8 @@ pl1 = ggplot(dat.true, aes(n,y)) +theme_bw() +
   geom_point(data=dat.obs,aes(x =V1,y = y))+scale_color_brewer(palette="Set1") + theme(legend.position = "none") + xlab("Sample Size") + ylab("Power") +theme(legend.position="bottom")+ theme(legend.title = element_blank()) + ggtitle("After Initialization")  + theme(plot.title = element_text(hjust = 0.5))
 pl1
 
-# pdf(paste0(folder,"init_uncertainty.pdf"),height=6,width=8);pl1;dev.off()
 
 #Final plot with uncertainty ribbon
-
 
 re4= ss.find(gauss.pred,runfun=runfun,design=design,goal=goal,budget=4000,dat=dat,seed = 1)
 dat.obs = todataframe(re4$dat)
@@ -75,14 +72,8 @@ pl2 = ggplot(dat.true, aes(n,y)) +theme_bw() +
   geom_point(data=dat.obs,aes(x =V1,y = y))+scale_color_brewer(palette="Set1") + theme(legend.title = element_blank())+ xlab("Sample Size") + ylab("Power") +theme(legend.position="bottom") + ggtitle("After Termination") + theme(plot.title = element_text(hjust = 0.5))
 pl2
 
-# pdf("C:/Users/admin/switchdrive/4 irt/paper 2/final_uncertainty.pdf",height=6,width=8);pl2;dev.off()
-
-# g1 = grid.arrange(pl1,pl2,ncol=2,widths=list(125,150))
-# g1 = grid.arrange(pl1,pl2,ncol=2,widths=list(105,150))
 g1 = grid.arrange(pl1,pl2,ncol=2,widths=list(100,100))
 pdf(paste0(folder,"uncertainty.pdf"),height=3,width=6);grid.draw(g1);dev.off()
-
-
 
 
 # 3D plot -----------------------------------------------------------------
@@ -95,7 +86,6 @@ library(ploty)
 runfun = runfun.anova()
 design = list(n = c(20,90),k=c(5,25))
 cost = function(x) x[1]*1.9+x[2]*6
-# true_power.fun = runfun.wilson2.true()
 goal=.8
 
 
@@ -181,57 +171,5 @@ pl3 = ggplot(dat1, aes(n,y)) +theme_bw() +
 pl3
 
 pdf(paste0(folder,"learner_plot.pdf"),height=4,width=5);pl3;dev.off()
-
-
-
-# archive -----------------------------------------------------------------
-
-# 3D plot different runfun -----------------------------------------------------------------
-
-library(ploty)
-
-#Setup Framework
-
-runfun = runfun.wilson2()
-design = list(n = c(300,1200),k=c(5,30))
-cost = function(x) x[1]*5+x[2]*100
-true_power.fun = runfun.wilson2.true()
-goal=.8
-
-
-#Run
-
-re3 = ss.find(gauss.pred,runfun=runfun,design=design,goal=goal,budget=4000,cost=cost,seed=1)
-
-
-
-#Plot data
-
-dat= re3$data
-datx = todataframe(dat)
-fig = plot_ly(x=datx$V1, y=datx$V2, z=datx$y,type='scatter3d')
-fig
-
-fig = fig %>% layout(scene = list(
-  xaxis = list(title ='Participants per Cluster'),
-  yaxis = list(title ='Clusters'),
-  zaxis = list(title ='Power')
-))
-
-
-#Plot Function on Top
-
-fun = re3$fun
-
-ns = 50:max(datx$V1)
-ks = min(datx$V2):max(datx$V2)
-x = expand.grid(ns,ks)
-preddat = matrix(apply(x,1,fun),ncol=length(ns),byrow=TRUE)
-
-fig <- add_surface(fig,x=ns, y=ks, z=preddat,opacity=.8)
-fig
-
-
-
 
 

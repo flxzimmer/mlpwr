@@ -7,7 +7,7 @@
 initpoints(design, n.points, seed = sample(1:10^3), random = F)
 }
 \arguments{
-\item{n.points}{}
+\item{random}{}
 }
 \value{
 

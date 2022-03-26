@@ -1,8 +1,8 @@
 
 install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
-
 library(simpackage)
 load.libs()
+folder = paste0(getwd(),"/results data/") # File Location of Results
 
 CLUSTERSIZE = 120
 
@@ -24,19 +24,6 @@ for (i in 1:nrow(a)) {
 for (i in 1:length(sim)){
   sim[[i]]$seed = i
 }
-
-# load data and delete what has already been calculated
-load(file= "res_fun6sim2.Rdata") # loads "res"
-
-vals = lapply(res,function(x) x$val)
-
-  use=c()
-  for (i in 1:length(sim)) {
-    x = sim[[i]]$val
-    ind = sapply(vals,function(y) all(y==x))
-    use = c(use,!any(ind))
-  }
-  sim = sim[use]
 
 
 # Run on the server -------------------------------------------------------
@@ -83,30 +70,27 @@ save(res,file= file_string)
 # running additional analysis for values in the range .75 - .85
 
 # which are in the range .75 - .85? and have good cost?
-if (F) {
 
-  load(file= paste0(folder,"at.Rdata"))
-  at = at[[6]]
-  true_power.fun = at$true_power.fun
-  costfun=x1$cost
-  x1 = load.cond(6,"B",1234124,NA)
-  design=x1$design
-  design
-  cands = list()
-  for (k in 3:30) {
-    for (n in 5:50) {
-      val = true_power.fun(c(n,k))
-      cost = costfun(c(n,k))
-      if (val<.85 & val>.75 & cost <350) cands = c(cands,list(c(n,k)))
-    }
+load(file= paste0(folder,"at.Rdata"))
+at = at[[6]]
+true_power.fun = at$true_power.fun
+costfun=x1$cost
+x1 = load.cond(6,"B",1234124,NA)
+design=x1$design
+design
+cands = list()
+for (k in 3:30) {
+  for (n in 5:50) {
+    val = true_power.fun(c(n,k))
+    cost = costfun(c(n,k))
+    if (val<.85 & val>.75 & cost <350) cands = c(cands,list(c(n,k)))
   }
-
-  save(cands,file="fun6_sim2_cands.Rdata")
-
 }
 
-# load the close candidates to a power of .8 and low cost!
-load(file="fun6_sim2_cands.Rdata")
+#optional save point here
+# save(cands,file="fun6_sim2_cands.Rdata")
+# load(file="fun6_sim2_cands.Rdata")
+
 
 install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
 
@@ -159,8 +143,8 @@ res =  parLapplyLB(cl,X = sim,chunk.size =1,fun = function(x){
 stopCluster(cl)
 
 
-#save file with new label
-res_string=paste0("res_fun6sim_2_")
+#save file
+res_string=paste0("res_fun6sim")
 i = 1
 file_string =paste0(res_string,i,".Rdata")
 while(file.exists(file_string)) {
@@ -169,6 +153,4 @@ while(file.exists(file_string)) {
 }
 
 save(res,file= file_string)
-
-
 

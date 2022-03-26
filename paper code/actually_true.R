@@ -9,11 +9,10 @@
 
 # some DGFs needed larger simulations for this, the files for these are respectively referred to.
 
+install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
 library(simpackage)
 load.libs()
-
-folder = getwd() # File Location of Results
-
+folder = paste0(getwd(),"/results data/") # File Location of Results
 
 # Function 1 --------------------------------------------------------------
 
@@ -207,29 +206,22 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
   design=x1$design
   cost=x1$cost
   fixed_cost=x1$fixed_cost
-#
-#   design = list(n = c(5,50),k=c(3,30))
-  # cost = function(x) x[1]*10+x[2]*5
-#   cost = function(x) x[1]*x[2]*5+x[2]*10
-#   fixed_cost = 1000
 
-  # Simulation zur Ermittlung der Power in allen Integer Orten siehe fun6_sim.R
+  # Larger Simulation in two parts, see actually_true_fun6_sim.R
   load(file= paste0(folder,"res_fun6sim1.Rdata")) # loads "res"
-  res1 =res
+  res1 = res
+
+  # more intensive simulation at candidate values.
   load(file= paste0(folder,"res_fun6sim2.Rdata")) # loads "res"
   res2 = res
 
-  # intensivere Simulation bei Kandidatenwerten.
-  load(file= paste0(folder,"res_fun6sim_2_2.Rdata")) # loads "res"
-  res3 = res
-
-  res = c(res1,res2)
+  res = res1
 
 
-  # integrieren der Ergebnisse der intensiveren Simulation
-  for (i in 1:length(res3)) {
-    ind = sapply(res,function(x)all(x$val==res3[[i]]$val))
-    res[[which(ind)]]$long = c(res[[which(ind)]]$long,res3[[i]]$long)
+  # integrate the results of the more intensive simulation
+  for (i in 1:length(res2)) {
+    ind = sapply(res,function(x)all(x$val==res2[[i]]$val))
+    res[[which(ind)]]$long = c(res[[which(ind)]]$long,res2[[i]]$long)
   }
 
   test = sapply(res,function(x)length(x$long))
@@ -244,7 +236,7 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
     t1$y = x$long
     return(t1)
   })
-  # design = list(n = c(5,30),k=c(5,30))
+
   re = gauss.pred(dat=dat,design=design,cost=cost,goal=.8)
   true_power.fun = re$fun
 
@@ -290,47 +282,6 @@ save(at2,file= paste0(folder,"at_2.Rdata"))
 
   save(at6,file= paste0(folder,"at_6.Rdata"))
 
-
-
-# # calculate with actual data
-#
-#   powers = sapply(res, function(x) x$pow)
-#   costs = sapply(res, function(x) cost(x$val))
-#   vals = lapply(res, function(x) x$val)
-#
-#   # For Task B
-#   cands = powers>.8
-#   optcost = min(costs[cands])
-#   ind = which(costs==optcost&cands)
-#   actually_true = res[[ind]]$val
-#   actual_power = res[[ind]]$pow
-#   actual_cost = cost(actually_true)
-# #
-# #   # For Task C
-#   cands = costs<=350
-#   optpower = max(powers[cands])
-#   ind = which(powers==optpower&cands)
-#   actually_trueC = res[[ind]]$val
-#   actual_powerC = res[[ind]]$pow
-#   actual_costC = cost(actually_trueC)
-#
-#   true_power.fun = function() {
-#
-#     load(file= paste0(folder,"res_fun6sim2.Rdata")) # loads "res"
-#
-#     powers = sapply(res, function(x) x$pow)
-#     vals = lapply(res, function(x) x$val)
-#
-#     fn = function(x) {
-#
-#     if (is.na(x[1])) return(NA)
-#
-#     ind = sapply(vals,function(y) all(y==x))
-#     re = powers[ind]
-#     return(re)
-#     }
-#     return(fn)
-#   }
 
 
 # Save all in one file ----------------------------------------------------

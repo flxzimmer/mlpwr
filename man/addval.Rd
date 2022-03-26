@@ -16,7 +16,7 @@ addval(
 )
 }
 \arguments{
-\item{...}{}
+\item{minrun}{}
 }
 \value{
 

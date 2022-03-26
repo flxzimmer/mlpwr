@@ -1,8 +1,8 @@
 
 install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
-
 library(simpackage)
 load.libs()
+folder = paste0(getwd(),"/results data/") # File Location of Results
 
 CLUSTERSIZE = 60
 

@@ -27,14 +27,12 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
 
     # Acquisition Function
     fn = function(x) ((cost(x)-fixed_cost)/fixed_cost)^2*10^5-predfun(x)
-    # fn = function(x) (relu(cost(x)-fixed_cost)/fixed_cost)^2*10^5-predfun(x)
 
     if (Ntry >1) {
 
       a = hush(multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list(factr=1)))
       new.n = a[which(a$value==min(a$value))[1],1:ncol(xvars)]
       exact = as.numeric(new.n)
-      # print(exact)
     }
 
     # Check if a reasonable value has been found
@@ -53,23 +51,17 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
     cands2 = cands[order(fnvals)[1:10],]
     fnvals2 = fnvals[order(fnvals)[1:10]]
 
-    # if (!greedy) {
+
       points = cands2[1,]
       new.n = as.numeric(points)
       print(paste("notgreedy:",new.n))
-    # }
+
 
     if (greedy) {
       sd_vals = apply(cands2,1,function(x) get.sd(dat,x))
-      # sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])*10
-      # if(all(sd_vals==Inf)) sd_vals = 0
       points = cands2[which(min(fnvals2-sd_vals)==(fnvals2-sd_vals)),]
       new.n = as.numeric(points)
     }
-
-
-    # if(17 %in% new.n & predfun(new.n)>.6) browser()
-
 
     re = list(new.n=new.n, exact=exact,toofar=toofar,points=points)
   }
@@ -104,7 +96,6 @@ get.pred =function(xvars,predfun,goal=NULL,cost=function(x)sum(x),Ntry=20,design
       sd_vals = apply(cands,1,function(x) get.sd(dat,x))
       sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])/2
 
-      # acceptable = which(pw_vals+sd_vals>0 & sd_vals!=10)
       acceptable = which(pw_vals+sd_vals/2>0)
       if (length(acceptable)==0 | length(acceptable)==nrow(cands)) greedy=FALSE
       }

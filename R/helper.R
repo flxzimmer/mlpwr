@@ -1,9 +1,9 @@
 
 # less packages
-packages = c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" , "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","pso","optimr","spatstat","pwr","RColorBrewer","dplyr")
+packages = c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice" , "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","pso","optimr","spatstat","pwr","RColorBrewer","dplyr","remotes")
 
 # more packages
-packages2= c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","plotly","pso","optimr","spatstat","pwr","RColorBrewer","dplyr")
+packages2= c( "simr" , "simpackage"  ,"lme4",  "Matrix" ,  "mirt" , "lattice", "randtoolbox" ,"rngWELL" , "WeightSVM", "sn", "stats4" , "e1071","DiceKriging" , "digest" , "rlist", "faux", "parallel", "grid" , "MASS" , "gridExtra", "ggplot2","stats", "graphics","grDevices",  "utils" , "datasets","methods", "base","plotly","pso","optimr","spatstat","pwr","RColorBrewer","dplyr","remotes")
 
 
 #' Title
@@ -67,7 +67,7 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
     itempars = runfun.irt.itempars(delta=.3,n.items = 20,seed=1)
     runfun = runfun.irt(itempars)
     design = list(n = c(50,250))
-    analytical = 150
+    analytical = 154
     budgets = c(1000,2000,4000)
     goal.cis = c(.05,.04,.03)
   }
@@ -132,8 +132,8 @@ load.cond = function(fun_nr,task,budget,goal.ci) {
 
 
 skeweddist = function(n,alpha = 4) {
-  #skeweddist: alpha = 0 entspricht normalverteilung.
-  # Wähle alpha = 4 und passe alle anderen Werte an, damit mean~0 und sd~1 gegeben ist.
+  #skeweddist: alpha = 0 corresponds to normal distribution.
+  # Choose alpha = 4 and adjust all other values to give mean~0 and sd~1.
   delta = alpha/sqrt(1+alpha^2)
   omega = sqrt(1/(1-2*delta^2/pi))
   xi = -omega*delta*sqrt(2/pi)
@@ -160,7 +160,6 @@ timer = function(obj=NULL,detailled = FALSE) {
       timex = proc.time() - obj
       t = timex[3]
       a = paste(round(t/60/60,2),"Hours |",round(t/60,2),"Minutes |",round(t,2),"Seconds")
-      # print(a)
     }
 
     if(detailled){
@@ -193,8 +192,6 @@ logloss = function(true.y,pred,true.w) { #y true value, p prediction
 
 
 hush=function(code){
-  # st = paste(sample(1:20,1),".txt")
-  # sink(st)
 
   os = Sys.info()['sysname']
   st = "/dev/null"
@@ -211,21 +208,6 @@ usedruns = function(dat) {
   return(sum(sapply(dat, function(x) length(x$y))))
 }
 
-# usedruns = function(dat) {
-#   return(sum(sapply(dat, function(x) x$h)))
-# }
-
-# updatestats = function(x,alpha=.05,CI=.95) {
-#
-#   x$h = length(x$p)
-#   x$power = mean(x$p<alpha)
-#   x$var = x$power * (1-x$power) /x$h
-#   radius = qnorm((1-CI)/2) * sqrt(x$var)
-#   x$CI = sapply(c(-1,1),function(d) x$power + qnorm((1+d*CI)/2) * sqrt(x$var))
-#   x$alpha = alpha
-#   return(x)
-# }
-
 
 
 #' Title
@@ -241,13 +223,9 @@ usedruns = function(dat) {
 todataframe = function(dat,aggregate=TRUE,pseudo=FALSE) {
 
   dim.design=length(dat[[1]]$x)
-  # if ( length(dat)>10)
 
   if (aggregate) {
   temp = t(sapply(dat,function(v) c(as.numeric(v$x),mean(as.numeric(v$y)))))
-  # temp = apply(temp,2,as.numeric)
-  # temp = as.data.frame(temp)
-  # names(temp)[length(temp)] = "y"
   }
 
   if (!aggregate & !pseudo) {
@@ -259,9 +237,7 @@ todataframe = function(dat,aggregate=TRUE,pseudo=FALSE) {
       return(tempx)
     })
     temp = do.call(rbind,temp)
-    # names(temp)[2:length(temp)] = names(dat[[1]]$x)
     temp = temp[,c(2:length(temp),1)]
-    # temp = matrix(temp,ncol=length(temp))
   }
 
 
@@ -274,20 +250,13 @@ todataframe = function(dat,aggregate=TRUE,pseudo=FALSE) {
       return(tempx)
     })
     temp = do.call(rbind,temp)
-    # names(temp)[2:length(temp)] = names(dat[[1]]$x)
     temp = temp[,c(2:length(temp),1)]
   }
 
   temp = apply(temp,2,as.numeric)
   temp = as.data.frame(temp)
   names(temp) = c(paste0("V",1:dim.design),"y")
-  # names(temp)[length(temp)] = "y"
 
-  # # Handling the case of zero variance in the data (causes error)
-  # if(var(datx$power)==0) {
-  #
-  #   datx$power = datx$power+rnorm(nrow(datx))/1000 # adding some variance
-  # }
   return(temp)
 }
 
@@ -295,7 +264,7 @@ todataframe = function(dat,aggregate=TRUE,pseudo=FALSE) {
 
 
 get.sd = function(dat,value) {
-  # value = pred$new.n
+
   ind = which(sapply(dat,function(ele) all(ele$x==value)))
   if (length(ind)==0) return(10)
   else {
@@ -305,6 +274,7 @@ get.sd = function(dat,value) {
 
 
 get.closest = function(dat,new.n,predfun.sd=NULL) {
+
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   xvars.z= scale(xvars)
@@ -374,19 +344,6 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 #'
 #' @examples
 initpoints = function(design,n.points,seed=sample(1:10^3),random=F) {
-  # s = as.matrix(sobol(n = n.points-2,dim=length(design),scrambling=1,seed=seed),ncol=length(design))
-  # pmin = pmax = c()
-  # for (i in 1:length(design)) {
-  #   dmin = design[[i]][1]
-  #   dmax = design[[i]][2]
-  #   s[,i] = dmin + s[,i]*(dmax-dmin)
-  #   pmin[i] = dmin
-  #   pmax[i] = dmax
-  # }
-  # points = round(s)
-  # points =rbind(points,as.numeric(pmin),as.numeric(pmax))
-
-  # s = as.matrix(halton(n = n.points,dim=length(design)),ncol=length(design))
 
   if(!random) {
     s = as.matrix(halton(n = n.points-2,dim=length(design)),ncol=length(design))

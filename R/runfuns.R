@@ -60,7 +60,7 @@ runfun.anova = function(delta=.16298) {
 
     n <- x[1] # Number of Persons
     k <- x[2] # Number of Clusters
-    pow = pwr.anova.test(k, n , f=delta , sig.level = .05)$power
+    pow = pwr::pwr.anova.test(k, n , f=delta , sig.level = .05)$power
     return(runif(1)<pow)
   }
   return(runfun)
@@ -82,7 +82,7 @@ runfun.anova.true = function(delta=.16298) {
     n <- x[1] # Number of Persons
     k <- x[2] # Number of Clusters
 
-    re = pwr.anova.test(k, n , f=delta , sig.level = .05)$power
+    re = pwr::pwr.anova.test(k, n , f=delta , sig.level = .05)$power
     return(re)
   }
   return(runfun)

@@ -4,11 +4,11 @@ library(simpackage)
 load.libs()
 folder = paste0(getwd(),"/results data/") # File Location of Results
 
-CLUSTERSIZE = 60
+CLUSTERSIZE = 11
 
 runseach= 10^4
 
-fun_nr = 3
+fun_nr = 5
 
 x1 = load.cond(fun_nr,"B",2000,.05)
 runfun = x1$runfun

@@ -6,6 +6,9 @@
 \usage{
 load.cond(fun_nr, task, budget, goal.ci)
 }
+\arguments{
+\item{goal.ci}{}
+}
 \value{
 
 }

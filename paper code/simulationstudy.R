@@ -1,11 +1,11 @@
 
 install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
-
 library(simpackage)
 load.libs()
+folder = paste0(getwd(),"/results data/") # File Location of Results
 
 CLUSTERSIZE = 32
-n.runs = 25
+n.runs = 25 # runs per cluster (4 clusters were used for a total of 100 runs per condition)
 
 fun_nr = 1:6
 task = c("B")
@@ -31,8 +31,8 @@ sim = c(sim2,sim3)
 # set.seed(as.integer(systime))
 
 
-# set seed
-seed = 1643483479 # f1
+# actually used seeds
+# seed = 1643483479 # f1
 # seed = 1643483500 # f2
 # seed = 1643483526 # f3
 # seed = 1643483513 # f4
@@ -48,15 +48,6 @@ for (i in 1:length(sim)){
 sim = sim[sample(1:length(sim))]
 
 
-print(seed)
-
-# x = sim[[94]]
-#
-# save(x,file= "problemcondition.Rdata")
-
-# seedsx = sapply(sim,function(x) x$seed)
-
-
 # Run on the server -------------------------------------------------------
 
 cl <- makeCluster(CLUSTERSIZE)
@@ -67,8 +58,6 @@ res =  parLapplyLB(cl,X = sim,chunk.size =1,fun = function(x){
 
   library(simpackage)
   load.libs()
-
-  # x = sim[[40]]
 
   fun_nr = x$fun_nr
   task = x$task
@@ -106,7 +95,6 @@ if (!fun_nr%in%c(2,6)) {
   re = lapply(re,function(y) return(y[names(y)!="fun.sd"]))
   re = lapply(re,function(y) return(y[names(y)!="fun"]))
 
-
   file_string=paste0("seeds/seed_",seed,"_fun_",fun_nr,"_task",task,".Rdata")
   save(re,file= file_string)
 
@@ -127,239 +115,3 @@ while(file.exists(file_string)) {
 save(res,file= file_string)
 
 
-
-# diagnostics -------------------------------------------------------------
-if (F) {
-
-  # 1D Plot
-  plot.res = function(re,fun=NULL) {
-    dat = re$data
-    if(is.null(fn)) fun = re$fun
-    dat.obs = todataframe(dat)
-    ns = seq(min(dat.obs[,1]/2),max(dat.obs[,1])*1.5)
-    p2 = data.frame(n =ns,y=sapply(ns,fun))
-    pl1 = ggplot(p2, aes(n,y)) +
-      geom_line() +
-      geom_point(data=dat.obs,aes(x =V1,y = y))
-    pl1
-  }
-  plot.res.sd = function(re,fun=NULL,predfun=NULL) {
-    dat = re$data
-    if(is.null(fn)) fun = re$fun.sd
-    dat.obs = todataframe(dat)
-    dat.pred = sapply(dat.obs$V1,predfun)
-    err = abs(dat.pred-dat.obs$y)
-    dat.obs$error = err
-    ns = seq(min(dat.obs[,1]/2),max(dat.obs[,1])*1.5)
-    p2 = data.frame(n =ns,y=sapply(ns,fun))
-    pl1 = ggplot(p2, aes(n,y)) +
-      geom_line()+
-      geom_point(data=dat.obs,aes(x=V1,y = err))
-    pl1
-  }
-
-  re =  res[[868]][[4]]
-  fun = logi.pred(re$data,goal=.8)$fun
-  sefun = logi.pred(re$data,goal=.8)$fun.sd
-
-  plot.res(re,fun)
-  plot.res.sd(re,sefun,fun)
-
-
-
-
-  re = re3
-  dat = re$data
-  datx = todataframe(dat)
-  fun = re$fun
-
-  re1 = svm.pred(dat,goal=goal)
-  re2= gauss.pred(dat,goal=goal)
-  fun = re1$fun
-
-
-  fig1 = plot_ly(x=datx$V1, y=datx$V2, z=datx$y,type='scatter3d')
-  ns = seq(min(datx$V1),max(datx$V1),10)
-  ks = seq(min(datx$V2),max(datx$V2),4)
-  x = expand.grid(ns,ks)
-  preddat = matrix(apply(x,1,fun),ncol=length(ns),byrow=TRUE)
-  fig2 <- add_surface(fig1,x=ns, y=ks, z=preddat)
-  fig2
-
-
-
-  re1$value;re2$value;re3$value;re4$value
-  set.seed(seed)
-  # dat = addval(runfun,design=design,n.points=n.startsets,each=setsize)
-  # dat = re2$data
-  # fn2 = re4$fun
-  dat = startdat
-  # dat=re3$data
-  dat = res[[62]][[6]]$data
-
-  re1 = svm.pred(dat,goal=goal)
-  re2 = gauss.pred(dat,goal=goal)
-  # re1 = logi.pred(dat,goal=goal)
-  # re1 = reg.pred(dat,goal=goal)
-
-
-  fn1 = re1$fun
-  fn2 = re2$fun
-  # fn2 = re$fun
-
-
-
-  # Observed data
-  dat.obs = todataframe(dat)
-  # n Values
-  ns = seq(min(dat.obs[,1]/2),max(dat.obs[,1])*1.5)
-  # Predictions
-  p1 = data.frame(n =ns,y=sapply(ns,fn1),type="1")
-  p2 = data.frame(n =ns,y=sapply(ns,fn2),type="2")
-  # p3 = data.frame(n =ns,y=sapply(ns,fn3),type="3")
-
-  dat1 = rbind(p1,p2)
-  dat.obs$type=NA
-
-  pl1 = ggplot(dat1, aes(n,y, group=type)) +
-    geom_line(aes(color=type)) +
-    geom_point(data=dat.obs,aes(x =V1,y = y))
-  pl1
-
-}
-
-# collect seeds and save (If errors) -------------------------------------------------
-
-if (F) {
-
-  # fold = "Y:/seeds/"
-  fold = "C:/Users/felix/switchdrive/4 irt/simpackage/paper code/temp/"
-  files=list.files(fold)
-
-  res =list()
-  #Save run"Y:"
-  for (i in 1:length(files)) {
-    load(file= paste0(fold,files[i]))
-    res[[i]] = re
-  }
-
-
-  # res_string=paste0("Y:/res_")
-  res_string = paste0("C:/Users/felix/switchdrive/4 irt/paper 2/res_")
-  i = 51
-  file_string =paste0(res_string,i,".Rdata")
-  while(file.exists(file_string)) {
-    i=i+1
-    file_string =paste0(res_string,i,".Rdata")
-  }
-
-  save(res,file= file_string)
-
-}
-
-
-# save only required seeds (not ghost) ------------------------------------
-
-if (F) {
-
-
-  # res_ object contains everything according to expectation
-  # seeds folder contains 606 instead of 600 files
-
-  #seeds that should be used on server:
-  should = sapply(sim,function(x) x$seed)
-
-
-  #seeds that have actually been used in the seeds folder :
-
-  fold = "C:/Users/admin/switchdrive/4 irt/paper 2/temp/"
-  files=list.files(fold)
-
-  res =list()
-  #Save run"Y:"
-  for (i in 1:length(files)) {
-    load(file= paste0(fold,files[i]))
-    res[[i]] = re
-  }
-
-  actually =  sapply(res,function(x) x[[1]]$seed)
-
-  sum(should %in% actually)
-  all(actually %in% should)
-  all(should %in% actually)
-  all(sort(actually)==sort(should)) # completely identical
-
-  ghost = which(!(actually %in% should)) # ghost seeds
-  ghost
-  res = res[-ghost]
-
-
-}
-
-
-
-# investigate weird seeds -------------------------------------------------
-
-if (F) {
-
-
-  # res_ object contains everything according to expectation
-  # seeds folder contains 606 instead of 600 files
-
-  #seeds that should be used on server:
-  should = sapply(sim,function(x) x$seed)
-
-
-  #seeds that have actually been used in the res_ object:
-
-  restag = c("49")
-
-  folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
-  # folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
-
-  rest = list()
-  for (i in restag) {
-    load(file= paste0(folder,"res_",i,".Rdata"))
-    rest = c(rest,res)
-  }
-  res = rest
-
-  actually =  sapply(res,function(x) x[[1]]$seed)
-
-  any(should %in% actually)
-  all(actually %in% should)
-  all(should %in% actually)
-  all(sort(actually)==sort(should)) # completely identical
-
-
-  #seeds that have actually been used in the seeds folder :
-
-  fold = "C:/Users/admin/switchdrive/4 irt/paper 2/temp/"
-  files=list.files(fold)
-
-  res =list()
-  #Save run"Y:"
-  for (i in 1:length(files)) {
-    load(file= paste0(fold,files[i]))
-    res[[i]] = re
-  }
-
-  actually =  sapply(res,function(x) x[[1]]$seed)
-
-  sum(should %in% actually)
-  all(actually %in% should)
-  all(should %in% actually)
-
-  which(!(actually %in% should))
-  # -> some seeds have been calculated that should not have been!
-  # e.g. 19993511
-  View(res[[122]])
-
-  which(!(should %in% actually))
-  # 3 seeds fehlen 119 136 328
-  missing =  which(!(should %in% actually))
-  should[missing]
-
-
-
-}

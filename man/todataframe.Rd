@@ -7,7 +7,7 @@
 todataframe(dat, aggregate = TRUE, pseudo = FALSE)
 }
 \arguments{
-\item{aggregate}{}
+\item{pseudo}{}
 }
 \value{
 

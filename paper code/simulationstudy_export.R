@@ -1,15 +1,12 @@
 
-devtools::load_all(".")
+install.packages("simpackage_0.0.0.9000.tar.gz",repos=NULL)
+library(simpackage)
 load.libs()
+folder = paste0(getwd(),"/results data/") # File Location of Results
 
 # Load Results ------------------------------------------------------------
 
-# restag = c("48","49","50","51")
 restag = c("52","53","54","55")
-
-
-folder = "C:/Users/felix/switchdrive/4 irt/paper 2/"
-# folder = "C:/Users/admin/switchdrive/4 irt/paper 2/"
 
 rest = list()
 for (i in restag) {
@@ -18,8 +15,11 @@ for (i in restag) {
 }
 res = rest
 
-
+# load actually true values (see actually_true.R)
 load(file= paste0(folder,"at.Rdata"))
+
+# load analytical power analysis results (see analytical.R)
+load(file= paste0(folder,"an.Rdata"))
 
 
 # Manual input ------------------------------------------------------------
@@ -28,11 +28,6 @@ learner.names = c("Analytical","Linreg","Logreg","SVR","GP")
 learner = factor(learner.names,levels=learner.names,ordered=T)
 
 funlabels = c("1 t-test","2 ANOVA","3 Skewed t-test","4 IRT","5 Mixed Model","6 2D Mixed Model")
-# funlabels = c("4 IRT","5 Mixed Model","6 2D Mixed Model")
-# funlabels = c("2 2D-t-test","6 2D Mixed Model")
-# funlabels = c("4 IRT")
-
-# resx$cost[resx$learner=="Analytical"]=150
 
 
 # Long Result Table -------------------------------------------------------
@@ -74,7 +69,6 @@ resx = lapply(res, function(x) {
         value[[i]] = t1[i,]
     }
     cost = sapply(value,costfun) |> as.numeric()
-    # if(task=="C"&fun_nr==6&&cost[4]!=320) browser()
 
     value.sd  = sapply(2:length(x),function(i) x[[i]]$value.sd)
     value.sd = lapply(value.sd,function(x) if(is.null(x))NA else x) |> as.numeric()
@@ -91,15 +85,10 @@ resx = lapply(res, function(x) {
         })
     } else {true_power= NA}
 
-
-    # if(seed == 300)browser()
-
     re = data.frame(cost,value.sd,budget_used,learner,actual_cost,actual_power,true_power,time_used,budget,goal.ci,fun_nr,task,seed,I(value),X1,X2)
     return(re)
 })
 
-# save(resx,file= paste0(folder,"resx_temp.Rdata"))
-# load(file= paste0(folder,"resx_temp.Rdata"))
 
 resx = do.call(rbind,resx)
 
@@ -113,16 +102,15 @@ resx = resx[!is.na(resx$fun_nr),]
 resx$value.sd[resx$value.sd ==10] = NA
 
 
-save(resx, file = paste0(folder,"tempres.Rdata"))
+#  optional save and load ----------------------------------------------
 
+# optional save and load
 
-# Load Preprocessed -------------------------------------------------------
-
-devtools::load_all(".")
-load.libs()
-
-load(file = paste0(folder,"tempres.Rdata")) #resx
-load(file = paste0(folder,"at.Rdata")) # at
+# save(resx, file = paste0(folder,"tempres.Rdata"))
+# devtools::load_all(".")
+# load.libs()
+# load(file = paste0(folder,"at.Rdata")) # at
+# load(file = paste0(folder,"tempres.Rdata")) #resx
 
 
 # Task B ------------------------------------------------------------
@@ -131,13 +119,15 @@ usetask = "B"
 resX = resx[resx$task==usetask,]
 resX = resX[!is.na(resX$cost),]
 
-# insert analytical results (wo kommen die her? am anfang importieren?)
+
+# import analytical results for DGFs 3 and 4 ("analytical")
+# Calculate corresponding actual power for these values ("analytical_power")
 resX$analytical = NA
-resX$analytical[as.numeric(resX$fun_nr)==3] = 99.0805650087345
-resX$analytical[as.numeric(resX$fun_nr)==4] = 150
+resX$analytical[as.numeric(resX$fun_nr)==3] = an[[3]]$analytical
+resX$analytical[as.numeric(resX$fun_nr)==4] = an[[4]]$analytical
 resX$analytical_power = NA
-resX$analytical_power[as.numeric(resX$fun_nr)==3] = 0.786687772969949
-resX$analytical_power[as.numeric(resX$fun_nr)==4] = 0.787123625772207
+resX$analytical_power[as.numeric(resX$fun_nr)==3] = at[[3]]$true_power.fun(an[[3]]$analytical)
+resX$analytical_power[as.numeric(resX$fun_nr)==4] = at[[4]]$true_power.fun(an[[4]]$analytical)
 
 resX = resX[resX$learner!="Analytical",]
 
@@ -185,7 +175,7 @@ pdf(paste0(folder,restag,"_plot2_",usetask,".pdf"),height=4 ,width=7);p2;dev.off
 
 
 
-# Höhenlinien Plot Function 2
+# 2D Plot Function 2
 fn_nr = 2
 resX1 = resX[resX$fun_nr=="2 ANOVA",]
 
@@ -212,7 +202,7 @@ eqcost.y = sapply(xvals,function(x) {
   fn = function(y) abs(costfun(c(x,y))-actual_cost)
   optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
 eqcost = data.frame(X1=xvals,X2=eqcost.y)
-# ignore some wrong values
+
 correct = sapply(1:nrow(eqcost),function(i) {
   costfun(eqcost[i,])==actual_cost
 })
@@ -239,7 +229,7 @@ p3 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
 pdf(paste0(folder,restag,"_plot3_",usetask,".pdf"),height=6,width=9.2);p3;dev.off()
 
 
-# Höhenlinien Plot Function 6
+# 2D Plot Function 6
 fn_nr = 6
 resX1 = resX[resX$fun_nr=="6 2D Mixed Model",]
 
@@ -266,7 +256,7 @@ eqcost.y = sapply(xvals,function(x) {
   fn = function(y) abs(costfun(c(x,y))-actual_cost)
   optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
 eqcost = data.frame(X1=xvals,X2=eqcost.y)
-# ignore some wrong values
+
 correct = sapply(1:nrow(eqcost),function(i) {
   costfun(eqcost[i,])==actual_cost
 })
@@ -292,7 +282,7 @@ p4 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
 pdf(paste0(folder,restag,"_plot4_",usetask,".pdf"),height=6,width=9.2);p4;dev.off()
 
 
-# Boxplot Zeit
+# Boxplot time
 p_time = ggplot(resX, aes(x= learner,y=time_used,fill=budget)) + theme_bw() +
   geom_violin(draw_quantiles = 0.5) +scale_fill_brewer(palette="Greys")+ facet_wrap(~ fun_nr, scales = "free_x")+theme(legend.position="bottom") + labs(x="Surrogate Model",y="Time used",fill="Budget")
 
@@ -337,7 +327,7 @@ p11 = ggplot(resy, aes(x= learner,y=true_power,fill=budget)) +  theme_bw() +
 pdf(paste0(folder,restag,"_plot11_",usetask,".pdf"),height=6,width=9.2);p11;dev.off()
 
 
-# Höhenlinien Plot Function 2
+# 2D Plot Function 2
 
 fn_nr = 2
 resX1 = resX[resX$fun_nr=="2 ANOVA",]
@@ -388,7 +378,7 @@ p3 = ggplot(resX1, aes(x=X1, y=X2)) + theme_bw() +
 pdf(paste0(folder,restag,"_plot3_",usetask,".pdf"),height=6,width=9.2);p3;dev.off()
 
 
-# Höhenlinien Plot Function 6
+# 2D Plot Function 6
 
 fn_nr = 6
 resX1 = resX[resX$fun_nr=="6 2D Mixed Model",]
@@ -447,7 +437,7 @@ pdf(paste0(folder,restag,"_plot_time_",usetask,".pdf"),height=4, width=7);p_time
 
 
 
-# Höhenlinienplot for introduction----------------------------------
+# 2Dplot for introduction----------------------------------
 # http://www.sthda.com/english/wiki/colors-in-r
 
 
@@ -455,13 +445,14 @@ usetask = "B"
 resX = resx[resx$task==usetask,]
 resX = resX[!is.na(resX$cost),]
 
-# convert analytical to column
+# import analytical results for DGFs 3 and 4 ("analytical")
+# Calculate corresponding actual power for these values ("analytical_power")
 resX$analytical = NA
-resX$analytical[as.numeric(resX$fun_nr)==3] = 99.0805650087345
-resX$analytical[as.numeric(resX$fun_nr)==4] = 150
+resX$analytical[as.numeric(resX$fun_nr)==3] = an[[3]]$analytical
+resX$analytical[as.numeric(resX$fun_nr)==4] = an[[4]]$analytical
 resX$analytical_power = NA
-resX$analytical_power[as.numeric(resX$fun_nr)==3] = 0.786687772969949
-resX$analytical_power[as.numeric(resX$fun_nr)==4] = 0.787123625772207
+resX$analytical_power[as.numeric(resX$fun_nr)==3] = at[[3]]$true_power.fun(an[[3]]$analytical)
+resX$analytical_power[as.numeric(resX$fun_nr)==4] = at[[4]]$true_power.fun(an[[4]]$analytical)
 
 resX = resX[resX$learner!="Analytical",]
 
@@ -489,7 +480,7 @@ eqcost.y = sapply(xvals,function(x) {
   fn = function(y) abs(costfun(c(x,y))-actual_cost)
   optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
 eqcost = data.frame(X1=xvals,X2=eqcost.y)
-# ignore some wrong values
+
 correct = sapply(1:nrow(eqcost),function(i) {
   costfun(eqcost[i,])==actual_cost
 })
@@ -536,7 +527,7 @@ pdf(paste0(folder,"multi_true_2D.pdf"),height=4,width=7);grid.draw(g1);dev.off()
 
 
 
-# comparison simr ----------------------------------------------------------
+# comparison simr (discussion) ----------------------------------------------------------
 
 # relevant runs
 ind = sapply(res,function(x)
@@ -555,87 +546,6 @@ mean(n)
 
 
 
-a = resx[as.numeric(resx$fun_nr)==5&resx$learner=="Logreg"&resx$budget=="mid",]
 
 
-p + qnorm(.975)*sd
-var = p*(1-p)/n
-sd = sqrt(var)
-n=1000
-p = .816
-
-
-
-
-
-# Additional Stuff --------------------------------------------------------
-
-
-# Diagnostics ------------------------------------------------------------
-# how many NA's?
-
-sapply(unique(resx$learner), function(i)  mean(is.na(resx[resx$learner==i,1])))
-
-# a = resx[is.na(resx$cost),]
-
-#remove NAs
-resx = resx[!is.na(resx$cost),]
-
-
-
-# Trace something ---------------------------------------------------------
-
-# missing seeds
-seeds = sapply(res,function(x) x[[1]]$seed)
-max(seeds)
-is.missing = function(x) return(! x %in% seeds)
-missing = which(sapply(1:max(seeds),is.missing))
-missing
-save(missing,file="missing.Rdata")
-
-
-n = which(resx$budget_used>10000&resx$task=="B"&resx$fun_nr=="5 Mixed Model")
-
-n = which(resx$task=="B"&as.numeric(resx$fun_nr)==6)
-
-
-View(resx[n,])
-
-n = which(resx$value.sd*1.96>.03&resx$learner=="GP"&resx$task=="B"&resx$fun_nr==5)
-resx$seed[n]
-
-n = which(resx$value.sd<.001&resx$learner=="Linreg"&resx$task=="B"&resx$fun_nr==4)
-resx$seed[n]
-
-n = which(resx$budget_used==200&resx$goal.ci==0.015&learner=="Linreg")
-resx$seed[n]
-
-n = which(resx$cost>440&as.numeric(resx$fun_nr)==6)
-n = which(resx$budget_used<700&as.numeric(resx$fun_nr)==6)
-
-
-
-n = which(resx$cost>19&as.numeric(resx$fun_nr)==2)
-seeds = resx[n,]$seed
-
-for (i in seeds) {
-    print(length(res[[i]][[5]]$data))
-}
-
-
-View(resx[n,])
-
-
-View(res[[395]][[5]])
-res[[395]][[5]]$data[[4]]$y |> mean()
-startdat = res[[395]][[5]]$data
-design = list(n = c(10,20))
-t1 = svm.pred(startdat,goal=.8,design=design)
-re3 =  ss.find(svm.pred,runfun=runfun,design=design,goal=goal,goal.ci=goal.ci,budget=budget, seed=seed,cost=cost,dat=startdat,fixed_cost=fixed_cost)
-
-fn = t1$fun
-a = sapply(10:40,fn)
-names(a) = 10:40
-a
-todataframe(startdat)
 
