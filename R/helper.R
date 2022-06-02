@@ -273,22 +273,6 @@ get.sd = function(dat,value) {
 }
 
 
-get.closest = function(dat,new.n,predfun.sd=NULL) {
-
-  datx = todataframe(dat,aggregate=TRUE)
-  xvars = datx[,1:(length(datx)-1),drop=FALSE]
-  xvars.z= scale(xvars)
-  new.n.z = matrix(new.n,nrow=1)
-  new.n.z = scale(new.n.z,center=attributes(xvars.z)$`scaled:center`,scale = attributes(xvars.z)$`scaled:scale`)
-  dist = apply(xvars.z,1,function(x) sum((x-new.n.z)^2))
-  ind = which(dist==min(dist))
-  closest = as.numeric(xvars[ind,])
-  if (!is.null(predfun.sd)) closest.sd = predfun.sd(closest)
-  if (is.null(predfun.sd)) closest.sd = getweight(dat,"sd")[ind]
-  re = list(value=closest,y = datx[ind,ncol(datx)],sd =closest.sd)
-  return(re)
-}
-
 
 
 #' Title
@@ -332,98 +316,8 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 
 
 
-#' Title
-#'
-#' @param design
-#' @param n.points
-#' @param seed
-#' @param random
-#'
-#' @return
-#' @export
-#'
-#' @examples
-initpoints = function(design,n.points,seed=sample(1:10^3),random=F) {
-
-  if(!random) {
-    s = as.matrix(halton(n = n.points-2,dim=length(design)),ncol=length(design))
-    pmin = pmax = c()
-    for (i in 1:length(design)) {
-      dmin = design[[i]][1]
-      dmax = design[[i]][2]
-      s[,i] = dmin + s[,i]*(dmax-dmin)
-      pmin[i] = dmin
-      pmax[i] = dmax
-    }
-    points = round(s)
-    points =rbind(points,as.numeric(pmin),as.numeric(pmax))
-}
-  if (random) {
-    s = as.matrix(sobol(n = n.points,dim=length(design),scrambling=1,seed=seed),ncol=length(design))
-
-    for (i in 1:length(design)) {
-      dmin = design[[i]][1]
-      dmax = design[[i]][2]
-      s[,i] = dmin + s[,i]*(dmax-dmin)
-    }
-    points = round(s)
-  }
-
-colnames(points)=names(design)
-
-return(points)
-}
 
 
-#' Title
-#'
-#' @param runfun
-#' @param dat
-#' @param points
-#' @param each
-#' @param design
-#' @param n.points
-#' @param seed
-#' @param minrun
-#'
-#' @return
-#' @export
-#'
-#' @examples
-addval = function(runfun,design,dat=NULL,points=NULL,each=1,minrun=F,n.points=10,seed=1) {
-  if (is.null(dat)) {
-    dat = list()
-  }
-
-  if (is.null(points)) {
-    points = initpoints(design,n.points,seed=seed)
-  }
-
-  xvalues = sapply(dat,function(y) digest(as.numeric(y$x)))
-  for (i in 1:nrow(points)) {
-
-    ind = which(xvalues==digest(as.numeric(points[i,])))
-
-    if(length(ind)==0) {
-      ind = length(dat)+1
-      dat[[ind]] = list()
-      dat[[ind]]$x = points[i,]
-      resx = c()
-    } else {
-      resx = dat[[ind]]$y
-    }
-    a = as.numeric(points[i,])
-
-    resx = c(resx,replicate(each,runfun(as.numeric(points[i,]))))
-
-    while(minrun && length(resx)> 1 && var(resx) == 0) {
-      resx = c(resx,replicate(1,runfun(as.numeric(points[i,]))))
-    }
-    dat[[ind]]$y = resx
-  }
-  return(dat)
-
-}
 
 
 

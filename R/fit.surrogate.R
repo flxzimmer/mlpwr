@@ -1,5 +1,20 @@
 
 
+fit.surrogate = function(dat,surrogate,lastfit=NULL){
+
+  switch(surrogate,
+               reg = reg.fit(dat),
+               logreg = logi.fit(dat),
+               svr = svm.fit(dat,lastfit=lastfit),
+               gpr = gauss.fit(dat)
+               )
+
+  # implement basic check here, like if the fit is a plane. Then skip the prediction phase in this case.
+
+}
+
+
+
 #' Linear Regression
 #'
 #' @param dat
@@ -14,7 +29,7 @@
 #' @export
 #'
 #' @examples
-reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,greedy=TRUE,...) {
+reg.fit = function(dat) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -22,18 +37,16 @@ reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,greedy=TRUE,.
 
   mod =lm(y~.,datx,weights=weight)
 
-  predfun = function(x) {
+  fitfun = function(x) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)))}
 
-  predfun.sd = function(x) {
+  fitfun.sd = function(x) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
 
-  # generate prediction
-  res = get.pred(xvars,predfun,goal,cost,Ntry=3,design=design,dat=dat,greedy=greedy)
+  re = list(fitfun=fitfun,fitfun.sd=fitfun.sd)
 
-  re=list(new.n = res$new.n,new.n.sd = predfun.sd(res$new.n),new.n.y=predfun(res$new.n),fun=predfun,fun.sd = predfun.sd,toofar=res$toofar,exact=res$exact)
   return(re)
 }
 
@@ -55,7 +68,7 @@ reg.pred = function(dat,goal=.8,cost=function(x)sum(x),design=NULL,greedy=TRUE,.
 #' @export
 #'
 #' @examples 1
-logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,greedy=TRUE,...) {
+logi.fit = function(dat,trans=TRUE) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -78,18 +91,15 @@ logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,g
     mod = glm(y~.,datx,weights=weight,family = fam)
   }
 
-  predfun = function(x) {
+  fitfun = function(x) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)),type="response")}
 
-  predfun.sd = function(x) {
+  fitfun.sd = function(x) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)),type="response",se.fit=TRUE)$se.fit}
 
-  # generate prediction
-  res = get.pred(xvars,predfun,goal,cost,Ntry=3,design=design,dat=dat,greedy=greedy)
-
-  re=list(new.n = res$new.n,new.n.sd = predfun.sd(res$new.n),new.n.y=predfun(res$new.n),fun=predfun,fun.sd = predfun.sd,toofar=res$toofar,exact=res$exact)
+  re = list(fitfun=fitfun,fitfun.sd=fitfun.sd)
 
   return(re)
 }
@@ -113,7 +123,7 @@ logi.pred = function(dat,goal=.8,cost=function(x)sum(x),trans=TRUE,design=NULL,g
 #' @export
 #'
 #' @examples
-svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRUE,design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
+svm.fit = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRUE,design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
 
   datx = todataframe(dat,aggregate=TRUE,pseudo=FALSE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -168,25 +178,29 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
   # Save used parameters
   pars_history = list.append(pars_history,as.data.frame(pars))
 
-  predfun = function(x) {
+  fitfun = function(x) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)))}
 
   if (!is.null(goal)) {
-    difs = apply(xvars,1,function(x) predfun(x)-goal)
+    difs = apply(xvars,1,function(x) fitfun(x)-goal)
     isdumb = !any(difs>0) | !any(difs<0)   # Check if it predicts all values to be on one side of the plane
     if (isdumb) {warning("Weird Function")}
   }
 
-  somevals = apply(xvars,1,function(x) predfun(x))
-  isplane = summary(lm(y~.,cbind(xvars,y = somevals)))$r.squared>.999 #
-  if (isplane) {warning("Plane predicted")}
+
+  # move this check outside the fitting function?
+  somevals = apply(xvars,1,function(x) fitfun(x))
+  isplane = summary(lm(y~.,cbind(xvars,y = somevals)))$r.squared>.98 #
+  if (isplane|| is.na(isplane)) {warning("Plane fitted")}
 
 
-  # generate prediction
-  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
+  re = list(fitfun=fitfun,fitfun.sd=fitfun.sd)
 
-  re=list(new.n = res$new.n,new.n.sd = NA,new.n.y=predfun(res$new.n),fun=predfun,fun.sd = NA,carryover=list(pars_history = pars_history),toofar=res$toofar,exact=res$exact,points=res$points)
+  # # generate prediction
+  # res = get.pred(xvars,fitfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
+  #
+  # re=list(new.n = res$new.n,new.n.sd = NA,new.n.y=fitfun(res$new.n),fun=fitfun,fun.sd = NA,carryover=list(pars_history = pars_history),toofar=res$toofar,exact=res$exact,points=res$points)
 
   return(re)
 }
@@ -209,7 +223,7 @@ svm.pred = function(dat,goal=NULL,carryover=NULL,cost=function(x)sum(x),tune=TRU
 #' @export
 #'
 #' @examples
-gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cost=NULL,greedy=TRUE,...) {
+gauss.fit = function(dat) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -230,32 +244,29 @@ gauss.pred = function(dat,goal=NULL,cost=function(x)sum(x),design=NULL,fixed_cos
 
     if (is.null(mod)) next
 
-    predfun = function(x) {
+    fitfun = function(x) {
       names(x) = names(xvars)
       DiceKriging::predict.km(mod, newdata=data.frame(t(x)), type="UK")$mean
     }
 
-    isflat = abs(predfun(mins-.5)-predfun(maxs+.5))<.001
+    isflat = abs(fitfun(mins-.5)-fitfun(maxs+.5))<.001
 
   }
 
   if (n.try==100) warning("model not converged")
 
-  predfun.sd = function(x) {
+  fitfun.sd = function(x) {
     names(x) = names(xvars)
     DiceKriging::predict.km(mod, newdata=data.frame(t(x)), type="UK")$sd
   }
 
-  somevals = apply(xvars,1,function(x) predfun(x))
+  # move this check outside the fitting function?
+  somevals = apply(xvars,1,function(x) fitfun(x))
   isplane = summary(lm(y~.,cbind(xvars,y = somevals)))$r.squared>.98 #
-  if (isplane|| is.na(isplane)) {warning("Plane predicted")}
-
-  # generate prediction
-
-  res = get.pred(xvars,predfun,goal,cost,Ntry=20,design=design,fixed_cost=fixed_cost,dat=dat,greedy=greedy)
+  if (isplane|| is.na(isplane)) {warning("Plane fitted")}
 
 
-  re=list(new.n = res$new.n,new.n.sd = predfun.sd(res$new.n),new.n.y=predfun(res$new.n),fun=predfun,fun.sd = predfun.sd,toofar=res$toofar,exact=res$exact,points=res$points)
+  re = list(fitfun=fitfun,fitfun.sd=fitfun.sd)
 
   return(re)
 }

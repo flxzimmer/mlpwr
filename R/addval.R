@@ -1,0 +1,49 @@
+
+
+#' Title
+#'
+#' @param runfun
+#' @param dat
+#' @param points
+#' @param each
+#' @param design
+#' @param n.points
+#' @param seed
+#' @param minrun
+#'
+#' @return
+#' @export
+#'
+#' @examples
+addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F) {
+
+  xvalues = sapply(dat,function(y) digest::digest(as.numeric(y$x)))
+
+  for (i in 1:nrow(points)) {
+
+    ind = which(xvalues==digest::digest(as.numeric(points[i,])))
+
+    if(length(ind)==0) {
+      ind = length(dat)+1
+      dat[[ind]] = list()
+      dat[[ind]]$x = points[i,]
+      resx = c()
+    } else {
+      resx = dat[[ind]]$y
+    }
+    a = as.numeric(points[i,])
+
+    resx = c(resx,replicate(each,dgfun(as.numeric(points[i,]))))
+
+    while(minrun && length(resx)> 1 && var(resx) == 0) {
+      resx = c(resx,replicate(1,dgfun(as.numeric(points[i,]))))
+    }
+    dat[[ind]]$y = resx
+  }
+  return(dat)
+
+}
+
+
+
+
