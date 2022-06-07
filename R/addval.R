@@ -1,20 +1,6 @@
 
 
-#' Title
-#'
-#' @param runfun
-#' @param dat
-#' @param points
-#' @param each
-#' @param design
-#' @param n.points
-#' @param seed
-#' @param minrun
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F) {
 
   xvalues = sapply(dat,function(y) digest::digest(as.numeric(y$x)))

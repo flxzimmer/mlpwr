@@ -6,9 +6,6 @@
 \usage{
 runfun.simr2()
 }
-\value{
-
-}
 \description{
 SIMR runfun multi
 }

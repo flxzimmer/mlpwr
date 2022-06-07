@@ -1,26 +1,19 @@
-#' Title
-#'
-#' @return
-#' @export
-#'
-#' @examples
-check.term = function(terminate,...){
 
-re =FALSE
+
+check.term = function(runs,ci,time,dat,time_temp){
+
+  re = FALSE
 
   # check termination (runs)
-  if ("runs" %in% terminate) {
+  if (!is.null(runs)) {
     used = usedruns(dat)
-
-    if (limitmaxruns& used>15000) {warning("max runs used, didn't converge?");re=TRUE}
-    if (!is.na(runs)){
-      runs.remaining = runs - used
-      if(runs.remaining<=0) re=TRUE
-    }
+    runs.remaining = runs - used
+    if(runs.remaining<=0) re=TRUE
+    print(runs.remaining)
   }
 
   # check termination (CI)
-  if ("ci" %in% terminate) {
+  if (!is.null(ci)) {
 
     if(!is.na(goal.ci)&& n.iter>0&useprediction) {
 
@@ -41,7 +34,7 @@ re =FALSE
 
 
   # check termination (time)
-  if ("time" %in% terminate) {
+  if (!is.null(time)) {
     time_used = timer(time_temp,detailled=F)
     if(time_used>time) re=TRUE
   }

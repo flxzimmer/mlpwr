@@ -9,7 +9,7 @@
 #' @export
 #'
 #' @examples
-runfun.ttest = function(delta) {
+runfun.ttest = function(delta = .4) {
 
   runfun = function(n) {
     # fetch a p-value at the specified sample size
@@ -33,7 +33,7 @@ runfun.ttest = function(delta) {
 #' @export
 #'
 #' @examples
-runfun.ttest.true = function(delta) {
+runfun.ttest.true = function(delta = .4) {
 
   runfun = function(n) {
     # fetch a p-value at the specified sample size
@@ -87,6 +87,22 @@ runfun.anova.true = function(delta=.16298) {
   }
   return(runfun)
 }
+
+
+
+
+skeweddist = function(n,alpha = 4) {
+  #skeweddist: alpha = 0 corresponds to normal distribution.
+  # Choose alpha = 4 and adjust all other values to give mean~0 and sd~1.
+  delta = alpha/sqrt(1+alpha^2)
+  omega = sqrt(1/(1-2*delta^2/pi))
+  xi = -omega*delta*sqrt(2/pi)
+
+  skewness = (4-pi)/2*(delta*sqrt(2/pi))^3/(1-2*delta^2/pi)^(3/2)
+
+  return(as.numeric(sn::rsn(n=n, xi=xi, omega=omega, alpha=alpha)))
+}
+
 
 
 #' Title

@@ -9,9 +9,6 @@ runfun.skewed2(n, delta = 0.2, alpha = 4)
 \arguments{
 \item{alpha}{}
 }
-\value{
-
-}
 \description{
 Title
 }

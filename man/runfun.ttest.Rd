@@ -4,13 +4,10 @@
 \alias{runfun.ttest}
 \title{Title}
 \usage{
-runfun.ttest(delta)
+runfun.ttest(delta = 0.4)
 }
 \arguments{
 \item{delta}{}
-}
-\value{
-
 }
 \description{
 Title

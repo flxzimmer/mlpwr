@@ -9,9 +9,6 @@ runfun.anova(delta = 0.16298)
 \arguments{
 \item{delta}{}
 }
-\value{
-
-}
 \description{
 Title
 }

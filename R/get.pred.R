@@ -1,5 +1,5 @@
 
-get.pred =function(fit,dat,goal,costfun,max_cost,boundaries,greedy,Ntry=20,task) {
+get.pred =function(fit,dat,power,costfun,max_cost,boundaries,greedy,Ntry=20,task) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -16,7 +16,6 @@ get.pred =function(fit,dat,goal,costfun,max_cost,boundaries,greedy,Ntry=20,task)
 
   boundmins = sapply(boundaries,function(x) x[1])
   boundmaxs = sapply(boundaries,function(x) x[2])
-
 
 
   if (task == "costthreshold"){ # Cost Threshold Task
@@ -45,27 +44,26 @@ get.pred =function(fit,dat,goal,costfun,max_cost,boundaries,greedy,Ntry=20,task)
 
 
     points = cands2[1,]
-    new.n = as.numeric(points)
-    print(paste("notgreedy:",new.n))
-
+    # new.n = as.numeric(points)
 
     if (greedy) {
       sd_vals = apply(cands2,1,function(x) get.sd(dat,x))
       points = cands2[which(min(fnvals2-sd_vals)==(fnvals2-sd_vals)),]
-      new.n = as.numeric(points)
+      # new.n = as.numeric(points)
     }
 
     # Check if a reasonable value has been found
-    toofar = abs((costfun(exact)-max_cost)/max_cost)>.01
+    badprediction = abs((costfun(exact)-max_cost)/max_cost)>.01
 
   }
+
 
 
   if (task == "desiredpower"){ # Desired Power Task
 
 
     # Acquisition Function
-    fn = function(x) (fit$fitfun(x)-goal)^2*10^5+costfun(x)/costfun(midpars)
+    fn = function(x) (fit$fitfun(x)-power)^2*10^5+costfun(x)/costfun(midpars)
 
     if (Ntry >1) {
 
@@ -83,12 +81,16 @@ get.pred =function(fit,dat,goal,costfun,max_cost,boundaries,greedy,Ntry=20,task)
     cands=cands[!out1&!out2,,drop = F]
 
     aq_vals = apply(cands,1,fn)
-    pw_vals = apply(cands,1,function(x) (fit$fitfun(x)-goal))
+    pw_vals = apply(cands,1,function(x) (fit$fitfun(x)-power))
     cost_vals = apply(cands,1,costfun)
 
     if (greedy) {
       sd_vals = apply(cands,1,function(x) get.sd(dat,x))
-      sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])/2
+      if (all(sd_vals>=10)) {
+        sd_vals[sd_vals==10]= Inf
+      } else {
+        sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])/2
+      }
 
       acceptable = which(pw_vals+sd_vals/2>0)
       if (length(acceptable)==0 | length(acceptable)==nrow(cands)) greedy=FALSE
@@ -96,8 +98,8 @@ get.pred =function(fit,dat,goal,costfun,max_cost,boundaries,greedy,Ntry=20,task)
 
     if (!greedy) acceptable = which(pw_vals>0)
     if (length(acceptable)==0) {
-      # warning("weird local maximum")
-      acceptable = 1:length(pw_vals) # treat all as acceptable instead of none
+      # the exact value seems to be a local maximum, treat all as acceptable instead of none
+      acceptable = 1:length(pw_vals)
     }
 
     ind = which(cost_vals[acceptable] == min(cost_vals[acceptable]))
@@ -106,50 +108,20 @@ get.pred =function(fit,dat,goal,costfun,max_cost,boundaries,greedy,Ntry=20,task)
     acceptable3 = acceptable2[ind2]
     new.n = as.numeric(cands[acceptable3,])
 
-    # Check if a reasonable value has been found
-    toofar = abs(fit$fitfun(exact)-goal)>.01 | abs(fit$fitfun(new.n)-goal)>.05
+    points = data.frame(t(new.n))
+
+    # Check if value is too far from goal power
+    badprediction = abs(fit$fitfun(exact)-power)>.01 | abs(fit$fitfun(new.n)-power)>.05
 
   }
 
-browser()
-
-  # TO DO PRETTIER
-  # ADD useprediction in return list
-  # useprediction = FALSE
-  # if (is.null(fit$new.n)) {
-  #   # warning("no predicted value")
-  # } else {
-    useprediction = !fit$toofar
-
-    # check if fitiction lies within design
-    for (i in 1:length(fit$new.n)) {
-      if (fit$new.n[i]<design[[i]][1]|fit$new.n[i]>design[[i]][2]) useprediction = FALSE
-    }
-  }
-
-
-  # transform this to create the points object, addval happens in main function
-
-  #add value to the dataset if prediction is ok
-  if (pred$useprediction) {
-    points = data.frame(t(fit$new.n))
-    if(!is.null(fixed_cost)) { # add multiple candidates for fixed cost condition
-      points = fit$points
-    }
-    dat = addval(runfun=runfun,design=design,dat=dat,points=points,each=setsize/nrow(points))
-  }
-
-  #search at previous values if prediction is bad
-  if (!pred$useprediction) {
-    datx = todataframe(dat)
+  # sample all locations if prediction is bad
+  if (badprediction) {
     points = datx[,1:(length(datx)-1),drop=FALSE]
-    each = max(round(setsize/nrow(datx)),1) # make sure at least one point is added
-    dat = addval(runfun=runfun,design=design,dat=dat,points=points,each=each)
   }
 
-# re = list(new.n=new.n, exact=exact,toofar=toofar,points=NULL)
-# re = list(new.n=new.n, exact=exact,toofar=toofar,points=points)
 
+  re = list(points=points, exact=exact, badprediction=badprediction)
 
   return(re)
 }

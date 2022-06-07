@@ -1,16 +1,5 @@
 
 
-#' Title
-#'
-#' @param boundaries
-#' @param n.points
-#' @param seed
-#' @param random
-#'
-#' @return
-#' @export
-#'
-#' @examples
 initpoints = function(boundaries,n.points,method="halton") {
 
   if(method=="halton") {

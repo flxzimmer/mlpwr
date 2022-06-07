@@ -9,9 +9,6 @@ runfun.irt.itempars(delta = 0.1, n.items = 20, seed = 1)
 \arguments{
 \item{seed}{}
 }
-\value{
-
-}
 \description{
 Title
 }

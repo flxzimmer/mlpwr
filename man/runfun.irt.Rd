@@ -9,9 +9,6 @@ runfun.irt(itempars)
 \arguments{
 \item{itempars}{}
 }
-\value{
-
-}
 \description{
 1PL vs 2PL
 }
