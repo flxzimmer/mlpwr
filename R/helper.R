@@ -1,7 +1,6 @@
 
 
-
-timer = function(obj=NULL,detailled = FALSE) {
+timer = function(obj=NULL,printit = FALSE) {
   # usage:
   # a = timer()
   # timer(a)
@@ -13,23 +12,19 @@ timer = function(obj=NULL,detailled = FALSE) {
 
   if (!is.null(obj)) {
 
-    if (!detailled){
+    if (printit){
       timex = proc.time() - obj
       t = timex[3]
       a = paste(round(t/60/60,2),"Hours |",round(t/60,2),"Minutes |",round(t,2),"Seconds")
+      print(a)
     }
 
-    if(detailled){
-        timex = proc.time() - obj
-        return(timex)
-      }
+
+    timex = proc.time() - obj
+    return(timex[3])
+
     }
 }
-
-
-
-
-
 
 
 

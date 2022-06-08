@@ -1,5 +1,5 @@
 
-get.pred =function(fit,dat,power,costfun,max_cost,boundaries,greedy,Ntry=20,task) {
+get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
@@ -43,18 +43,19 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,greedy,Ntry=20,task
     fnvals2 = fnvals[order(fnvals)[1:10]]
 
 
-    points = cands2[1,]
-    # new.n = as.numeric(points)
+    ## find points not greedy
+    points.notgreedy = cands2[1,]
 
-    if (greedy) {
-      sd_vals = apply(cands2,1,function(x) get.sd(dat,x))
-      points = cands2[which(min(fnvals2-sd_vals)==(fnvals2-sd_vals)),]
-      # new.n = as.numeric(points)
-    }
+
+    ## find points greedy
+    sd_vals = apply(cands2,1,function(x) get.sd(dat,x))
+    points = cands2[which(min(fnvals2-sd_vals)==(fnvals2-sd_vals)),]
+
+
+    ## final checks
 
     # Check if a reasonable value has been found
     badprediction = abs((costfun(exact)-max_cost)/max_cost)>.01
-
   }
 
 
@@ -84,24 +85,42 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,greedy,Ntry=20,task
     pw_vals = apply(cands,1,function(x) (fit$fitfun(x)-power))
     cost_vals = apply(cands,1,costfun)
 
-    if (greedy) {
-      sd_vals = apply(cands,1,function(x) get.sd(dat,x))
-      if (all(sd_vals>=10)) {
-        sd_vals[sd_vals==10]= Inf
-      } else {
-        sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])/2
-      }
+    ## find points not greedy
 
-      acceptable = which(pw_vals+sd_vals/2>0)
-      if (length(acceptable)==0 | length(acceptable)==nrow(cands)) greedy=FALSE
+    # pick acceptable values (notgreedy)
+    acceptable.notgreedy = which(pw_vals>0)
+
+    # if none are acceptable the exact value seems to be a local maximum. treat all as acceptable instead of none
+    if (length(acceptable.notgreedy)==0) acceptable.notgreedy = 1:length(pw_vals)
+
+    # pick value from acceptable ones
+    ind = which(cost_vals[acceptable.notgreedy] == min(cost_vals[acceptable.notgreedy]))
+    acceptable2 = acceptable.notgreedy[ind]
+    ind2 = which(aq_vals[acceptable2] == min(aq_vals[acceptable2]))
+    acceptable3 = acceptable2[ind2]
+    new.n = as.numeric(cands[acceptable3,])
+
+    points.notgreedy = data.frame(t(new.n))
+
+
+    ## find points greedy
+
+    # pick acceptable values
+    sd_vals = apply(cands,1,function(x) get.sd(dat,x))
+    if (all(sd_vals>=10)) {
+      sd_vals[sd_vals==10]= Inf
+    } else {
+      sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])/2
     }
 
-    if (!greedy) acceptable = which(pw_vals>0)
-    if (length(acceptable)==0) {
-      # the exact value seems to be a local maximum, treat all as acceptable instead of none
-      acceptable = 1:length(pw_vals)
-    }
+    acceptable = which(pw_vals+sd_vals/2>0)
+    # switch to not greedy if no good value was found
+    if (length(acceptable)==0 | length(acceptable)==nrow(cands)) acceptable = acceptable.notgreedy
 
+    # if none are acceptable the exact value seems to be a local maximum. treat all as acceptable instead of none
+    if (length(acceptable)==0) acceptable = 1:length(pw_vals)
+
+    # pick value from acceptable ones
     ind = which(cost_vals[acceptable] == min(cost_vals[acceptable]))
     acceptable2 = acceptable[ind]
     ind2 = which(aq_vals[acceptable2] == min(aq_vals[acceptable2]))
@@ -110,9 +129,11 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,greedy,Ntry=20,task
 
     points = data.frame(t(new.n))
 
+
+    ## final checks
+
     # Check if value is too far from goal power
     badprediction = abs(fit$fitfun(exact)-power)>.01 | abs(fit$fitfun(new.n)-power)>.05
-
   }
 
   # sample all locations if prediction is bad
@@ -121,7 +142,7 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,greedy,Ntry=20,task
   }
 
 
-  re = list(points=points, exact=exact, badprediction=badprediction)
+  re = list(points=points, exact=exact, badprediction=badprediction,points.notgreedy = points.notgreedy)
 
   return(re)
 }

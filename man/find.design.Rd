@@ -7,12 +7,11 @@
 find.design(
   dgfun,
   boundaries,
-  power = 0.8,
-  terminate = "runs",
+  power = NULL,
   runs = 1000,
-  ci = 0.03,
+  ci = NULL,
   ci_perc = 0.95,
-  time = 120,
+  time = NULL,
   costfun = NULL,
   max_cost = NULL,
   surrogate = "gpr",
@@ -20,11 +19,14 @@ find.design(
   init.perc = 0.1,
   setsize = 50,
   dat = NULL,
-  save_dir = NULL
+  save_dir = NULL,
+  Ntry = 2
 )
 }
 \arguments{
 \item{boundaries}{Kann vector oder liste sein}
+
+\item{n.startsets}{Startsets per Dimension}
 
 \item{init.perc}{}
 

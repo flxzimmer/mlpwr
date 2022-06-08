@@ -28,9 +28,9 @@ find.design = function(dgfun,
                    boundaries,
                    power=NULL,
                    runs = 1000,
-                   ci = .03,
+                   ci = NULL,
                    ci_perc = .95,
-                   time = 120,
+                   time = NULL,
                    costfun = NULL,
                    max_cost = NULL,
                    surrogate = "gpr",
@@ -83,15 +83,15 @@ find.design = function(dgfun,
     # count bad fits (e.g. plane fitted)
     if (fit$badfit) n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits + 1,1)
 
-    # check termination
-    is.terminate = check.term(runs=runs,ci=ci,time=time,dat=dat,time_temp=time_temp)
-    if (is.terminate) break
-
     # PREDICTION: Get a prediction from the fitted model
-    pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, max_cost=max_cost,boundaries=boundaries,greedy=TRUE,task=task,Ntry=Ntry)
+    pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, max_cost=max_cost,boundaries=boundaries,task=task,Ntry=Ntry)
 
     # count bad predictions (no sensible value found)
     if (pred$badprediction) n.bad.predictions = ifelse(exists("n.bad.predictions"),n.bad.predictions + 1,1)
+
+    # check TERMINATION
+    is.terminate = check.term(runs=runs,ci=ci,time=time,dat=dat,time_temp=time_temp,fit =fit,pred=pred,ci_perc=ci_perc)
+    if (is.terminate) break
 
     # UPDATING: sample from the DGF
     dat = addval(dgfun=dgfun,dat=dat,points=pred$points,each= max(ceiling(setsize/nrow(pred$points)),1))
@@ -102,20 +102,25 @@ find.design = function(dgfun,
   }
   ##############################################################################
 
-  # Generate final prediction (not Greedy)
-  pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, max_cost=max_cost,boundaries=boundaries,greedy=FALSE,task=task,Ntry=Ntry)
-
-  # Optional for the final output: Generate SD from a GP if not available
+  # Optional for the final output: Generate SD from a GP if using a different surrogate
 
   # Stop the clock
-  time_used = timer(time_temp,detailled=T)
+  time_used = timer(time_temp)
 
+  # Maybe add warning if ending with a bad prediction
+
+  final = list(
+    design = pred$points.notgreedy,
+    power = fit$fitfun(as.numeric(pred$points.notgreedy)),
+    cost = costfun(as.numeric(pred$points.notgreedy))
+  )
+  names(final$design) = names(boundaries)
 
   # Collect Results
   re = list(
-    design = pred$points,
+    final = final,
     dat = dat,
-    runs = usedruns(dat),
+    runs_used = usedruns(dat),
     fit = fit,
     time_used = time_used,
     n.updates = ifelse(exists("n.updates"),n.updates,0),

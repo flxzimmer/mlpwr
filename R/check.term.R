@@ -1,6 +1,6 @@
 
 
-check.term = function(runs,ci,time,dat,time_temp){
+check.term = function(runs,ci,time,dat,time_temp,fit,pred,ci_perc){
 
   re = FALSE
 
@@ -12,35 +12,22 @@ check.term = function(runs,ci,time,dat,time_temp){
     print(runs.remaining)
   }
 
-  # check termination (CI)
+  # check termination (ci)
   if (!is.null(ci)) {
-
-    if(!is.na(goal.ci)&& n.iter>0&useprediction) {
-
-      if (use_data_sd) new.n.sd = get.sd(dat,fit$new.n)
-
-      if (!use_data_sd) { #Use SD from the learner
-        if(is.na(fit$new.n.sd)){ # Generate from GP if missing
-          fit2 = tryCatch(gauss.fit(dat = dat,goal=goal,carryover = fit$carryover,design=design,fixed_cost=fixed_cost,cost=cost,...),error=function(x) {return(x)})
-          new.n.sd = fit2$fun.sd(fit$new.n)
-        } else {
-          new.n.sd = fit$new.n.sd
-        }
-      }
-
-      if(new.n.sd*qnorm(CI+(1-CI)/2)<goal.ci) re=TRUE
-    }
+    sdval = fit$fitfun.sd(as.numeric(pred$points.notgreedy))
+    interval = sdval*qnorm(ci_perc+(1-ci_perc)/2)
+    if(interval<ci) re=TRUE
+    print(interval)
   }
-
 
   # check termination (time)
   if (!is.null(time)) {
-    time_used = timer(time_temp,detailled=F)
+    time_used = as.numeric(timer(time_temp))
     if(time_used>time) re=TRUE
+    print(time_used)
   }
 
 
 return(re)
-
 
 }
