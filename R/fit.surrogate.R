@@ -1,6 +1,7 @@
 
 
-fit.surrogate = function(dat,surrogate,lastfit=0){
+fit.surrogate = function(dat,surrogate,lastfit=0,control){
+
 
   if(!is.list(lastfit)) lastfit = NULL
 
@@ -8,7 +9,7 @@ fit.surrogate = function(dat,surrogate,lastfit=0){
                reg = reg.fit(dat),
                logreg = logi.fit(dat),
                svr = svm.fit(dat,lastfit=lastfit),
-               gpr = gauss.fit(dat)
+               gpr = gauss.fit(dat,patience=100,control)
                )
 
 }
@@ -177,12 +178,16 @@ svm.fit = function(dat,lastfit,tune=TRUE) {
 
 
 
-gauss.fit = function(dat,patience=100) {
+gauss.fit = function(dat,patience=100,control) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   weight = getweight(dat,weight.type="var")
 
+  # setup gpr arguments
+  args = list(design=xvars, response=datx$y,noise.var=weight,control=list(trace=FALSE))
+  # args = rlist::list.append(args, control)
+  args = c(args, control)
 
   n.try = 0
 
@@ -193,7 +198,7 @@ gauss.fit = function(dat,patience=100) {
     n.try = n.try+1
 
     # Fit the GPR
-    mod = tryCatch(DiceKriging::km(design=xvars, response=datx$y,noise.var=weight,control=list(trace=FALSE)),error=function(x) {return(NULL)})
+    mod = tryCatch(do.call(DiceKriging::km,args=args),error=function(x) {return(NULL)})
 
     if (is.null(mod)) next
 

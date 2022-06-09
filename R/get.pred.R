@@ -18,6 +18,7 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
   boundmaxs = sapply(boundaries,function(x) x[2])
 
 
+  ##############################################################################
   if (task == "costthreshold"){ # Cost Threshold Task
 
     # Acquisition Function
@@ -44,18 +45,19 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
     out2 = apply(cands,1,function(x) any(x>boundmaxs))
     cands=cands[!out1&!out2,,drop = F]
 
+    ## find points greedy
     fnvals = apply(cands,1,fn)
     cands2 = cands[order(fnvals)[1:10],]
     fnvals2 = fnvals[order(fnvals)[1:10]]
-
-
-    ## find points not greedy
-    points.notgreedy = cands2[1,]
-
-
-    ## find points greedy
     sd_vals = apply(cands2,1,function(x) get.sd(dat,x))
     points = cands2[which(min(fnvals2-sd_vals)==(fnvals2-sd_vals)),]
+
+    ## find points not greedy
+    out3 = apply(cands,1,function(x) costfun(x)>max_cost)
+    cands3=cands[!out3,,drop = F]
+    fnvals2 = apply(cands3,1,fn)
+    cands4 = cands3[order(fnvals2)[1:10],]
+    points.notgreedy = cands4[1,]
 
 
     ## final checks
@@ -63,9 +65,10 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
     # Check if a reasonable value has been found
     badprediction = abs((costfun(exact)-max_cost)/max_cost)>.01
   }
+  ##############################################################################
 
 
-
+  ##############################################################################
   if (task == "desiredpower"){ # Desired Power Task
 
 
@@ -147,13 +150,14 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
     # Check if value is too far from goal power
     badprediction = abs(fit$fitfun(exact)-power)>.01 | abs(fit$fitfun(new.n)-power)>.05
   }
+  ##############################################################################
+
 
   # sample all locations if prediction is bad
   # an edgeprediction should be updated at for falsification, it is not the same as other "bad" predictions (e.g. because of too few data)
   if (badprediction& !edgeprediction) {
     points = datx[,1:(length(datx)-1),drop=FALSE]
   }
-
 
   re = list(points=points, exact=exact, badprediction=badprediction,points.notgreedy = points.notgreedy,edgeprediction=edgeprediction)
 

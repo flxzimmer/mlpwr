@@ -10,7 +10,7 @@
 #' @param time integer; seconds until termination
 #' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for dgfuns with multiple input dimensions.
 #' @param max_cost numeric; cost threshold for the respective task
-#' @param surrogate; character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".
+#' @param surrogate character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".
 #' @param n.startsets integer; number of startsets used per dimension of dgfun
 #' @param setsize The number of draws from the data generating function in each iteration
 #' @param init.perc numeric; percentage of runs used for the initialization phase
@@ -18,6 +18,7 @@
 #' @param Ntry integer; number of locations to start a search for optimal paramters in the prediction phase.
 #' @param silent logical; supresses output during the search.
 #' @param autosave_dir character; file location for saving the dat object after each update.
+#' @param control list specifying arguments passed to the surrogate models. For example, list(covtype="gauss") can be used with the gpr surrogate to use a different covariance structure than the default.
 #'
 #' @return
 #' @export
@@ -41,9 +42,11 @@ find.design = function(dgfun,
                    dat = NULL,
                    Ntry = 4,
                    silent =FALSE,
-                   autosave_dir=NULL
+                   autosave_dir=NULL,
+                   control = list()
                    ) {
 
+  seed <- .Random.seed
 
   # Start the clock
   time_temp = timer()
@@ -85,7 +88,7 @@ find.design = function(dgfun,
   repeat{
 
     # FIT: Fit a surrogate model
-    fit = fit.surrogate(dat = dat,surrogate=surrogate,lastfit=ifelse(exists("fit"),fit,0))
+    fit = fit.surrogate(dat = dat,surrogate=surrogate,lastfit=ifelse(exists("fit"),fit,0),control=control)
 
     # count bad fits (e.g. plane fitted)
     if (fit$badfit) n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits + 1,1)
@@ -143,7 +146,8 @@ find.design = function(dgfun,
     n_updates = ifelse(exists("n_updates"),n_updates,0),
     n.bad.predictions = ifelse(exists("n.bad.predictions"), n.bad.predictions, 0),
     n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits,0),
-    call = match.call()
+    call = match.call(),
+    seed = seed
     )
 
   class(re) = "designresult"
