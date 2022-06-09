@@ -4,7 +4,7 @@
 \alias{plot.designresult}
 \title{Title}
 \usage{
-\method{plot}{designresult}(ds)
+\method{plot}{designresult}(ds, adderrorbars = NULL, addribbon = NULL, design = NULL)
 }
 \arguments{
 \item{ds}{}

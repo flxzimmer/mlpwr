@@ -1,14 +1,28 @@
-
-
-# T-TEST runfun
 #' Title
 #'
-#' @param delta
+#' @param type
+#' @param ...
 #'
 #' @return
 #' @export
 #'
 #' @examples
+example.dgf = function(type,...) {
+
+  switch(type,
+         ttest = runfun.ttest(...),
+         anova = runfun.anova(...),
+         skewed = runfun.skewed(...),
+         simr = runfun.simr(...),
+         simr2 = runfun.simr2(...)
+  )
+
+}
+
+
+
+
+
 runfun.ttest = function(delta = .4) {
 
   runfun = function(n) {
@@ -24,15 +38,6 @@ runfun.ttest = function(delta = .4) {
 }
 
 
-# T-TEST runfun
-#' Title
-#'
-#' @param delta
-#'
-#' @return
-#' @export
-#'
-#' @examples
 runfun.ttest.true = function(delta = .4) {
 
   runfun = function(n) {
@@ -46,14 +51,7 @@ runfun.ttest.true = function(delta = .4) {
 
 
 
-#' Title
-#'
-#' @param delta
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 runfun.anova = function(delta=.16298) {
 
   runfun = function(x) {
@@ -67,14 +65,7 @@ runfun.anova = function(delta=.16298) {
 }
 
 
-#' Title
-#'
-#' @param delta
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 runfun.anova.true = function(delta=.16298) {
 
   runfun = function(x) {
@@ -105,17 +96,8 @@ skeweddist = function(n,alpha = 4) {
 
 
 
-#' Title
-#'
-#' @param n
-#' @param delta
-#' @param alpha
-#'
-#' @return
-#' @export
-#'
-#' @examples
-runfun.skewed2 = function(n, delta =.2, alpha =4) {
+
+runfun.skewed = function(n, delta =.2, alpha =4) {
 
   runfun= function(n) {
 
@@ -128,16 +110,6 @@ runfun.skewed2 = function(n, delta =.2, alpha =4) {
 }
 
 
-#' Title
-#'
-#' @param delta
-#' @param n.items
-#' @param seed
-#'
-#' @return
-#' @export
-#'
-#' @examples
 runfun.irt.itempars = function(delta=.1,n.items = 20,seed=1) {
   # delta is the variance of the slope parameters
   set.seed(seed)
@@ -147,14 +119,7 @@ runfun.irt.itempars = function(delta=.1,n.items = 20,seed=1) {
   )
 }
 
-#' 1PL vs 2PL
-#'
-#' @param itempars
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 runfun.irt = function(itempars) {
 
   runfun=function(n) {
@@ -172,13 +137,7 @@ runfun.irt = function(itempars) {
 }
 
 
-#' SIMR runfun
-#'
-#'
-#' @return
-#' @export
-#'
-#' @examples
+
 runfun.simr = function() {
   model1 <- lme4::glmer(z ~ x + (1|g), family="poisson", data=simr::simdata)
   tmp = lme4::fixef(model1)
@@ -194,13 +153,6 @@ runfun.simr = function() {
 }
 
 
-#' SIMR runfun multi
-#'
-#'
-#' @return
-#' @export
-#'
-#' @examples
 runfun.simr2 = function() {
   model1 <- lme4::glmer(z ~ x + (1|g), family="poisson", data=simr::simdata)
   tmp = lme4::fixef(model1)
@@ -217,4 +169,5 @@ runfun.simr2 = function() {
   }
   return(runfun)
 }
+
 

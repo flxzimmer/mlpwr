@@ -16,11 +16,13 @@ find.design(
   max_cost = NULL,
   surrogate = "gpr",
   n.startsets = 4,
-  init.perc = 0.1,
-  setsize = 50,
+  init.perc = 0.2,
+  setsize = 100,
   dat = NULL,
   save_dir = NULL,
-  Ntry = 2
+  Ntry = 2,
+  silent = FALSE,
+  autosave_dir = NULL
 )
 }
 \arguments{

@@ -1,7 +1,7 @@
 
 
 
-addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F) {
+addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F,autosave_dir=NULL) {
 
   xvalues = sapply(dat,function(y) digest::digest(as.numeric(y$x)))
 
@@ -26,6 +26,9 @@ addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F) {
     }
     dat[[ind]]$y = resx
   }
+
+  if(!is.null(autosave_dir)) save(dat,file=paste0(autosave_dir,"dat_autosave.RData"))
+
   return(dat)
 
 }

@@ -30,6 +30,13 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
       exact = as.numeric(new.n)
     }
 
+    # Check if value is on the edge of the design space
+    edgeprediction=FALSE
+    if(any(exact==boundmins) | any(exact==boundmaxs)) {
+      edgeprediction = TRUE
+    }
+
+
     # Serch candidate values for best match
     a = floor(exact)
     cands = expand.grid(data.frame(rbind(a-6,a-5,a-4,a-3,a-2,a-1,a,a+1,a+2,a+3,a+4,a+5,a+6,a+7)))
@@ -71,6 +78,12 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
       a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list(factr=1)))
       new.n = a[which(a$value==min(a$value))[1],1:ncol(xvars)]
       exact = as.numeric(new.n)
+    }
+
+    # Check if value is on the edge of the design space
+    edgeprediction=FALSE
+    if(any(exact==boundmins) | any(exact==boundmaxs)) {
+      edgeprediction = TRUE
     }
 
     # Serch integer candidate values for best match
@@ -137,12 +150,13 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
   }
 
   # sample all locations if prediction is bad
-  if (badprediction) {
+  # an edgeprediction should be updated at for falsification, it is not the same as other "bad" predictions (e.g. because of too few data)
+  if (badprediction& !edgeprediction) {
     points = datx[,1:(length(datx)-1),drop=FALSE]
   }
 
 
-  re = list(points=points, exact=exact, badprediction=badprediction,points.notgreedy = points.notgreedy)
+  re = list(points=points, exact=exact, badprediction=badprediction,points.notgreedy = points.notgreedy,edgeprediction=edgeprediction)
 
   return(re)
 }

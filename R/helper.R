@@ -131,6 +131,19 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 }
 
 
+print.progress = function(n_updates,runs_used,time_used) {
+  # cat('\r',paste(c("Updates","Runs","Time"),c(n_updates,runs_used,round(time_used,1)),sep=": ",collapse=", "),"\n")
+  cat('\r',paste(c("Updates","Runs","Time"),c(n_updates,runs_used,round(time_used,1)),sep=": ",collapse=", "))
+  flush.console()
+}
+
+
+#
+# while (1) {
+#   cat('\r',format(Sys.time(),'%H:%M:%S'))
+#   flush.console()
+# }
+
 
 
 

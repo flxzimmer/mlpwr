@@ -1,22 +1,23 @@
 
 #' Sample Size Finding
 #'
-#' @param dgfun
-#' @param boundaries Kann vector oder liste sein
-#' @param power
-#' @param terminate
-#' @param runs
-#' @param ci
-#' @param ci_perc
-#' @param time
-#' @param costfun
-#' @param max_cost
-#' @param surrogate
-#' @param n.startsets Startsets per Dimension
-#' @param continue
-#' @param save_dir
+#' @param dgfun function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)
+#' @param boundaries list containing lower and upper bounds of the design space
+#' @param power numeric; power value for the 'desired power' task
+#' @param runs integer; number of dgf evaluations to be performed before termination
+#' @param ci numeric; desired width of the confidence interval at the predicted value on termination.
+#' @param ci_perc numeric; specifying the desired confidence interval, e.g. 95% or 99%.
+#' @param time integer; seconds until termination
+#' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for dgfuns with multiple input dimensions.
+#' @param max_cost numeric; cost threshold for the respective task
+#' @param surrogate; character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".
+#' @param n.startsets integer; number of startsets used per dimension of dgfun
 #' @param setsize The number of draws from the data generating function in each iteration
-#' @param init.perc
+#' @param init.perc numeric; percentage of runs used for the initialization phase
+#' @param dat list of data from a previous design result.
+#' @param Ntry integer; number of locations to start a search for optimal paramters in the prediction phase.
+#' @param silent logical; supresses output during the search.
+#' @param autosave_dir character; file location for saving the dat object after each update.
 #'
 #' @return
 #' @export
@@ -35,11 +36,12 @@ find.design = function(dgfun,
                    max_cost = NULL,
                    surrogate = "gpr",
                    n.startsets = 4,
-                   init.perc = .1,
-                   setsize = 50,
+                   init.perc = .2,
+                   setsize = 100,
                    dat = NULL,
-                   save_dir = NULL,
-                   Ntry = 2
+                   Ntry = 2,
+                   silent =FALSE,
+                   autosave_dir=NULL
                    ) {
 
 
@@ -66,10 +68,15 @@ find.design = function(dgfun,
   # Set setsize according to a percentage of runs, if available
   if (!is.null(runs)) setsize = ceiling(runs*init.perc/n.points)
 
+  # adjust number of runs for continuing a search
+  if(!is.null(dat)) {
+    runs = usedruns(dat) + runs
+  }
+
   # Generate initialization data if not available
   if(is.null(dat)) {
     points = initpoints(boundaries=boundaries,n.points = n.points)
-    dat = addval(dgfun=dgfun,points=points,each=setsize)
+    dat = addval(dgfun=dgfun,points=points,each=setsize,autosave_dir=autosave_dir)
   }
 
 
@@ -89,15 +96,24 @@ find.design = function(dgfun,
     # count bad predictions (no sensible value found)
     if (pred$badprediction) n.bad.predictions = ifelse(exists("n.bad.predictions"),n.bad.predictions + 1,1)
 
+    # count edge predictions (value on edge of parameter space) and issue warning if happened too often
+    if (pred$edgeprediction) {
+      n.edgepredictions = ifelse(exists("n.edgepredictions"),n.edgepredictions + 1,1)
+      if(n.edgepredictions==5) warning("The predicted value consistently lies at the edge of the parameter space. Consider adjusting the boundaries.")
+    }
+
     # check TERMINATION
     is.terminate = check.term(runs=runs,ci=ci,time=time,dat=dat,time_temp=time_temp,fit =fit,pred=pred,ci_perc=ci_perc)
     if (is.terminate) break
 
     # UPDATING: sample from the DGF
-    dat = addval(dgfun=dgfun,dat=dat,points=pred$points,each= max(ceiling(setsize/nrow(pred$points)),1))
+    dat = addval(dgfun=dgfun,dat=dat,points=pred$points,each= max(ceiling(setsize/nrow(pred$points)),1),autosave_dir=autosave_dir)
 
     # number of performed updates
-    n.updates = ifelse(exists("n.updates"),n.updates + 1,1)
+    n_updates = ifelse(exists("n_updates"),n_updates + 1,1)
+
+    # print current progress
+    if(!silent) print.progress(n_updates=n_updates,runs_used=usedruns(dat),time_used = timer(time_temp))
 
   }
   ##############################################################################
@@ -107,7 +123,8 @@ find.design = function(dgfun,
   # Stop the clock
   time_used = timer(time_temp)
 
-  # Maybe add warning if ending with a bad prediction
+  # Warning if ending with a bad prediction
+  if (pred$badprediction) warning("No good design found after the final update.")
 
   final = list(
     design = pred$points.notgreedy,
@@ -123,7 +140,7 @@ find.design = function(dgfun,
     runs_used = usedruns(dat),
     fit = fit,
     time_used = time_used,
-    n.updates = ifelse(exists("n.updates"),n.updates,0),
+    n_updates = ifelse(exists("n_updates"),n_updates,0),
     n.bad.predictions = ifelse(exists("n.bad.predictions"), n.bad.predictions, 0),
     n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits,0),
     call = match.call()

@@ -7,42 +7,62 @@
 #' @export
 #'
 #' @examples
-plot.designresult = function(ds,adderrorbars=NULL,addribbon=NULL,...) {
+plot.designresult = function(ds,design=NULL,adderrorbars=NULL,addribbon=NULL) {
 
 
   dat = ds$dat
   fit = ds$fit
 
-  boundaries = eval(ds$call$boundaries)
-
-  # convert boundaries to list
-  if (!is.list(boundaries)) boundaries=list(n=boundaries)
-
-  # treat 2D dgfun differntly
-  if(length(boundaries)>1) {
-
-    namesx = names(boundaries)
-    specified = sapply(namesx,exists)
-    conditions = sapply(names,)
-
-    eval(parse(text=""))
-    if(exists(namesx))
-
-  }
-
-  ns = seq(boundaries[1],boundaries[2])
-
-  xlab = names(ds$final$design)
-
-  # Prediction
-  dat_pred = data.frame(n =ns,y=sapply(ns,fit$fitfun),type="Prediction")
-
   # Actual SD
   dat_obs = todataframe(dat)
   dat_obs$sd = getweight(dat,"sd")
 
+  boundaries = eval(ds$call$boundaries)
+
+  # treat 2D dgfun differntly
+  if(!is.null(design)) {
+
+    namesx = names(boundaries)
+    specified = !sapply(design,is.na)
+
+    # vary the non-specified variable
+    boundariesx = unlist(boundaries[!specified])
+    ns = seq(boundariesx[1],boundariesx[2])
+
+    nsx = lapply(ns,function(x) {
+      a = c()
+      a[specified]= as.numeric(design[specified])
+      a[!specified] = x
+      a
+    })
+
+    #select from dat_obs
+    ind = dat_obs[c(specified,F,F)] == as.numeric(design[specified])
+    dat_obs=dat_obs[ind,]
+
+    # setup xlab
+    a1 = names(ds$final$design)[!specified]
+    a2 = paste(names(design)[specified],"=",design[specified],sep=" ",collapse=",")
+    xlab = paste0(a1," (",a2,")")
+
+  } else {
+    # 1D Case
+    boundariesx = unlist(boundaries)
+    xlab = names(ds$final$design)
+    ns = seq(boundariesx[1],boundariesx[2])
+    nsx = ns
+  }
+
+
+
+  # Prediction
+  dat_pred = data.frame(n =ns,y=sapply(nsx,fit$fitfun),type="Prediction")
+
+
   # Estimated SD
-  dat_sd = data.frame(n =ns,pred=dat_pred$y,sd=sapply(ns,fit$fitfun.sd))
+  dat_sd = data.frame(n =ns,pred=dat_pred$y,sd=sapply(nsx,fit$fitfun.sd))
+  dat_sd$ymin = sapply(dat_sd$pred - dat_sd$sd,function(x) max(0,x))
+  dat_sd$ymax = sapply(dat_sd$pred + dat_sd$sd,function(x) min(1,x))
 
 
   ## choose plot
@@ -67,7 +87,7 @@ plot.designresult = function(ds,adderrorbars=NULL,addribbon=NULL,...) {
   pl2 = ggplot2::ggplot()
 
   if (addribbon) pl2 = pl2 +
-    ggplot2::geom_ribbon(data=dat_sd,ggplot2::aes(ymin = pred - sd, ymax = pred + sd,y=1,x=ns), fill = "grey70")
+    ggplot2::geom_ribbon(data=dat_sd,ggplot2::aes(ymin = ymin, ymax =ymax,y=1,x=ns), fill = "grey70")
 
   if (adderrorbars) pl2 = pl2 +
     ggplot2::geom_errorbar(data=dat_obs,ggplot2::aes(ymin = y - sd, ymax = y + sd,y=1,x=V1))
@@ -80,8 +100,6 @@ plot.designresult = function(ds,adderrorbars=NULL,addribbon=NULL,...) {
     ggplot2::scale_color_brewer(palette="Set1") +
     ggplot2::theme(legend.title = ggplot2::element_blank())+ ggplot2::xlab(xlab) + ggplot2::ylab("power") +
     ggplot2::theme(legend.position="bottom")
-
-
 
 
   print(pl2)

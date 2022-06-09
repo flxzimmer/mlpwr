@@ -9,7 +9,6 @@ check.term = function(runs,ci,time,dat,time_temp,fit,pred,ci_perc){
     used = usedruns(dat)
     runs.remaining = runs - used
     if(runs.remaining<=0) re=TRUE
-    print(runs.remaining)
   }
 
   # check termination (ci)

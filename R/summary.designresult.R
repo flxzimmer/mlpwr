@@ -31,7 +31,7 @@ print.summary.designresult = function(ds) {
   cost = round(ds$final$cost,2)
   runs = ds$runs_used
   timex = round(ds$time_used,2)
-  updates = ds$n.updates
+  updates = ds$n_updates
 
 
   cat("\nCall:\n", paste(deparse(ds$call), sep = "\n", collapse = "\n"),
