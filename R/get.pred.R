@@ -24,7 +24,6 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
     fn = function(x) ((costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
 
     if (Ntry >1) {
-
       a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list(factr=1)))
       new.n = a[which(a$value==min(a$value))[1],1:ncol(xvars)]
       exact = as.numeric(new.n)

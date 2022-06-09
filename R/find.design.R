@@ -39,7 +39,7 @@ find.design = function(dgfun,
                    init.perc = .2,
                    setsize = 100,
                    dat = NULL,
-                   Ntry = 2,
+                   Ntry = 4,
                    silent =FALSE,
                    autosave_dir=NULL
                    ) {

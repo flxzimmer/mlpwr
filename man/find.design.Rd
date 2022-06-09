@@ -19,20 +19,45 @@ find.design(
   init.perc = 0.2,
   setsize = 100,
   dat = NULL,
-  save_dir = NULL,
-  Ntry = 2,
+  Ntry = 4,
   silent = FALSE,
   autosave_dir = NULL
 )
 }
 \arguments{
-\item{boundaries}{Kann vector oder liste sein}
+\item{dgfun}{function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)}
 
-\item{n.startsets}{Startsets per Dimension}
+\item{boundaries}{list containing lower and upper bounds of the design space}
 
-\item{init.perc}{}
+\item{power}{numeric; power value for the 'desired power' task}
+
+\item{runs}{integer; number of dgf evaluations to be performed before termination}
+
+\item{ci}{numeric; desired width of the confidence interval at the predicted value on termination.}
+
+\item{ci_perc}{numeric; specifying the desired confidence interval, e.g. 95\% or 99\%.}
+
+\item{time}{integer; seconds until termination}
+
+\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for dgfuns with multiple input dimensions.}
+
+\item{max_cost}{numeric; cost threshold for the respective task}
+
+\item{n.startsets}{integer; number of startsets used per dimension of dgfun}
+
+\item{init.perc}{numeric; percentage of runs used for the initialization phase}
 
 \item{setsize}{The number of draws from the data generating function in each iteration}
+
+\item{dat}{list of data from a previous design result.}
+
+\item{Ntry}{integer; number of locations to start a search for optimal paramters in the prediction phase.}
+
+\item{silent}{logical; supresses output during the search.}
+
+\item{autosave_dir}{character; file location for saving the dat object after each update.}
+
+\item{surrogate;}{character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".}
 }
 \description{
 Sample Size Finding
