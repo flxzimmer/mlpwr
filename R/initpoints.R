@@ -17,7 +17,7 @@ initpoints = function(boundaries,n.points,method="halton") {
   }
 
   if (method=="sobol") {
-    s = as.matrix(randtoolbox::sobol(n = n.points,dim=length(boundaries),scrambling=1),ncol=length(boundaries))
+    s = as.matrix(randtoolbox::sobol(n = n.points,dim=length(boundaries),scrambling=0),ncol=length(boundaries))
 
     for (i in 1:length(boundaries)) {
       dmin = boundaries[[i]][1]
@@ -26,6 +26,20 @@ initpoints = function(boundaries,n.points,method="halton") {
     }
     points = round(s)
   }
+
+
+  if (method=="random") {
+
+    s = matrix(runif(n.points*length(boundaries)),ncol=length(boundaries))
+
+    for (i in 1:length(boundaries)) {
+      dmin = boundaries[[i]][1]
+      dmax = boundaries[[i]][2]
+      s[,i] = dmin + s[,i]*(dmax-dmin)
+    }
+    points = round(s)
+  }
+
 
   colnames(points)=names(boundaries)
 

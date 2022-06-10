@@ -21,8 +21,6 @@ example.dgf = function(type,...) {
 
 
 
-
-
 runfun.ttest = function(delta = .4) {
 
   runfun = function(n) {

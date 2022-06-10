@@ -8,7 +8,7 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
 
   #using half of the Ntrys for random values!
   parmat_last = xvars[nrow(xvars) + 1 - seq(1,min(round(Ntry/2),nrow(xvars))),,drop=F]
-  parmat_rand = initpoints(boundaries,max(Ntry-nrow(parmat_last),0),method="sobol")
+  parmat_rand = initpoints(boundaries,max(Ntry-nrow(parmat_last),0),method="random")
   parmat_rand = as.data.frame(parmat_rand)
   names(parmat_rand) = names(parmat_last)
 
@@ -22,13 +22,12 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
   if (task == "costthreshold"){ # Cost Threshold Task
 
     # Acquisition Function
-    fn = function(x) ((costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
+    # fn = function(x) ((costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
+    fn = function(x) (relu(costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
 
-    if (Ntry >1) {
-      a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list(factr=1)))
+      a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list()))
       new.n = a[which(a$value==min(a$value))[1],1:ncol(xvars)]
       exact = as.numeric(new.n)
-    }
 
     # Check if value is on the edge of the design space
     edgeprediction=FALSE
@@ -75,12 +74,9 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
     # Acquisition Function
     fn = function(x) (fit$fitfun(x)-power)^2*10^5+costfun(x)/costfun(midpars)
 
-    if (Ntry >1) {
-
-      a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list(factr=1)))
+      a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list()))
       new.n = a[which(a$value==min(a$value))[1],1:ncol(xvars)]
       exact = as.numeric(new.n)
-    }
 
     # Check if value is on the edge of the design space
     edgeprediction=FALSE

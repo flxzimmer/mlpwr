@@ -1,89 +1,114 @@
 plot2d = function(ds) {
 
+  dat = ds$dat
+  fit = ds$fit
+  dat_obs = todataframe(dat)
+  boundaries = ds$boundaries
+  final = ds$final
+  costfun = ds$costfun
 
-  usetask = "B"
-  resX = resx[resx$task==usetask,]
-  resX = resX[!is.na(resX$cost),]
 
-  # import analytical results for DGFs 3 and 4 ("analytical")
-  # Calculate corresponding actual power for these values ("analytical_power")
-  resX$analytical = NA
-  resX$analytical[as.numeric(resX$fun_nr)==3] = an[[3]]$analytical
-  resX$analytical[as.numeric(resX$fun_nr)==4] = an[[4]]$analytical
-  resX$analytical_power = NA
-  resX$analytical_power[as.numeric(resX$fun_nr)==3] = at[[3]]$true_power.fun(an[[3]]$analytical)
-  resX$analytical_power[as.numeric(resX$fun_nr)==4] = at[[4]]$true_power.fun(an[[4]]$analytical)
+  ns = seq(boundaries[[1]][1],boundaries[[1]][2],.5)
+  kstart = mean(boundaries[[2]])
 
-  resX = resX[resX$learner!="Analytical",]
-
-  fn_nr = 2
-  resX1 = resX[resX$fun_nr=="2 ANOVA",]
-
-  atx = at[[fn_nr]]
-  true_power.fun = atx$true_power.fun
-  actual_power = atx$actual_power
-  actual_cost = atx$actual_cost
-  x1 = load.cond(fn_nr,usetask,budget=NA,goal.ci=NA)
-  costfun=x1$cost
-  design=x1$design
-
-  xvals = seq(min(resX1$X1,na.rm=T),max(resX1$X1,na.rm=T),.5)
-  eqpower.y = sapply(xvals,function(x) {
-    fn = function(y) abs(true_power.fun(c(x,y))-actual_power)
-    a = optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])
-    legit = a$value<.001
-    if(legit) return(a$par) else return(NA)
+  eqpower.k = sapply(ns,function(n) {
+    fn = function(k) abs(fit$fitfun(c(n,k))-final$power)
+    a = optim(kstart,fn,method="L-BFGS-B",lower=boundaries[[2]][[1]],upper=boundaries[[2]][[2]],control=list(factr=1e11))
+    valid = a$value<.001
+    if(valid) return(a$par) else return(NA)
   })
-  eqpower = data.frame(X1=xvals,X2=eqpower.y)
 
-  eqcost.y = sapply(xvals,function(x) {
-    fn = function(y) abs(costfun(c(x,y))-actual_cost)
-    optim(20,fn,method="L-BFGS-B",lower=design[[2]][[1]],upper=design[[2]][[2]])$par})
-  eqcost = data.frame(X1=xvals,X2=eqcost.y)
+  eqpower = data.frame(n=ns,k=eqpower.k)
+  eqpower = eqpower[!is.na(eqpower$k),]
 
-  correct = sapply(1:nrow(eqcost),function(i) {
-    costfun(eqcost[i,])==actual_cost
+  eqcost.k = sapply(ns,function(n) {
+    fn = function(k) abs(costfun(c(n,k))-final$cost)
+    a = optim(kstart,fn,method="L-BFGS-B",lower=boundaries[[2]][[1]],upper=boundaries[[2]][[2]],control=list(factr=1e11))
+    valid = a$value<.001
+    if(valid) return(a$par) else return(NA)
   })
-  eqcost = eqcost[correct,]
+
+  eqcost = data.frame(n=ns,k=eqcost.k)
+  eqcost = eqcost[!is.na(eqcost$k),]
+
+  # trim power and cost to a common area
+  powermins = apply(eqpower,2,min)
+  powermaxs = apply(eqpower,2,max)
+  costmins = apply(eqcost,2,min)
+  costmaxs = apply(eqcost,2,max)
+  mins = apply(rbind(powermins,costmins),2,max)
+  maxs = apply(rbind(powermaxs,costmaxs),2,min)
+  ind1 = apply(eqpower,1,function(x) !any(x<mins))
+  ind2 = apply(eqpower,1,function(x) !any(x>maxs))
+  eqpower = eqpower[ind1&ind2,]
+  ind1 = apply(eqcost,1,function(x) !any(x<mins))
+  ind2 = apply(eqcost,1,function(x) !any(x>maxs))
+  eqcost = eqcost[ind1&ind2,]
 
 
-  dat.at = data.frame(t(atx$actually_true))
+  # trim observed data
+  ind1 = apply(dat_obs[,1:2],1,function(x) !any(x<mins))
+  ind2 = apply(dat_obs[,1:2],1,function(x) !any(x>maxs))
+  dat_obs = dat_obs[ind1&ind2,]
+
+  #final value
+  fin= final$design
+  names(fin) = c("n","k")
+
+  # axis labels
+  xlab = names(boundaries)[1]
+  ylab = names(boundaries)[2]
 
 
-  eqpower = eqpower[!is.na(eqpower$X2),]
+  #labels
+  powerlabel = paste0("power = ",round(final$power,3))
+  costlabel = paste0("cost = ",round(final$cost,2))
+  pointlabel = "Designs"
+  crosslabel = "Optimal design"
 
-  p7 = ggplot() + theme_bw()  + xlim(40, 80) + ylim(5,16) +
-    scale_colour_manual(values = c("#B2182B", "#2166AC","black"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid","blank"),shape = c(NA, NA,3)))) +
-    xlab("Participants per Cluster") +
-    ylab("Number of Clusters") +
-    geom_ribbon(data=eqpower,aes(x=X1,ymin = X2, ymax = 16), fill = "#92C5DE") +
-    geom_line(data=eqpower,aes(x=X1, y=X2,col="Minimal power"),size=1)+
-    geom_line(data=eqcost,aes(x=X1, y=X2,col="Maximal cost"),size=1)+
-    geom_point(data=dat.at, aes(x=X1, y=X2,col="Optimal set"),shape=3,size=5) +
-    annotate(geom="text", x=52, y=14, label="Desired Power", color="#2166AC",size = 5,hjust = "left") +
-    annotate(geom="text", x=67, y=7, label="Optimal Cost", color="#B2182B",size = 5,hjust = "right") +
-    annotate(geom="text", x=58, y=10, label="Optimal Set", color="black",size = 5, hjust = "right") +
-    theme(legend.position="none",plot.title = element_text(hjust = 0.5)) + ggtitle("Desired Power Task")
+  levels  = c(powerlabel,costlabel,pointlabel,crosslabel)
 
+  powerlabel = factor(powerlabel,levels=levels)
+  costlabel = factor(costlabel,level=levels)
+  pointlabel = factor(pointlabel,levels=levels)
+  crosslabel = factor(crosslabel,levels=levels)
 
+  #labelorder
+  labelorder = c(3,2,1,4)
 
-  p8 = ggplot() + theme_bw()  + xlim(40, 80) + ylim(5,16) +
-    scale_colour_manual(values = c("#B2182B", "#2166AC","black"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid","blank"),shape = c(NA, NA,3)))) +
-    xlab("Participants per Cluster") +
-    ylab("Number of Clusters") +
-    geom_ribbon(data=eqcost,aes(x=X1,ymin = 5, ymax = X2), fill = "#F4A582") +
-    geom_line(data=eqpower,aes(x=X1, y=X2,col="Minimal power"),size=1)+
-    geom_line(data=eqcost,aes(x=X1, y=X2,col="Maximal cost"),size=1)+
-    geom_point(data=dat.at, aes(x=X1, y=X2,col="Optimal set"),shape=3,size=5) +
-    annotate(geom="text", x=52, y=14, label="Optimal Power", color="#2166AC",size = 5,hjust = "left") +
-    annotate(geom="text", x=67, y=7, label="Cost Threshold", color="#B2182B",size = 5,hjust = "right") +
-    annotate(geom="text", x=58, y=10, label="Optimal Set", color="black",size = 5, hjust = "right") +
-    theme(legend.position="none",plot.title = element_text(hjust = 0.5)) + ggtitle("Cost Threshold Task")
+  pl2 = ggplot2::ggplot()
 
+  pl2 = pl2 +
+    ggplot2::geom_line(data=eqpower,ggplot2::aes(x=n, y=k,col=powerlabel))+
+    ggplot2::geom_line(data=eqcost,ggplot2::aes(x=n, y=k,col=costlabel))+
+    ggplot2::geom_point(data=dat_obs, ggplot2::aes(x=V1, y=V2,col=pointlabel)) +
+    ggplot2::geom_point(data = fin,ggplot2::aes(x=n,y=k,col=crosslabel),shape=3,size=5) +
+    ggplot2::theme_bw() +
+    ggplot2::scale_colour_manual(breaks = levels,values = c("black","#B2182B", "#2166AC","green")[labelorder], guide = ggplot2::guide_legend(title="",override.aes = list(linetype = c("blank", "solid","solid","blank")[labelorder],shape = c(20, NA,NA,3)[labelorder]))) +
+    # ggplot2::scale_color_brewer(palette="Set1") +
+    ggplot2::theme(legend.title = ggplot2::element_blank())+ ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
+    ggplot2::theme(legend.position="bottom")
 
-  g1 = grid.arrange(p7,p8, ncol=2)
+  pl2
 
-  pdf(paste0(folder,"multi_true_2D.pdf"),height=4,width=7);grid.draw(g1);dev.off()
 
 
 }
+
+
+
+# p7 = ggplot() + theme_bw()  + xlim(40, 80) + ylim(5,16) +
+#   scale_colour_manual(values = c("#B2182B", "#2166AC","black"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid","blank"),shape = c(NA, NA,3)))) +
+#   xlab("Participants per Cluster") +
+#   ylab("Number of Clusters") +
+#   geom_ribbon(data=eqpower,aes(x=X1,ymin = X2, ymax = 16), fill = "#92C5DE") +
+#   geom_line(data=eqpower,aes(x=X1, y=X2,col="Minimal power"),size=1)+
+#   geom_line(data=eqcost,aes(x=X1, y=X2,col="Maximal cost"),size=1)+
+#   geom_point(data=dat.at, aes(x=X1, y=X2,col="Optimal set"),shape=3,size=5) +
+#   annotate(geom="text", x=52, y=14, label="Desired Power", color="#2166AC",size = 5,hjust = "left") +
+#   annotate(geom="text", x=67, y=7, label="Optimal Cost", color="#B2182B",size = 5,hjust = "right") +
+#   annotate(geom="text", x=58, y=10, label="Optimal Set", color="black",size = 5, hjust = "right") +
+#   theme(legend.position="none",plot.title = element_text(hjust = 0.5)) + ggtitle("Desired Power Task")
+
+
+

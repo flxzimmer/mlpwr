@@ -7,7 +7,7 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
   dat_obs = todataframe(dat)
   dat_obs$sd = getweight(dat,"sd")
 
-  boundaries = eval(ds$call$boundaries)
+  boundaries = ds$boundaries
 
   # treat 2D dgfun differntly
   if(!is.null(design)) {
@@ -44,15 +44,18 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
   }
 
 
-
   # Prediction
   dat_pred = data.frame(n =ns,y=sapply(nsx,fit$fitfun),type="Prediction")
 
 
   # Estimated SD
   dat_sd = data.frame(n =ns,pred=dat_pred$y,sd=sapply(nsx,fit$fitfun.sd))
-  dat_sd$ymin = sapply(dat_sd$pred - dat_sd$sd,function(x) max(0,x))
-  dat_sd$ymax = sapply(dat_sd$pred + dat_sd$sd,function(x) min(1,x))
+  dat_sd$ymin = dat_sd$pred - dat_sd$sd
+  dat_sd$ymax = dat_sd$pred + dat_sd$sd
+
+  # Optional: Censor the ribbon to plausible values (between 0 and 1)
+  # dat_sd$ymin = sapply(dat_sd$pred - dat_sd$sd,function(x) max(0,x))
+  # dat_sd$ymax = sapply(dat_sd$pred + dat_sd$sd,function(x) min(1,x))
 
 
   ## choose plot

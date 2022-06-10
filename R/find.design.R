@@ -40,7 +40,7 @@ find.design = function(dgfun,
                    init.perc = .2,
                    setsize = 100,
                    dat = NULL,
-                   Ntry = 4,
+                   Ntry = 2,
                    silent =FALSE,
                    autosave_dir=NULL,
                    control = list()
@@ -121,6 +121,10 @@ find.design = function(dgfun,
   }
   ##############################################################################
 
+  # move to next line
+  cat("\n")
+
+
   # Optional for the final output: Generate SD from a GP if using a different surrogate
 
   # Stop the clock
@@ -147,7 +151,9 @@ find.design = function(dgfun,
     n.bad.predictions = ifelse(exists("n.bad.predictions"), n.bad.predictions, 0),
     n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits,0),
     call = match.call(),
-    seed = seed
+    seed = seed,
+    costfun = costfun,
+    boundaries = boundaries
     )
 
   class(re) = "designresult"

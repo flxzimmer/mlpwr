@@ -19,9 +19,10 @@ find.design(
   init.perc = 0.2,
   setsize = 100,
   dat = NULL,
-  Ntry = 4,
+  Ntry = 2,
   silent = FALSE,
-  autosave_dir = NULL
+  autosave_dir = NULL,
+  control = list()
 )
 }
 \arguments{
@@ -43,6 +44,8 @@ find.design(
 
 \item{max_cost}{numeric; cost threshold for the respective task}
 
+\item{surrogate}{character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".}
+
 \item{n.startsets}{integer; number of startsets used per dimension of dgfun}
 
 \item{init.perc}{numeric; percentage of runs used for the initialization phase}
@@ -57,7 +60,7 @@ find.design(
 
 \item{autosave_dir}{character; file location for saving the dat object after each update.}
 
-\item{surrogate;}{character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".}
+\item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype="gauss") can be used with the gpr surrogate to use a different covariance structure than the default.}
 }
 \description{
 Sample Size Finding
