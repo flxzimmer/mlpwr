@@ -19,6 +19,7 @@ check.term = function(runs,ci,time,dat,time_temp,fit,pred,ci_perc){
     sdval = fit$fitfun.sd(as.numeric(pred$points.notgreedy))
     interval = sdval*qnorm(ci_perc+(1-ci_perc)/2)
     if(interval<ci) re=TRUE
+
   }
 
   # check termination (time)

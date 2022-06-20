@@ -1,0 +1,113 @@
+---
+title: "demo"
+output: html_document
+---
+
+```{r include=FALSE}
+set.seed(1)
+```
+
+
+This vignette serves as an introduction and tutorial to the "xyz" package. The material is used in the tutorial paper "xyz".
+
+# Introduction to the package
+
+The package can be loaded via
+```{r}
+library(simpackage)
+```
+
+
+### Setting up a data generating function (DGF)
+
+The data generating function (dgfun) is the function to simulate hypothesis test results with.
+
+A simple function simulates a group mean comparison with a t-test. The input is a sample size n and the output is either TRUE or FALSE depending on the significance of the hypothesis test.
+
+```{r}
+dgfun = function(n) {
+
+    mean_difference = .4 
+    group1 = rnorm(n)
+    group2 = rnorm(n) + mean_difference
+    testresult = t.test(group1,group2)
+    significant = testresult$p.value<.05
+
+    return(significant)
+}
+
+```
+
+We can test the data generating function as follows.
+
+```{r}
+dgfun(30)
+dgfun(400)
+```
+
+### Performing the search for design parameters
+
+The find.design functions can be used to find an appropriate sample size given a power level that should be surpassed.
+
+The central arguments to be specified are the following:
+
+-   dgfun: The data generating function as defined above
+
+-   boundaries: The lower and upper bound to search within, e.g. a sample size between 50 and 200.
+
+-   runs: The number of evaluations of the dgfun that should be performed before returning a result.
+
+Internally, the function performs an initialization phase, in which it evaluates the dgfun at some random initial values and the boundaries. After that, it performs the following steps in a loop:
+
+-   Fit: A surrogate model is fitted to the relationship of sample size and power.
+
+-   Predict: A candidate for a good sample size is determined.
+
+-   Update: The dgfun is evaluated at the predicted sample size.
+
+Once a termination criterion is met (e.g. the number of permissible dgfun evaluation specified with runs), the algorithm is terminated.
+
+We can perform the search with the above arguments in use.
+
+```{r}
+ds = find.design(
+  dgfun = dgfun,
+  boundaries = c(50,200),
+  power = .8,
+  runs = 2000
+  )
+```
+
+While it is running, the function gives us some updates regarding the number of updates performed, the time used, and the the number of runs.
+
+We can get an overview of the results via summary.
+
+```{r}
+summary(ds)
+```
+
+The results indicate that a sample size of 98 is suitable. 
+
+Also, we can plot the fitted relationship between sample size and power. The black dots show us the simulated data. The gray ribbon indicates the uncertainty of the power at the respective sample sizes.  
+```{r}
+plot(ds)
+```
+
+
+
+# IRT Use Case
+
+DIF in polytomous Model catchy - Mit Paperbezug
+
+```{r}
+dgf = function(n) {
+  
+}
+
+```
+
+IRT Beispiel - Graded Response Model - 1 dimensional!
+
+# Multilevel Use Case
+
+Multilevel Beispiel - 2D so relevant wie möglich!
