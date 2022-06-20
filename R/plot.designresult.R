@@ -14,7 +14,7 @@ plot.designresult = function(ds,design=NULL,adderrorbars=NULL,addribbon=NULL) {
   if(dims==2&is.null(design)) {
     pl = plot2d(ds)
   } else {
-    pl = plot1d(ds,design,adderrorbars,addribbon)
+    pl = plot1d(ds,design=design,adderrorbars=adderrorbars,addribbon=addribbon)
   }
 
   print(pl)

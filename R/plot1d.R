@@ -2,6 +2,9 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
 
   dat = ds$dat
   fit = ds$fit
+  # if (use_gpr_SE) fitfun.sd = ds$fit_gpr$fitfun.sd
+  # if (!use_gpr_SE) fitfun.sd = ds$fit$fitfun.sd
+
 
   # Actual SD
   dat_obs = todataframe(dat)
@@ -9,7 +12,7 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
 
   boundaries = ds$boundaries
 
-  # treat 2D dgfun differntly
+  # treat 2D dgfun differntly, convert to 1D according to specification
   if(!is.null(design)) {
 
     namesx = names(boundaries)
@@ -35,8 +38,10 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
     a2 = paste(names(design)[specified],"=",design[specified],sep=" ",collapse=",")
     xlab = paste0(a1," (",a2,")")
 
-  } else {
-    # 1D Case
+  }
+
+  # 1D Case
+  if (is.null(design)) {
     boundariesx = unlist(boundaries)
     xlab = names(ds$final$design)
     ns = seq(boundariesx[1],boundariesx[2])
@@ -63,13 +68,16 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
   # set default options if arguments aren't specified
   if (is.null(addribbon)& is.null(adderrorbars)) {
 
-    if (!is.null(fit$fitfun.sd)) {
-      addribbon = TRUE
-      adderrorbars = FALSE
-    } else {
-      addribbon = FALSE
-      adderrorbars = TRUE
-    }
+    addribbon = TRUE
+    adderrorbars = FALSE
+
+    # if (!is.null(fit$fitfun.sd)) {
+    #   addribbon = TRUE
+    #   adderrorbars = FALSE
+    # } else {
+    #   addribbon = FALSE
+    #   adderrorbars = TRUE
+    # }
   }
   if (is.null(addribbon)) addribbon=FALSE
   if (is.null(adderrorbars)) adderrorbars=FALSE

@@ -2,6 +2,7 @@ plot2d = function(ds) {
 
   dat = ds$dat
   fit = ds$fit
+
   dat_obs = todataframe(dat)
   boundaries = ds$boundaries
   final = ds$final

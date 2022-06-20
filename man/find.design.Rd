@@ -14,7 +14,7 @@ find.design(
   time = NULL,
   costfun = NULL,
   max_cost = NULL,
-  surrogate = "gpr",
+  surrogate = NULL,
   n.startsets = 4,
   init.perc = 0.2,
   setsize = 100,
@@ -44,7 +44,7 @@ find.design(
 
 \item{max_cost}{numeric; cost threshold for the respective task}
 
-\item{surrogate}{character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".}
+\item{surrogate}{character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.}
 
 \item{n.startsets}{integer; number of startsets used per dimension of dgfun}
 

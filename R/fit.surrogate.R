@@ -1,6 +1,6 @@
 
 
-fit.surrogate = function(dat,surrogate,lastfit=0,control){
+fit.surrogate = function(dat,surrogate,lastfit=0,control=list()){
 
 
   if(!is.list(lastfit)) lastfit = NULL
@@ -31,11 +31,11 @@ reg.fit = function(dat) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)))}
 
-  fitfun.sd = function(x) {
-    names(x) = names(xvars)
-    predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
+  # fitfun.sd = function(x) {
+  #   names(x) = names(xvars)
+  #   predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
 
-  re = list(fitfun=fitfun,fitfun.sd=fitfun.sd,badfit=FALSE)
+  re = list(fitfun=fitfun,fitfun.sd=NULL,badfit=FALSE)
 
   return(re)
 }
@@ -69,11 +69,11 @@ logi.fit = function(dat,trans=TRUE) {
     names(x) = names(xvars)
     predict(mod,newdata=data.frame(t(x)),type="response")}
 
-  fitfun.sd = function(x) {
-    names(x) = names(xvars)
-    predict(mod,newdata=data.frame(t(x)),type="response",se.fit=TRUE)$se.fit}
+  # fitfun.sd = function(x) {
+  #   names(x) = names(xvars)
+  #   predict(mod,newdata=data.frame(t(x)),type="response",se.fit=TRUE)$se.fit}
 
-  re = list(fitfun=fitfun,fitfun.sd=fitfun.sd,badfit=FALSE)
+  re = list(fitfun=fitfun,fitfun.sd=NULL,badfit=FALSE)
 
   return(re)
 }
@@ -168,7 +168,7 @@ svm.fit = function(dat,lastfit,tune=TRUE) {
   if (!is.na(isplane) && !isplane) badfit = FALSE
 
 
-  re = list(fitfun=fitfun,badfit=badfit,lastfit=list(pars_history = pars_history))
+  re = list(fitfun=fitfun,fitfun.sd=NULL,badfit=badfit,lastfit=list(pars_history = pars_history))
 
   return(re)
 }

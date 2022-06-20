@@ -28,6 +28,7 @@ print.summary.designresult = function(ds) {
 
   design = ds$final$design
   power = round(ds$final$power,5)
+  se = round(ds$final$se,5)
   cost = round(ds$final$cost,2)
   runs = ds$runs_used
   timex = round(ds$time_used,2)
@@ -42,6 +43,9 @@ print.summary.designresult = function(ds) {
 
   cat("\nPower: ", paste(power, sep = "\n", collapse = "\n"),
        sep = "")
+
+  cat("\nSE: ", paste(se, sep = "\n", collapse = "\n"),
+      sep = "")
 
   cat("\nCost: ", paste(cost, sep = "\n", collapse = "\n"),
        sep = "")

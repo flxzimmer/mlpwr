@@ -10,7 +10,7 @@
 #' @param time integer; seconds until termination
 #' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for dgfuns with multiple input dimensions.
 #' @param max_cost numeric; cost threshold for the respective task
-#' @param surrogate character; which surrogate model should be used. The default is "gpr". The current options are: "gpr", "svr", "logreg", "reg".
+#' @param surrogate character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.
 #' @param n.startsets integer; number of startsets used per dimension of dgfun
 #' @param setsize The number of draws from the data generating function in each iteration
 #' @param init.perc numeric; percentage of runs used for the initialization phase
@@ -35,7 +35,7 @@ find.design = function(dgfun,
                    time = NULL,
                    costfun = NULL,
                    max_cost = NULL,
-                   surrogate = "gpr",
+                   surrogate = NULL,
                    n.startsets = 4,
                    init.perc = .2,
                    setsize = 100,
@@ -82,6 +82,15 @@ find.design = function(dgfun,
     dat = addval(dgfun=dgfun,points=points,each=setsize,autosave_dir=autosave_dir)
   }
 
+  #choose surrogate (if not specified)
+  if (is.null(surrogate)) {
+  if (length(boundaries)==1) surrogate = "logreg"
+  if (length(boundaries)>1) surrogate = "gpr"
+  }
+
+# warn if ci is termination critrerion without gpr surrogate
+  if (!is.null(ci)&& surrogate!="gpr") warning("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
+
 
 ##############################################################################
   # start the search
@@ -126,6 +135,7 @@ find.design = function(dgfun,
 
 
   # Optional for the final output: Generate SD from a GP if using a different surrogate
+  if (is.null(fit$fitfun.sd)) fit$fitfun.sd = fit.surrogate(dat = dat,surrogate="gpr")$fitfun.sd
 
   # Stop the clock
   time_used = timer(time_temp)
@@ -136,7 +146,8 @@ find.design = function(dgfun,
   final = list(
     design = pred$points.notgreedy,
     power = fit$fitfun(as.numeric(pred$points.notgreedy)),
-    cost = costfun(as.numeric(pred$points.notgreedy))
+    cost = costfun(as.numeric(pred$points.notgreedy)),
+    se = fit$fitfun.sd(as.numeric(pred$points.notgreedy))
   )
   names(final$design) = names(boundaries)
 
@@ -145,6 +156,7 @@ find.design = function(dgfun,
     final = final,
     dat = dat,
     runs_used = usedruns(dat),
+    surrogate = surrogate,
     fit = fit,
     time_used = time_used,
     n_updates = ifelse(exists("n_updates"),n_updates,0),
