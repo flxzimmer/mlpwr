@@ -202,7 +202,7 @@ summary(ds)
 set.seed(1)
 ```
 
-
+ 
 ```{r}
 dgfun = example.dgf("ttest")
 
@@ -367,6 +367,8 @@ ds = find.design(
 
 plot(ds)
 ```
+
+
 
 
 ### autosaving          

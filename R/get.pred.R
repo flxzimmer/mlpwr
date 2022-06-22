@@ -21,9 +21,14 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
   ##############################################################################
   if (task == "costthreshold"){ # Cost Threshold Task
 
+    # greediness in cost threshold task, higher values are more greedy (more exploration)
+    # greediness = 1 original in paper
+    # greediness = .1
+    greediness = .5
+
+
     # Acquisition Function
-    # fn = function(x) ((costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
-    fn = function(x) (relu(costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
+    fn = function(x) ((costfun(x)-max_cost)/max_cost)^2*10^5-fit$fitfun(x)
 
       a = hush(optimr::multistart(parmat=parmat,fn=fn,method="L-BFGS-B",lower=boundmins,upper=boundmaxs,control=list()))
       new.n = a[which(a$value==min(a$value))[1],1:ncol(xvars)]
@@ -49,7 +54,7 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
     cands2 = cands[order(fnvals)[1:10],]
     fnvals2 = fnvals[order(fnvals)[1:10]]
     sd_vals = apply(cands2,1,function(x) get.sd(dat,x))
-    points = cands2[which(min(fnvals2-sd_vals)==(fnvals2-sd_vals)),]
+    points = cands2[which(min(fnvals2-greediness*sd_vals)==(fnvals2-greediness*sd_vals)),]
 
     ## find points not greedy
     out3 = apply(cands,1,function(x) costfun(x)>max_cost)
@@ -70,6 +75,9 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
   ##############################################################################
   if (task == "desiredpower"){ # Desired Power Task
 
+    # greediness in desired power task, higher values are more greedy (more exploration)
+    # greediness = .5 original in paper
+    greediness = .1
 
     # Acquisition Function
     fn = function(x) (fit$fitfun(x)-power)^2*10^5+costfun(x)/costfun(midpars)
@@ -124,7 +132,7 @@ get.pred =function(fit,dat,power,costfun,max_cost,boundaries,Ntry=20,task) {
       sd_vals[sd_vals==10]= min(sd_vals[sd_vals<10])/2
     }
 
-    acceptable = which(pw_vals+sd_vals/2>0)
+    acceptable = which(pw_vals+sd_vals*greediness>0)
     # switch to not greedy if no good value was found
     if (length(acceptable)==0 | length(acceptable)==nrow(cands)) acceptable = acceptable.notgreedy
 
