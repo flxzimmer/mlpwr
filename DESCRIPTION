@@ -1,4 +1,4 @@
-Package: mlwpr
+Package: mlpwr
 Title: A Power Analysis Toolbox to Find Study Designs with Optimal Costs using Machine Learning
 Version: 0.0.0.9000
 Authors@R: c(
