@@ -12,7 +12,7 @@ You can install the development version of mlpwr from [GitHub](https://github.co
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("flxzimmer/irtpwr")
+devtools::install_github("flxzimmer/mlpwr")
 ```
 
 ## Example
