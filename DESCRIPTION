@@ -1,5 +1,5 @@
-Package: simpackage
-Title: Find Study Designs with Optimal Costs
+Package: mlwpr
+Title: A Power Analysis Toolbox to Find Study Designs with Optimal Costs using Machine Learning
 Version: 0.0.0.9000
 Authors@R: c(
     person("Felix", "Zimmer", , "felix.zimmer@mail.de", role = c("aut", "cre"),

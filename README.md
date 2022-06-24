@@ -1,14 +1,14 @@
 
-# simpackage
+# mlpwr
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of simpackage is to ...
+The goal of mlpwr is to ...
 
 ## Installation
 
-You can install the development version of simpackage from [GitHub](https://github.com/) with:
+You can install the development version of mlpwr from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
@@ -20,7 +20,7 @@ devtools::install_github("flxzimmer/irtpwr")
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-library(simpackage)
+library(mlpwr)
 ## basic example code
 ```
 

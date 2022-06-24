@@ -14,7 +14,7 @@ This vignette serves as an introduction and tutorial to the "xyz" package. The m
 
 The package can be loaded via
 ```{r}
-library(simpackage)
+library(mlpwr)
 ```
 
 
@@ -92,22 +92,3 @@ Also, we can plot the fitted relationship between sample size and power. The bla
 ```{r}
 plot(ds)
 ```
-
-
-
-# IRT Use Case
-
-DIF in polytomous Model catchy - Mit Paperbezug
-
-```{r}
-dgf = function(n) {
-  
-}
-
-```
-
-IRT Beispiel - Graded Response Model - 1 dimensional!
-
-# Multilevel Use Case
-
-Multilevel Beispiel - 2D so relevant wie möglich!

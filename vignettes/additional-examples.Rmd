@@ -20,7 +20,7 @@ This vignette includes additional use cases and examples. It includes
 
 
 ```{r setup}
-library(simpackage)
+library(mlpwr)
 ```
 
 
