@@ -112,7 +112,7 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
     p = mean(vec)
     n = length(vec)
       if (correct_zero) {
-        if (is.na(p==0)) browser()
+        # if (is.na(p==0)) browser()
         if (p==0) vec = c(vec,1)
         if (p==1) vec = c(vec,0)
         p = mean(vec)
@@ -134,7 +134,7 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 print.progress = function(n_updates,runs_used,time_used) {
   # cat('\r',paste(c("Updates","Runs","Time"),c(n_updates,runs_used,round(time_used,1)),sep=": ",collapse=", "),"\n")
   cat('\r',paste(c("Updates","Runs","Time"),c(n_updates,runs_used,round(time_used,1)),sep=": ",collapse=", "))
-  flush.console()
+  utils::flush.console()
 }
 
 

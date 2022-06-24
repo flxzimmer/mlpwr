@@ -21,7 +21,7 @@ addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F,autosave_dir=NULL
 
     resx = c(resx,replicate(each,dgfun(as.numeric(points[i,]))))
 
-    while(minrun && length(resx)> 1 && var(resx) == 0) {
+    while(minrun && length(resx)> 1 && stats::var(resx) == 0) {
       resx = c(resx,replicate(1,dgfun(as.numeric(points[i,]))))
     }
     dat[[ind]]$y = resx

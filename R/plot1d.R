@@ -86,22 +86,25 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
   ## build plot
 
   pl2 = ggplot2::ggplot()
-
+# browser()
   if (addribbon) pl2 = pl2 +
-    ggplot2::geom_ribbon(data=dat_sd,ggplot2::aes(ymin = ymin, ymax =ymax,y=1,x=ns), fill = "grey70")
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = dat_sd$ymin, ymax =dat_sd$ymax,x=ns), fill = "grey70")
 
   if (adderrorbars) pl2 = pl2 +
-    ggplot2::geom_errorbar(data=dat_obs,ggplot2::aes(ymin = y - sd, ymax = y + sd,y=1,x=V1))
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = dat_obs$y - dat_obs$sd, ymax = dat_obs$y + dat_obs$sd,x=dat_obs$V1))
 
 
   pl2 = pl2 +
-    ggplot2::geom_line(data = dat_pred,ggplot2::aes(x=n,y=y)) +
-    ggplot2::geom_point(data=dat_obs,ggplot2::aes(x =V1,y = y))+
+    ggplot2::geom_line(ggplot2::aes(x=dat_pred$n,y=dat_pred$y)) +
+    ggplot2::geom_point(ggplot2::aes(x =dat_obs$V1,y = dat_obs$y))+
     ggplot2::theme_bw() +
     ggplot2::scale_color_brewer(palette="Set1") +
     ggplot2::theme(legend.title = ggplot2::element_blank())+ ggplot2::xlab(xlab) + ggplot2::ylab("power") +
     ggplot2::theme(legend.position="bottom")
 
 
-
 }
+
+
+
+

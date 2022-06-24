@@ -7,14 +7,14 @@
 #' @export
 #'
 #' @examples
-plot.designresult = function(ds,design=NULL,adderrorbars=NULL,addribbon=NULL) {
+plot.designresult = function(x,design=NULL,adderrorbars=NULL,addribbon=NULL,...) {
 
   # choose 1D or 2D plot
-  dims = length(ds$final$design)
+  dims = length(x$final$design)
   if(dims==2&is.null(design)) {
-    pl = plot2d(ds)
+    pl = plot2d(x)
   } else {
-    pl = plot1d(ds,design=design,adderrorbars=adderrorbars,addribbon=addribbon)
+    pl = plot1d(x,design=design,adderrorbars=adderrorbars,addribbon=addribbon)
   }
 
   print(pl)

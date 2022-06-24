@@ -25,15 +25,15 @@ reg.fit = function(dat) {
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   weight = getweight(dat,weight.type="freq")
 
-  mod =lm(y~.,datx,weights=weight)
+  mod =stats::lm(y~.,datx,weights=weight)
 
   fitfun = function(x) {
     names(x) = names(xvars)
-    predict(mod,newdata=data.frame(t(x)))}
+    stats::predict(mod,newdata=data.frame(t(x)))}
 
   # fitfun.sd = function(x) {
   #   names(x) = names(xvars)
-  #   predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
+  #   stats::predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
 
   re = list(fitfun=fitfun,fitfun.sd=NULL,badfit=FALSE)
 
@@ -48,12 +48,12 @@ logi.fit = function(dat,trans=TRUE) {
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   weight = getweight(dat,weight.type="freq")
 
-  if (!trans) mod = glm(y~.,datx,weights=weight,family = binomial)
+  if (!trans) mod = stats::glm(y~.,datx,weights=weight,family = stats::binomial)
 
   if (trans) {
     trans = function(x) x/2 +.5
     invtrans = function(y) y*2-1
-    fam = quasi(link="logit", variance = "mu(1-mu)")
+    fam = stats::quasi(link="logit", variance = "mu(1-mu)")
     linkfun = function(mu) log(mu/(1-mu))
     linkfun.new = function(mu) linkfun(trans(mu))
     fam$linkfun = linkfun.new
@@ -62,16 +62,16 @@ logi.fit = function(dat,trans=TRUE) {
     fam$linkinv = linkinv.new
     fam$mu.eta = function(mu) 2 * exp(-mu) / (exp(-mu)+1)^2
 
-    mod = glm(y~.,datx,weights=weight,family = fam)
+    mod = stats::glm(y~.,datx,weights=weight,family = fam)
   }
 
   fitfun = function(x) {
     names(x) = names(xvars)
-    predict(mod,newdata=data.frame(t(x)),type="response")}
+    stats::predict(mod,newdata=data.frame(t(x)),type="response")}
 
   # fitfun.sd = function(x) {
   #   names(x) = names(xvars)
-  #   predict(mod,newdata=data.frame(t(x)),type="response",se.fit=TRUE)$se.fit}
+  #   stats::predict(mod,newdata=data.frame(t(x)),type="response",se.fit=TRUE)$se.fit}
 
   re = list(fitfun=fitfun,fitfun.sd=NULL,badfit=FALSE)
 
@@ -91,7 +91,7 @@ fixpred = function(x) { # get pred to [0,1] Interval
 
 logloss = function(true.y,pred,true.w) { #y true value, p prediction
   pred = fixpred(pred)
-  weighted.mean(-(true.y * log2(pred) + (1-true.y) * log2(1-pred)),true.w)
+  stats::weighted.mean(-(true.y * log2(pred) + (1-true.y) * log2(1-pred)),true.w)
 }
 
 svm.fit = function(dat,lastfit,tune=TRUE) {
@@ -103,7 +103,7 @@ svm.fit = function(dat,lastfit,tune=TRUE) {
   #Treat the case of equal power values in the data [especially the case of zero variance]- add (a negligibly small amount of) random noise
   if(any(ind <- duplicated(datx$y))) {
     a = datx$y[ind]
-    a = a + rnorm(length(a),sd=.0000001)
+    a = a + stats::rnorm(length(a),sd=.0000001)
     a[a>1] = 1-(a[a>1]-1)
     a[a<0] = -a[a<0]
     datx$y[ind] = a
@@ -158,13 +158,13 @@ svm.fit = function(dat,lastfit,tune=TRUE) {
   # setup function that outputs power
   fitfun = function(x) {
     names(x) = names(xvars)
-    predict(mod,newdata=data.frame(t(x)))}
+    stats::predict(mod,newdata=data.frame(t(x)))}
 
 
   # check if a plane was fitted
   badfit = TRUE
   somevals = apply(xvars,1,function(x) fitfun(x))
-  isplane = suppressWarnings(summary(lm(y~.,cbind(xvars,y = somevals)))$r.squared>.98)
+  isplane = suppressWarnings(summary(stats::lm(y~.,cbind(xvars,y = somevals)))$r.squared>.98)
   if (!is.na(isplane) && !isplane) badfit = FALSE
 
 
@@ -210,7 +210,7 @@ gauss.fit = function(dat,patience=100,control) {
 
     # check if a plane was fitted
     somevals = apply(xvars,1,function(x) fitfun(x))
-    isplane = suppressWarnings(summary(lm(y~.,cbind(xvars,y = somevals)))$r.squared>.98)
+    isplane = suppressWarnings(summary(stats::lm(y~.,cbind(xvars,y = somevals)))$r.squared>.98)
     if (!is.na(isplane) && !isplane) badfit = FALSE
 
   }

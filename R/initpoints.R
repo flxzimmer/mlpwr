@@ -30,7 +30,7 @@ initpoints = function(boundaries,n.points,method="halton") {
 
   if (method=="random") {
 
-    s = matrix(runif(n.points*length(boundaries)),ncol=length(boundaries))
+    s = matrix(stats::runif(n.points*length(boundaries)),ncol=length(boundaries))
 
     for (i in 1:length(boundaries)) {
       dmin = boundaries[[i]][1]

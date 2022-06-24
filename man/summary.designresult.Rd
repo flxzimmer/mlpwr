@@ -4,7 +4,7 @@
 \alias{summary.designresult}
 \title{Title}
 \usage{
-\method{summary}{designresult}(ds)
+\method{summary}{designresult}(object, ...)
 }
 \arguments{
 \item{ds}{}

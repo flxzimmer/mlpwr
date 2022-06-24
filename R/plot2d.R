@@ -14,7 +14,7 @@ plot2d = function(ds) {
 
   eqpower.k = sapply(ns,function(n) {
     fn = function(k) abs(fit$fitfun(c(n,k))-final$power)
-    a = optim(kstart,fn,method="L-BFGS-B",lower=boundaries[[2]][[1]],upper=boundaries[[2]][[2]],control=list(factr=1e11))
+    a = stats::optim(kstart,fn,method="L-BFGS-B",lower=boundaries[[2]][[1]],upper=boundaries[[2]][[2]],control=list(factr=1e11))
     valid = a$value<.001
     if(valid) return(a$par) else return(NA)
   })
@@ -24,7 +24,7 @@ plot2d = function(ds) {
 
   eqcost.k = sapply(ns,function(n) {
     fn = function(k) abs(costfun(c(n,k))-final$cost)
-    a = optim(kstart,fn,method="L-BFGS-B",lower=boundaries[[2]][[1]],upper=boundaries[[2]][[2]],control=list(factr=1e11))
+    a = stats::optim(kstart,fn,method="L-BFGS-B",lower=boundaries[[2]][[1]],upper=boundaries[[2]][[2]],control=list(factr=1e11))
     valid = a$value<.001
     if(valid) return(a$par) else return(NA)
   })
@@ -70,7 +70,7 @@ plot2d = function(ds) {
   levels  = c(powerlabel,costlabel,pointlabel,crosslabel)
 
   powerlabel = factor(powerlabel,levels=levels)
-  costlabel = factor(costlabel,level=levels)
+  costlabel = factor(costlabel,levels=levels)
   pointlabel = factor(pointlabel,levels=levels)
   crosslabel = factor(crosslabel,levels=levels)
 
@@ -80,10 +80,10 @@ plot2d = function(ds) {
   pl2 = ggplot2::ggplot()
 
   pl2 = pl2 +
-    ggplot2::geom_line(data=eqpower,ggplot2::aes(x=n, y=k,col=powerlabel))+
-    ggplot2::geom_line(data=eqcost,ggplot2::aes(x=n, y=k,col=costlabel))+
-    ggplot2::geom_point(data=dat_obs, ggplot2::aes(x=V1, y=V2,col=pointlabel)) +
-    ggplot2::geom_point(data = fin,ggplot2::aes(x=n,y=k,col=crosslabel),shape=3,size=5) +
+    ggplot2::geom_line(ggplot2::aes(x=eqpower$n, y=eqpower$k,col=powerlabel))+
+    ggplot2::geom_line(ggplot2::aes(x=eqcost$n, y=eqcost$k,col=costlabel))+
+    ggplot2::geom_point(ggplot2::aes(x=dat_obs$V1, y=dat_obs$V2,col=pointlabel)) +
+    ggplot2::geom_point(ggplot2::aes(x=fin$n,y=fin$k,col=crosslabel),shape=3,size=5) +
     ggplot2::theme_bw() +
     ggplot2::scale_colour_manual(breaks = levels,values = c("black","#B2182B", "#2166AC","green")[labelorder], guide = ggplot2::guide_legend(title="",override.aes = list(linetype = c("blank", "solid","solid","blank")[labelorder],shape = c(20, NA,NA,3)[labelorder]))) +
     # ggplot2::scale_color_brewer(palette="Set1") +

@@ -6,8 +6,9 @@
 #' @export
 #'
 #' @examples
-summary.designresult = function(ds) {
+summary.designresult = function(object, ...) {
 
+  ds = object
   # remove unneeded list elements here
 
   class(ds)="summary.designresult"
@@ -24,8 +25,9 @@ summary.designresult = function(ds) {
 #' @export
 #'
 #' @examples
-print.summary.designresult = function(ds) {
+print.summary.designresult = function(x, ...) {
 
+  ds = x
   design = ds$final$design
   power = round(ds$final$power,5)
   se = round(ds$final$se,5)

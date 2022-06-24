@@ -17,7 +17,7 @@ check.term = function(runs,ci,time,dat,time_temp,fit,pred,ci_perc){
     if (is.null(fit$fitfun.sd)) fit$fitfun.sd = fit.surrogate(dat = dat,surrogate="gpr")$fitfun.sd
 
     sdval = fit$fitfun.sd(as.numeric(pred$points.notgreedy))
-    interval = sdval*qnorm(ci_perc+(1-ci_perc)/2)
+    interval = sdval*stats::qnorm(ci_perc+(1-ci_perc)/2)
     if(interval<ci) re=TRUE
 
   }

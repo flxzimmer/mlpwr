@@ -8,7 +8,7 @@ find.design(
   dgfun,
   boundaries,
   power = NULL,
-  runs = 1000,
+  runs = 2000,
   ci = NULL,
   ci_perc = 0.95,
   time = NULL,

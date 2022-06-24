@@ -29,7 +29,7 @@
 find.design = function(dgfun,
                    boundaries,
                    power=NULL,
-                   runs = 1000,
+                   runs = 2000,
                    ci = NULL,
                    ci_perc = .95,
                    time = NULL,
