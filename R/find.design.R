@@ -4,7 +4,7 @@
 #' @param dgfun function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)
 #' @param boundaries list containing lower and upper bounds of the design space
 #' @param power numeric; power value for the 'desired power' task
-#' @param runs integer; number of dgf evaluations to be performed before termination
+#' @param evaluations integer; number of dgf evaluations to be performed before termination
 #' @param ci numeric; desired width of the confidence interval at the predicted value on termination.
 #' @param ci_perc numeric; specifying the desired confidence interval, e.g. 95% or 99%.
 #' @param time integer; seconds until termination
@@ -13,7 +13,7 @@
 #' @param surrogate character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.
 #' @param n.startsets integer; number of startsets used per dimension of dgfun
 #' @param setsize The number of draws from the data generating function in each iteration
-#' @param init.perc numeric; percentage of runs used for the initialization phase
+#' @param init.perc numeric; percentage of evaluations used for the initialization phase
 #' @param dat list of data from a previous design result.
 #' @param Ntry integer; number of locations to start a search for optimal paramters in the prediction phase.
 #' @param silent logical; supresses output during the search.
@@ -29,7 +29,7 @@
 find.design = function(dgfun,
                    boundaries,
                    power=NULL,
-                   runs = 2000,
+                   evaluations = 2000,
                    ci = NULL,
                    ci_perc = .95,
                    time = NULL,
@@ -39,6 +39,7 @@ find.design = function(dgfun,
                    n.startsets = 4,
                    init.perc = .2,
                    setsize = 100,
+                   continue = NULL,
                    dat = NULL,
                    Ntry = 2,
                    silent =FALSE,
@@ -46,34 +47,34 @@ find.design = function(dgfun,
                    control = list()
                    ) {
 
+  # save seed for reproducibility
   seed <- .Random.seed
 
   # Start the clock
   time_temp = timer()
 
+  # initiate continue
+  if (!is.null(continue)) {
+    dgfun = continue$dgfun
+    boundaries = continue$boundaries
+    power = continue$call$power
+    max_cost = continue$call$max_cost
+    dat = continue$dat
+    surrogate = continue$call$surrogate
+  }
+
   # convert boundaries to list
   if (!is.list(boundaries)) boundaries=list(n=boundaries)
-
-  # set a default costfunction (identity) if not specified
-  if (is.null(costfun)) costfun = function(x)sum(x)
-
-  # Error if neither power or max_cost is given or both are given
-  if (is.null(power)& is.null(max_cost)) stop("Either the power or max_cost argument must be supplied")
-  if (!is.null(power)& !is.null(max_cost)) stop("Only one of power or max_cost argument can be supplied")
-
-  # determine the optimization task to perform
-  if (!is.null(max_cost)) task = "costthreshold"
-  if (!is.null(power)) task = "desiredpower"
 
   # determine number of points
   n.points = n.startsets*length(boundaries)
 
-  # Set setsize according to a percentage of runs, if available
-  if (!is.null(runs)) setsize = ceiling(runs*init.perc/n.points)
+  # Set setsize according to a percentage of evaluations, if available
+  if (!is.null(evaluations)) setsize = ceiling(evaluations*init.perc/n.points)
 
-  # adjust number of runs for continuing a search
+  # adjust number of evaluations for continuing a search
   if(!is.null(dat)) {
-    runs = usedruns(dat) + runs
+    evaluations = usedevaluations(dat) + evaluations
   }
 
   # Generate initialization data if not available
@@ -91,6 +92,17 @@ find.design = function(dgfun,
 # warn if ci is termination critrerion without gpr surrogate
   if (!is.null(ci)&& surrogate!="gpr") warning("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
 
+
+  # set a default costfunction (identity) if not specified
+  if (is.null(costfun)) costfun = function(x)sum(x)
+
+  # Error if neither power or max_cost is given or both are given
+  if (is.null(power)& is.null(max_cost)) stop("Either the power or max_cost argument must be supplied")
+  if (!is.null(power)& !is.null(max_cost)) stop("Only one of power or max_cost argument can be supplied")
+
+  # determine the optimization task to perform
+  if (!is.null(max_cost)) task = "costthreshold"
+  if (!is.null(power)) task = "desiredpower"
 
 ##############################################################################
   # start the search
@@ -115,7 +127,7 @@ find.design = function(dgfun,
     }
 
     # check TERMINATION
-    is.terminate = check.term(runs=runs,ci=ci,time=time,dat=dat,time_temp=time_temp,fit =fit,pred=pred,ci_perc=ci_perc)
+    is.terminate = check.term(evaluations=evaluations,ci=ci,time=time,dat=dat,time_temp=time_temp,fit =fit,pred=pred,ci_perc=ci_perc)
     if (is.terminate) break
 
     # UPDATING: sample from the DGF
@@ -125,7 +137,7 @@ find.design = function(dgfun,
     n_updates = ifelse(exists("n_updates"),n_updates + 1,1)
 
     # print current progress
-    if(!silent) print.progress(n_updates=n_updates,runs_used=usedruns(dat),time_used = timer(time_temp))
+    if(!silent) print.progress(n_updates=n_updates,evaluations_used=usedevaluations(dat),time_used = timer(time_temp))
 
   }
   ##############################################################################
@@ -155,7 +167,7 @@ find.design = function(dgfun,
   re = list(
     final = final,
     dat = dat,
-    runs_used = usedruns(dat),
+    evaluations_used = usedevaluations(dat),
     surrogate = surrogate,
     fit = fit,
     time_used = time_used,
@@ -165,7 +177,8 @@ find.design = function(dgfun,
     call = match.call(),
     seed = seed,
     costfun = costfun,
-    boundaries = boundaries
+    boundaries = boundaries,
+    dgfun = dgfun
     )
 
   class(re) = "designresult"

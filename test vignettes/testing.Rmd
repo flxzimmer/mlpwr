@@ -30,7 +30,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000
+  evaluations = 2000
   )
 summary(ds)
 plot(ds)
@@ -50,7 +50,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000,
+  evaluations = 2000,
   surrogate="reg"
 )
 summary(ds)
@@ -60,7 +60,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000,
+  evaluations = 2000,
   surrogate="gpr"
 )
 summary(ds)
@@ -70,7 +70,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000,
+  evaluations = 2000,
   surrogate="svr"
 )
 summary(ds)
@@ -94,7 +94,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   power = .8,
-  runs = 4000)
+  evaluations = 4000)
 summary(ds)
 
 
@@ -103,7 +103,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   power = .8,
-  runs = 4000,
+  evaluations = 4000,
   surrogate="svr"
   )
 summary(ds)
@@ -117,7 +117,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   max_cost = 174,
-  runs = 4000
+  evaluations = 4000
 )
 summary(ds)
 
@@ -127,7 +127,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   max_cost = 174,
-  runs = 4000,
+  evaluations = 4000,
   surrogate="svr"
 )
 summary(ds)
@@ -146,13 +146,13 @@ set.seed(1)
 ```{r}
 dgfun = example.dgf("ttest")
 
-# runs
+# evaluations
 
 ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000)
+  evaluations = 2000)
 summary(ds)
 ```
 
@@ -187,7 +187,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs= 1000,
+  evaluations = 1000,
   ci = .03,
   time = 5,
   surrogate = "gpr"
@@ -210,17 +210,13 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000
+  evaluations = 2000
 )
 summary(ds)
 
 ds_continued = find.design(
-  dgfun = dgfun,
-  boundaries = c(50,200),
-  power = .8,
-  runs = 2000,
-  dat=ds$dat
-)
+  continue = ds,
+  evaluations = 2000)
 
 summary(ds_continued)
 ```
@@ -240,7 +236,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000
+  evaluations = 2000
 )
 summary(ds)
 plot(ds)
@@ -251,7 +247,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(200,500),
   power = .8,
-  runs = 2000
+  evaluations = 2000
 )
 summary(ds)
 plot(ds)
@@ -272,7 +268,7 @@ ds = find.design(
   boundaries = list(n = c(20,40),k=c(5,25)),
   costfun = costfun,
   max_cost = 174,
-  runs = 8000
+  evaluations = 8000
 )
 summary(ds)
 plot(ds)
@@ -285,7 +281,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   max_cost = 174,
-  runs = 8000
+  evaluations = 8000
 )
 summary(ds)
 plot(ds)
@@ -307,7 +303,7 @@ ds1 = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000
+  evaluations = 2000
 )
 summary(ds1)
 plot(ds1)
@@ -324,7 +320,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   power = .8,
-  runs = 4000)
+  evaluations = 4000)
 summary(ds)
 
 plot(ds,design=list(n=NA,k=9))
@@ -349,7 +345,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   power = .8,
-  runs = 4000)
+  evaluations = 4000)
 
 plot(ds)
 ```
@@ -362,7 +358,7 @@ ds = find.design(
   boundaries = list(n = c(20,90),k=c(5,25)),
   costfun = costfun,
   max_cost = 174,
-  runs = 4000
+  evaluations = 4000
 )
 
 plot(ds)
@@ -384,8 +380,8 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000,
-  autosave_dir = "C:/Users/admin/switchdrive/4 irt/"
+  evaluations = 2000,
+  autosave_dir = "C:/Users/felix/switchdrive/4 irt/"
 )
 summary(ds)
 ```
@@ -408,7 +404,7 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000,
+  evaluations = 2000,
   surrogate = "gpr",
   control = list(covtype="gauss")
   )

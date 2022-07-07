@@ -8,7 +8,7 @@ find.design(
   dgfun,
   boundaries,
   power = NULL,
-  runs = 2000,
+  evaluations = 2000,
   ci = NULL,
   ci_perc = 0.95,
   time = NULL,
@@ -18,6 +18,7 @@ find.design(
   n.startsets = 4,
   init.perc = 0.2,
   setsize = 100,
+  continue = NULL,
   dat = NULL,
   Ntry = 2,
   silent = FALSE,
@@ -32,7 +33,7 @@ find.design(
 
 \item{power}{numeric; power value for the 'desired power' task}
 
-\item{runs}{integer; number of dgf evaluations to be performed before termination}
+\item{evaluations}{integer; number of dgf evaluations to be performed before termination}
 
 \item{ci}{numeric; desired width of the confidence interval at the predicted value on termination.}
 
@@ -48,7 +49,7 @@ find.design(
 
 \item{n.startsets}{integer; number of startsets used per dimension of dgfun}
 
-\item{init.perc}{numeric; percentage of runs used for the initialization phase}
+\item{init.perc}{numeric; percentage of evaluations used for the initialization phase}
 
 \item{setsize}{The number of draws from the data generating function in each iteration}
 

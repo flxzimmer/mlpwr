@@ -62,8 +62,8 @@ plot2d = function(ds) {
 
 
   #labels
-  powerlabel = paste0("power = ",round(final$power,3))
-  costlabel = paste0("cost = ",round(final$cost,2))
+  powerlabel = paste0("Power = ",round(final$power,3))
+  costlabel = paste0("Cost = ",round(final$cost,2))
   pointlabel = "Designs"
   crosslabel = "Optimal design"
 

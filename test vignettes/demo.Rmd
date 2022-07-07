@@ -55,7 +55,7 @@ The central arguments to be specified are the following:
 
 -   boundaries: The lower and upper bound to search within, e.g. a sample size between 50 and 200.
 
--   runs: The number of evaluations of the dgfun that should be performed before returning a result.
+-   evaluations: The number of evaluations of the dgfun that should be performed before returning a result.
 
 Internally, the function performs an initialization phase, in which it evaluates the dgfun at some random initial values and the boundaries. After that, it performs the following steps in a loop:
 
@@ -65,7 +65,7 @@ Internally, the function performs an initialization phase, in which it evaluates
 
 -   Update: The dgfun is evaluated at the predicted sample size.
 
-Once a termination criterion is met (e.g. the number of permissible dgfun evaluation specified with runs), the algorithm is terminated.
+Once a termination criterion is met (e.g. the number of permissible dgfun evaluation specified with evaluations), the algorithm is terminated.
 
 We can perform the search with the above arguments in use.
 
@@ -74,11 +74,11 @@ ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000
+  evaluations = 2000
   )
 ```
 
-While it is running, the function gives us some updates regarding the number of updates performed, the time used, and the the number of runs.
+While it is running, the function gives us some updates regarding the number of updates performed, the time used, and the the number of evaluations.
 
 We can get an overview of the results via summary.
 

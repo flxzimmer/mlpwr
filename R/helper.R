@@ -41,7 +41,7 @@ hush=function(code){
 }
 
 
-usedruns = function(dat) {
+usedevaluations = function(dat) {
   return(sum(sapply(dat, function(x) length(x$y))))
 }
 
@@ -131,9 +131,9 @@ getweight = function(dat,weight.type="freq",correct_zero=T) {
 }
 
 
-print.progress = function(n_updates,runs_used,time_used) {
-  # cat('\r',paste(c("Updates","Runs","Time"),c(n_updates,runs_used,round(time_used,1)),sep=": ",collapse=", "),"\n")
-  cat('\r',paste(c("Updates","Runs","Time"),c(n_updates,runs_used,round(time_used,1)),sep=": ",collapse=", "))
+print.progress = function(n_updates,evaluations_used,time_used) {
+  # cat('\r',paste(c("Updates","evaluations","Time"),c(n_updates,evaluations_used,round(time_used,1)),sep=": ",collapse=", "),"\n")
+  cat('\r',paste(c("Updates","Evaluations","Time"),c(n_updates,evaluations_used,round(time_used,1)),sep=": ",collapse=", "))
   utils::flush.console()
 }
 

@@ -99,7 +99,7 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
     ggplot2::geom_point(ggplot2::aes(x =dat_obs$V1,y = dat_obs$y))+
     ggplot2::theme_bw() +
     ggplot2::scale_color_brewer(palette="Set1") +
-    ggplot2::theme(legend.title = ggplot2::element_blank())+ ggplot2::xlab(xlab) + ggplot2::ylab("power") +
+    ggplot2::theme(legend.title = ggplot2::element_blank())+ ggplot2::xlab(xlab) + ggplot2::ylab("Power") +
     ggplot2::theme(legend.position="bottom")
 
 

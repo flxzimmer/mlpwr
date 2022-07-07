@@ -1,14 +1,14 @@
 
 
-check.term = function(runs,ci,time,dat,time_temp,fit,pred,ci_perc){
+check.term = function(evaluations,ci,time,dat,time_temp,fit,pred,ci_perc){
 
   re = FALSE
 
-  # check termination (runs)
-  if (!is.null(runs)) {
-    used = usedruns(dat)
-    runs.remaining = runs - used
-    if(runs.remaining<=0) re=TRUE
+  # check termination (evaluations)
+  if (!is.null(evaluations)) {
+    used = usedevaluations(dat)
+    evaluations.remaining = evaluations - used
+    if(evaluations.remaining<=0) re=TRUE
   }
 
   # check termination (ci)

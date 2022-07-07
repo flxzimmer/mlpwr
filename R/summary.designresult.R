@@ -32,9 +32,19 @@ print.summary.designresult = function(x, ...) {
   power = round(ds$final$power,5)
   se = round(ds$final$se,5)
   cost = round(ds$final$cost,2)
-  runs = ds$runs_used
+  evaluations = ds$evaluations_used
   timex = round(ds$time_used,2)
   updates = ds$n_updates
+  surrogate = ds$surrogate
+
+
+  surrogate = switch(surrogate,
+         reg = "Linear regression",
+         logreg = "Logistic regression",
+         svr = "Support vector regression",
+         gpr = "Gaussian process regression"
+  )
+
 
 
   cat("\nCall:\n", paste(deparse(ds$call), sep = "\n", collapse = "\n"),
@@ -46,23 +56,29 @@ print.summary.designresult = function(x, ...) {
   cat("\nPower: ", paste(power, sep = "\n", collapse = "\n"),
        sep = "")
 
-  cat("\nSE: ", paste(se, sep = "\n", collapse = "\n"),
+  cat(",  SE: ", paste(se, sep = "\n", collapse = "\n"),
       sep = "")
 
-  cat("\nCost: ", paste(cost, sep = "\n", collapse = "\n"),
+  if (length(ds$boundaries)>1) cat(",  Cost: ", paste(cost, sep = "\n", collapse = "\n"),
        sep = "")
 
-  cat("\nRuns: ", paste(runs, sep = "\n", collapse = "\n"),
+  cat("\nEvaluations: ", paste(evaluations, sep = "\n", collapse = "\n"),
      sep = "")
 
-  cat("\nTime: ", paste(timex, sep = "\n", collapse = "\n"),
+  cat(",  Time: ", paste(timex, sep = "\n", collapse = "\n"),
       sep = "")
 
-  cat("\nUpdates: ", paste(updates, sep = "\n", collapse = "\n"),
+  cat(",  Updates: ", paste(updates, sep = "\n", collapse = "\n"),
      sep = "")
+
+  cat("\nSurrogate: ", paste(surrogate, sep = "\n", collapse = "\n"),
+      sep = "")
+
+
 
   cat("\n")
   cat("\n")
 
   invisible(ds)
 }
+

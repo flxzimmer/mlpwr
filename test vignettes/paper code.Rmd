@@ -1,7 +1,15 @@
 ---
 title: "paper code"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
+
+
+```{r}
+library(mirt)
+```
+
 
 # Toy Example
 
@@ -22,6 +30,7 @@ estimated_power
 ```
 
 ```{r}
+set.seed(1)
 library(mlpwr)
 res = find.design(dgfun = simfun,
     boundaries = c(50,200), power = .8)
@@ -32,8 +41,135 @@ summary(res)
 plot(res)
 ```
 
+```{r include=FALSE}
+pl = plot(res)
+
+pdf(paste0(getwd(),"/plots/toyexample.pdf"),height=3.3,width=3.3*1.3);pl;dev.off()
+```
+
 
 # Example 1
+
+Opitz 2021
+
+```{r}
+library(foreign)
+library(psychotree)
+library(mlpwr)
+library(mirt)
+
+set.seed(1)
+```
+
+```{r}
+# load data
+dat <- read.spss("C:/Users/felix/switchdrive/4 irt/paper 3/opitz 21/Modifications for R_160419_1.sav", use.value.labels = F, to.data.frame = T)
+
+# preprocessing
+dat$resp <- as.matrix(dat[ , 3:14])
+dat <- dat[ , -(3:14)]
+dat <- subset(dat, rowMeans(resp, na.rm = TRUE) > 0 & rowMeans(resp, na.rm = TRUE) < 1)
+
+# perform DIF analysis, simpler than original (only physics split)(raschtrees)
+res <- raschtree(resp ~ Phy_dummy, data = dat) 
+
+plot(res)
+
+d1 = itempar(res, node = 2)
+d2 = itempar(res, node = 3)
+
+# setup a simfun according these item parameters
+simfun_irt = function(N) {
+  
+  datx = NULL
+  N1 = round(N/2)
+  N2 = N-round(N/2)
+  datx$resp = rbind(
+    simdata(a=rep(NA,length(d1)),d = d1, N=N1, itemtype="2PL"),
+    simdata(a=rep(NA,length(d2)),d = d2, N=N2, itemtype="2PL")
+  )
+  datx$group = c(rep(1, N1), rep(2, N2))
+  
+  # remove perfect good/bad results
+  ind = rowMeans(datx$resp, na.rm = TRUE) > 0 & rowMeans(datx$resp, na.rm = TRUE) < 1
+  datx$resp <- datx$resp[ind,]
+  datx$group = datx$group[ind]
+  
+  res <- raschtree(resp ~ group, data = datx) 
+  length(summary(res))==2
+}
+
+```
+
+Perform Design Finding
+
+```{r}
+res = find.design(dgfun = simfun_irt,
+    boundaries = c(100,300), power = .8)
+summary(res)
+```
+
+Continue the search
+
+```{r}
+res2 = find.design(continue = res, evaluations = 2000)
+summary(res2)
+```
+
+Plot result
+```{r}
+plot(res2)
+```
+
+
+```{r include=FALSE}
+# save plot for paper
+pl = plot(res2)
+
+pdf(paste0("C:/Users/felix/switchdrive/4 irt/mlpwr/plots/ex1.pdf"),height=3.3,width=3.3*1.3);pl;dev.off()
+
+```
+
+
+# Example 2
+
+```{r}
+set.seed(1)
+```
+
+
+```{r}
+simfun_multi = function(N) {
+}
+simfun_multi = example.dgf("anova")
+costfun = function(x) x[1]*1.9+x[2]*6
+```
+
+```{r}
+res = find.design(dgfun = simfun_multi, costfun = costfun,
+    boundaries = list(N=c(20,200),k=c(5,29)),
+    power = .8,evaluations = 4000)
+summary(res)
+```
+
+```{r}
+plot(res)
+```
+
+
+
+```{r include=FALSE}
+
+pl = plot(res)
+
+pdf(paste0("C:/Users/felix/switchdrive/4 irt/mlpwr/plots/ex2.pdf"),height=4,width=4*1.3);pl;dev.off()
+
+```
+
+
+
+
+# (Placeholder Example 1)
 ```{r}
 set.seed(1)
 ```
@@ -71,13 +207,13 @@ simfun_irt = function(N) {
 
 ```{r}
 res = find.design(dgfun = simfun_irt,
-    boundaries = c(50,200), power = .8,runs = 1000)
+    boundaries = c(50,200), power = .8,evaluations = 1000)
 summary(res)
 ```
 
 
 ```{r}
-res2 = find.design(continue = res, runs = 2000)
+res2 = find.design(continue = res, evaluations = 2000)
 summary(res2)
 ```
 
@@ -85,4 +221,15 @@ summary(res2)
 ```{r}
 plot(res2)
 ```
+
+
+```{r include=FALSE}
+
+pl = plot(res2)
+
+pdf(paste0("C:/Users/felix/switchdrive/4 irt/mlpwr/plots/ex1.pdf"),height=3.3,width=3.3*1.3);pl;dev.off()
+
+```
+
+
 

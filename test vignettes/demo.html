@@ -404,7 +404,7 @@ size given a power level that should be surpassed.</p>
 <li><p>dgfun: The data generating function as defined above</p></li>
 <li><p>boundaries: The lower and upper bound to search within, e.g. a
 sample size between 50 and 200.</p></li>
-<li><p>runs: The number of evaluations of the dgfun that should be
+<li><p>evaluations: The number of evaluations of the dgfun that should be
 performed before returning a result.</p></li>
 </ul>
 <p>Internally, the function performs an initialization phase, in which
@@ -419,47 +419,47 @@ determined.</p></li>
 size.</p></li>
 </ul>
 <p>Once a termination criterion is met (e.g. the number of permissible
-dgfun evaluation specified with runs), the algorithm is terminated.</p>
+dgfun evaluation specified with evaluations), the algorithm is terminated.</p>
 <p>We can perform the search with the above arguments in use.</p>
 <pre class="r"><code>ds = find.design(
   dgfun = dgfun,
   boundaries = c(50,200),
   power = .8,
-  runs = 2000
+  evaluations = 2000
   )</code></pre>
 <pre><code>## 
- Updates: 1, Runs: 500, Time: 0.3
- Updates: 2, Runs: 600, Time: 0.5
- Updates: 3, Runs: 700, Time: 0.7
- Updates: 4, Runs: 800, Time: 0.9
- Updates: 5, Runs: 900, Time: 1.1
- Updates: 6, Runs: 1000, Time: 1.3
- Updates: 7, Runs: 1100, Time: 1.6
- Updates: 8, Runs: 1200, Time: 1.8
- Updates: 9, Runs: 1300, Time: 2.1
- Updates: 10, Runs: 1400, Time: 2.3
- Updates: 11, Runs: 1500, Time: 2.6
- Updates: 12, Runs: 1600, Time: 2.9
- Updates: 13, Runs: 1700, Time: 3.1
- Updates: 14, Runs: 1800, Time: 3.4
- Updates: 15, Runs: 1900, Time: 3.7
- Updates: 16, Runs: 2000, Time: 3.9</code></pre>
+ Updates: 1, evaluations: 500, Time: 0.3
+ Updates: 2, evaluations: 600, Time: 0.5
+ Updates: 3, evaluations: 700, Time: 0.7
+ Updates: 4, evaluations: 800, Time: 0.9
+ Updates: 5, evaluations: 900, Time: 1.1
+ Updates: 6, evaluations: 1000, Time: 1.3
+ Updates: 7, evaluations: 1100, Time: 1.6
+ Updates: 8, evaluations: 1200, Time: 1.8
+ Updates: 9, evaluations: 1300, Time: 2.1
+ Updates: 10, evaluations: 1400, Time: 2.3
+ Updates: 11, evaluations: 1500, Time: 2.6
+ Updates: 12, evaluations: 1600, Time: 2.9
+ Updates: 13, evaluations: 1700, Time: 3.1
+ Updates: 14, evaluations: 1800, Time: 3.4
+ Updates: 15, evaluations: 1900, Time: 3.7
+ Updates: 16, evaluations: 2000, Time: 3.9</code></pre>
 <p>While it is running, the function gives us some updates regarding the
 number of updates performed, the time used, and the the number of
-runs.</p>
+evaluations.</p>
 <p>We can get an overview of the results via summary.</p>
 <pre class="r"><code>summary(ds)</code></pre>
 <pre><code>## 
 ## Call:
 ## find.design(dgfun = dgfun, boundaries = c(50, 200), power = 0.8, 
-##     runs = 2000)
+##     evaluations = 2000)
 ## 
 ## Design: n = 100
 ## 
 ## Power: 0.8007
 ## SE: 0.00971
 ## Cost: 100
-## Runs: 2000
+## evaluations: 2000
 ## Time: 4.33
 ## Updates: 16</code></pre>
 <p>The results indicate that a sample size of 98 is suitable.</p>
