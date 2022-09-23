@@ -4,7 +4,15 @@
 \alias{plot.designresult}
 \title{Title}
 \usage{
-\method{plot}{designresult}(x, design = NULL, adderrorbars = NULL, addribbon = NULL, ...)
+\method{plot}{designresult}(
+  x,
+  design = NULL,
+  adderrorbars = NULL,
+  addribbon = NULL,
+  trim = TRUE,
+  type = "heat",
+  ...
+)
 }
 \arguments{
 \item{ds}{}

@@ -8,7 +8,7 @@ find.design(
   simfun,
   boundaries,
   power = NULL,
-  evaluations = 2000,
+  evaluations = 4000,
   ci = NULL,
   ci_perc = 0.95,
   time = NULL,
