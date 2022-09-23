@@ -374,12 +374,12 @@ package. The material is used in the tutorial paper “xyz”.</p>
 <pre class="r"><code>library(mlpwr)</code></pre>
 <div id="setting-up-a-data-generating-function-dgf" class="section level3">
 <h3>Setting up a data generating function (DGF)</h3>
-<p>The data generating function (dgfun) is the function to simulate
+<p>The data generating function (simfun) is the function to simulate
 hypothesis test results with.</p>
 <p>A simple function simulates a group mean comparison with a t-test.
 The input is a sample size n and the output is either TRUE or FALSE
 depending on the significance of the hypothesis test.</p>
-<pre class="r"><code>dgfun = function(n) {
+<pre class="r"><code>simfun = function(n) {
 
     mean_difference = .4 
     group1 = rnorm(n)
@@ -390,9 +390,9 @@ depending on the significance of the hypothesis test.</p>
     return(significant)
 }</code></pre>
 <p>We can test the data generating function as follows.</p>
-<pre class="r"><code>dgfun(30)</code></pre>
+<pre class="r"><code>simfun(30)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>dgfun(400)</code></pre>
+<pre class="r"><code>simfun(400)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 </div>
 <div id="performing-the-search-for-design-parameters" class="section level3">
@@ -401,28 +401,28 @@ depending on the significance of the hypothesis test.</p>
 size given a power level that should be surpassed.</p>
 <p>The central arguments to be specified are the following:</p>
 <ul>
-<li><p>dgfun: The data generating function as defined above</p></li>
+<li><p>simfun: The data generating function as defined above</p></li>
 <li><p>boundaries: The lower and upper bound to search within, e.g. a
 sample size between 50 and 200.</p></li>
-<li><p>evaluations: The number of evaluations of the dgfun that should be
+<li><p>evaluations: The number of evaluations of the simfun that should be
 performed before returning a result.</p></li>
 </ul>
 <p>Internally, the function performs an initialization phase, in which
-it evaluates the dgfun at some random initial values and the boundaries.
+it evaluates the simfun at some random initial values and the boundaries.
 After that, it performs the following steps in a loop:</p>
 <ul>
 <li><p>Fit: A surrogate model is fitted to the relationship of sample
 size and power.</p></li>
 <li><p>Predict: A candidate for a good sample size is
 determined.</p></li>
-<li><p>Update: The dgfun is evaluated at the predicted sample
+<li><p>Update: The simfun is evaluated at the predicted sample
 size.</p></li>
 </ul>
 <p>Once a termination criterion is met (e.g. the number of permissible
-dgfun evaluation specified with evaluations), the algorithm is terminated.</p>
+simfun evaluation specified with evaluations), the algorithm is terminated.</p>
 <p>We can perform the search with the above arguments in use.</p>
 <pre class="r"><code>ds = find.design(
-  dgfun = dgfun,
+  simfun = simfun,
   boundaries = c(50,200),
   power = .8,
   evaluations = 2000
@@ -451,7 +451,7 @@ evaluations.</p>
 <pre class="r"><code>summary(ds)</code></pre>
 <pre><code>## 
 ## Call:
-## find.design(dgfun = dgfun, boundaries = c(50, 200), power = 0.8, 
+## find.design(simfun = simfun, boundaries = c(50, 200), power = 0.8, 
 ##     evaluations = 2000)
 ## 
 ## Design: n = 100

@@ -9,7 +9,8 @@ fit.surrogate = function(dat,surrogate,lastfit=0,control=list()){
                reg = reg.fit(dat),
                logreg = logi.fit(dat),
                svr = svm.fit(dat,lastfit=lastfit),
-               gpr = gauss.fit(dat,patience=100,control)
+               gpr = gauss.fit(dat,patience=100,control),
+              gam = gam.fit(dat)
                )
 
 }
@@ -184,6 +185,15 @@ gauss.fit = function(dat,patience=100,control) {
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   weight = getweight(dat,weight.type="var")
 
+  if(any(ind <- duplicated(datx$y))) {
+    a = datx$y[ind]
+    a = a + stats::rnorm(length(a),sd=.0000001)
+    a[a>1] = 1-(a[a>1]-1)
+    a[a<0] = -a[a<0]
+    datx$y[ind] = a
+  }
+
+
   # setup gpr arguments
   args = list(design=xvars, response=datx$y,noise.var=weight,control=list(trace=FALSE))
   # args = rlist::list.append(args, control)
@@ -225,5 +235,53 @@ gauss.fit = function(dat,patience=100,control) {
 
   return(re)
 }
+
+
+
+# gam ---------------------------------------------------------------------
+
+gam.fit = function(dat) {
+
+  datx = todataframe(dat,aggregate=TRUE)
+  xvars = datx[,1:(length(datx)-1),drop=FALSE]
+  weight = getweight(dat,weight.type="freq")
+
+   # browser()
+   mod = tryCatch(
+     mgcv::gam(y ~ s(V1) + s(V2), data = datx,weights=weight,family = binomial(link = "logit")),
+     error = function(e) {
+       print("error");
+       # mgcv::gam(y ~ V1+V2, data = datx,weights=weight)
+       mgcv::gam(y ~ s(V1,k=1) + s(V2,k=1), data = datx,weights=weight,family = binomial(link = "logit"))
+     })
+
+
+  # mod = tryCatch(
+  #   mgcv::gam(y ~ s(V1) + s(V2), data = datx,weights=weight),
+  #   error = function(e) {
+  #   print("error");
+  #   # mgcv::gam(y ~ V1+V2, data = datx,weights=weight)
+  #     mgcv::gam(y ~ s(V1,k=1) + s(V2,k=1), data = datx,weights=weight)
+  #   })
+
+
+
+  # mod =mgcv::gam(y~.,datx,weights=weight)
+
+  fitfun = function(x) {
+    names(x) = names(xvars)
+    stats::predict(mod,newdata=data.frame(t(x)))}
+
+  # fitfun.sd = function(x) {
+  #   names(x) = names(xvars)
+  #   stats::predict(mod,newdata=data.frame(t(x)),se.fit=TRUE)$se.fit}
+
+  re = list(fitfun=fitfun,fitfun.sd=NULL,badfit=FALSE)
+
+  return(re)
+}
+
+
+
 
 

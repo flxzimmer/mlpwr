@@ -12,7 +12,7 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
 
   boundaries = ds$boundaries
 
-  # treat 2D dgfun differntly, convert to 1D according to specification
+  # treat 2D simfun differntly, convert to 1D according to specification
   if(!is.null(design)) {
 
     namesx = names(boundaries)

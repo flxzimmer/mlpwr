@@ -1,7 +1,7 @@
 
 
 
-addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F,autosave_dir=NULL) {
+addval = function(simfun,dat=list(),points=NULL,each=1,minrun=F,autosave_dir=NULL) {
 
   xvalues = sapply(dat,function(y) digest::digest(as.numeric(y$x)))
 
@@ -19,10 +19,10 @@ addval = function(dgfun,dat=list(),points=NULL,each=1,minrun=F,autosave_dir=NULL
     }
     a = as.numeric(points[i,])
 
-    resx = c(resx,replicate(each,suppressMessages(hush(dgfun(as.numeric(points[i,]))))))
+    resx = c(resx,replicate(each,suppressMessages(hush(simfun(as.numeric(points[i,]))))))
 
     while(minrun && length(resx)> 1 && stats::var(resx) == 0) {
-      resx = c(resx,replicate(1,suppressMessages(hush(dgfun(as.numeric(points[i,]))))))
+      resx = c(resx,replicate(1,suppressMessages(hush(simfun(as.numeric(points[i,]))))))
     }
     dat[[ind]]$y = resx
   }

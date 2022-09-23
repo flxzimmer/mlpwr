@@ -1,4 +1,4 @@
-plot2d = function(ds) {
+plot2d_line = function(ds,trim) {
 
   dat = ds$dat
   fit = ds$fit
@@ -7,7 +7,6 @@ plot2d = function(ds) {
   boundaries = ds$boundaries
   final = ds$final
   costfun = ds$costfun
-
 
   ns = seq(boundaries[[1]][1],boundaries[[1]][2],.5)
   kstart = mean(boundaries[[2]])
@@ -32,6 +31,8 @@ plot2d = function(ds) {
   eqcost = data.frame(n=ns,k=eqcost.k)
   eqcost = eqcost[!is.na(eqcost$k),]
 
+  if(trim) {
+
   # trim power and cost to a common area
   powermins = apply(eqpower,2,min)
   powermaxs = apply(eqpower,2,max)
@@ -46,11 +47,13 @@ plot2d = function(ds) {
   ind2 = apply(eqcost,1,function(x) !any(x>maxs))
   eqcost = eqcost[ind1&ind2,]
 
-
   # trim observed data
   ind1 = apply(dat_obs[,1:2],1,function(x) !any(x<mins))
   ind2 = apply(dat_obs[,1:2],1,function(x) !any(x>maxs))
   dat_obs = dat_obs[ind1&ind2,]
+
+  if(nrow(eqpower)==0 | nrow(eqcost)==0 | nrow(dat_obs) ==0) stop("Plotting area is trimmed by default, leading to a too small area in this case. Try setting trim=FALSE")
+  }
 
   #final value
   fin= final$design
@@ -91,25 +94,6 @@ plot2d = function(ds) {
     ggplot2::theme(legend.position="bottom")
 
   pl2
-
-
-
 }
-
-
-
-# p7 = ggplot() + theme_bw()  + xlim(40, 80) + ylim(5,16) +
-#   scale_colour_manual(values = c("#B2182B", "#2166AC","black"), guide = guide_legend(title="",override.aes = list(linetype = c("solid", "solid","blank"),shape = c(NA, NA,3)))) +
-#   xlab("Participants per Cluster") +
-#   ylab("Number of Clusters") +
-#   geom_ribbon(data=eqpower,aes(x=X1,ymin = X2, ymax = 16), fill = "#92C5DE") +
-#   geom_line(data=eqpower,aes(x=X1, y=X2,col="Minimal power"),size=1)+
-#   geom_line(data=eqcost,aes(x=X1, y=X2,col="Maximal cost"),size=1)+
-#   geom_point(data=dat.at, aes(x=X1, y=X2,col="Optimal set"),shape=3,size=5) +
-#   annotate(geom="text", x=52, y=14, label="Desired Power", color="#2166AC",size = 5,hjust = "left") +
-#   annotate(geom="text", x=67, y=7, label="Optimal Cost", color="#B2182B",size = 5,hjust = "right") +
-#   annotate(geom="text", x=58, y=10, label="Optimal Set", color="black",size = 5, hjust = "right") +
-#   theme(legend.position="none",plot.title = element_text(hjust = 0.5)) + ggtitle("Desired Power Task")
-
 
 

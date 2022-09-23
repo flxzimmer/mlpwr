@@ -148,6 +148,34 @@ print.progress = function(n_updates,evaluations_used,time_used) {
 relu = function(x) ifelse(x>0,x,0)
 
 
+fix.argtype = function (fun,boundaries) {
+
+  ismulti = length(boundaries) > 1
+  islist = length(as.list(args(fun)))-1 > 1
+
+  if (islist&ismulti) re = function(x) {
+    do.call(fun,as.list(x))
+  } else {
+    re = fun
+  }
+
+# points = initpoints(boundaries=boundaries,n.points = 3)[1,]
+#   names(points) = c()
+#
+#
+#   islist = is.na(tryCatch(hush(fun(as.numeric(points))),error=function(e)NA))
+#   suppressWarnings(sink());suppressWarnings(sink())
+#
+#
+#   if (islist) re = function(x) {
+#     browser()
+#     do.call(fun,as.list(x))
+#   } else {
+#     re = fun
+#   }
+
+  return(re)
+}
 
 
 

@@ -5,7 +5,7 @@
 \title{Sample Size Finding}
 \usage{
 find.design(
-  dgfun,
+  simfun,
   boundaries,
   power = NULL,
   evaluations = 2000,
@@ -13,7 +13,7 @@ find.design(
   ci_perc = 0.95,
   time = NULL,
   costfun = NULL,
-  max_cost = NULL,
+  cost = NULL,
   surrogate = NULL,
   n.startsets = 4,
   init.perc = 0.2,
@@ -27,7 +27,7 @@ find.design(
 )
 }
 \arguments{
-\item{dgfun}{function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)}
+\item{simfun}{function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)}
 
 \item{boundaries}{list containing lower and upper bounds of the design space}
 
@@ -41,13 +41,13 @@ find.design(
 
 \item{time}{integer; seconds until termination}
 
-\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for dgfuns with multiple input dimensions.}
+\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for simfuns with multiple input dimensions.}
 
-\item{max_cost}{numeric; cost threshold for the respective task}
+\item{cost}{numeric; cost threshold for the respective task}
 
 \item{surrogate}{character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.}
 
-\item{n.startsets}{integer; number of startsets used per dimension of dgfun}
+\item{n.startsets}{integer; number of startsets used per dimension of simfun}
 
 \item{init.perc}{numeric; percentage of evaluations used for the initialization phase}
 

@@ -46,7 +46,6 @@ print.summary.designresult = function(x, ...) {
   )
 
 
-
   cat("\nCall:\n", paste(deparse(ds$call), sep = "\n", collapse = "\n"),
       "\n", sep = "")
 

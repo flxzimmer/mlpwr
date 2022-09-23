@@ -1,17 +1,17 @@
 
 #' Sample Size Finding
 #'
-#' @param dgfun function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)
+#' @param simfun function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)
 #' @param boundaries list containing lower and upper bounds of the design space
 #' @param power numeric; power value for the 'desired power' task
 #' @param evaluations integer; number of dgf evaluations to be performed before termination
 #' @param ci numeric; desired width of the confidence interval at the predicted value on termination.
 #' @param ci_perc numeric; specifying the desired confidence interval, e.g. 95% or 99%.
 #' @param time integer; seconds until termination
-#' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for dgfuns with multiple input dimensions.
-#' @param max_cost numeric; cost threshold for the respective task
+#' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for simfuns with multiple input dimensions.
+#' @param cost numeric; cost threshold for the respective task
 #' @param surrogate character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.
-#' @param n.startsets integer; number of startsets used per dimension of dgfun
+#' @param n.startsets integer; number of startsets used per dimension of simfun
 #' @param setsize The number of draws from the data generating function in each iteration
 #' @param init.perc numeric; percentage of evaluations used for the initialization phase
 #' @param dat list of data from a previous design result.
@@ -26,15 +26,15 @@
 #' @examples
 #'
 #'
-find.design = function(dgfun,
+find.design = function(simfun,
                    boundaries,
                    power=NULL,
-                   evaluations = 2000,
+                   evaluations = 4000,
                    ci = NULL,
                    ci_perc = .95,
                    time = NULL,
                    costfun = NULL,
-                   max_cost = NULL,
+                   cost = NULL,
                    surrogate = NULL,
                    n.startsets = 4,
                    init.perc = .2,
@@ -55,16 +55,23 @@ find.design = function(dgfun,
 
   # initiate continue
   if (!is.null(continue)) {
-    dgfun = continue$dgfun
+    simfun = continue$simfun
+    costfun = continue$costfun
     boundaries = continue$boundaries
-    power = continue$call$power
-    max_cost = continue$call$max_cost
+    power = continue$power
+    cost = continue$cost
     dat = continue$dat
-    surrogate = continue$call$surrogate
+    surrogate = ifelse(surrogate!=continue$surrogate,surrogate,continue$surrogate)
   }
 
-  # convert boundaries to list
-  if (!is.list(boundaries)) boundaries=list(n=boundaries)
+  # set a default costfunction (identity) if not specified
+  if (is.null(costfun)) costfun = function(x)sum(x)
+
+  # convert boundaries to list and set name from simfun
+  if (!is.list(boundaries)) {
+    boundaries=list(boundaries)
+    names(boundaries) = names(as.list(args(simfun)))[1]
+  }
 
   # determine number of points
   n.points = n.startsets*length(boundaries)
@@ -77,10 +84,14 @@ find.design = function(dgfun,
     evaluations = usedevaluations(dat) + evaluations
   }
 
+  simfun = fix.argtype(simfun,boundaries)
+  costfun = fix.argtype(costfun,boundaries)
+
+
   # Generate initialization data if not available
   if(is.null(dat)) {
     points = initpoints(boundaries=boundaries,n.points = n.points)
-    dat = addval(dgfun=dgfun,points=points,each=setsize,autosave_dir=autosave_dir)
+    dat = addval(simfun=simfun,points=points,each=setsize,autosave_dir=autosave_dir)
   }
 
   #choose surrogate (if not specified)
@@ -93,15 +104,13 @@ find.design = function(dgfun,
   if (!is.null(ci)&& surrogate!="gpr") warning("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
 
 
-  # set a default costfunction (identity) if not specified
-  if (is.null(costfun)) costfun = function(x)sum(x)
 
-  # Error if neither power or max_cost is given or both are given
-  if (is.null(power)& is.null(max_cost)) stop("Either the power or max_cost argument must be supplied")
-  if (!is.null(power)& !is.null(max_cost)) stop("Only one of power or max_cost argument can be supplied")
+  # Error if neither power or cost is given or both are given
+  if (is.null(power)& is.null(cost)) stop("Either the power or cost argument must be supplied")
+  if (!is.null(power)& !is.null(cost)) stop("Only one of power or cost argument can be supplied")
 
   # determine the optimization task to perform
-  if (!is.null(max_cost)) task = "costthreshold"
+  if (!is.null(cost)) task = "costthreshold"
   if (!is.null(power)) task = "desiredpower"
 
 ##############################################################################
@@ -115,7 +124,7 @@ find.design = function(dgfun,
     if (fit$badfit) n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits + 1,1)
 
     # PREDICTION: Get a prediction from the fitted model
-    pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, max_cost=max_cost,boundaries=boundaries,task=task,Ntry=Ntry)
+    pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, cost=cost,boundaries=boundaries,task=task,Ntry=Ntry)
 
     # count bad predictions (no sensible value found)
     if (pred$badprediction) n.bad.predictions = ifelse(exists("n.bad.predictions"),n.bad.predictions + 1,1)
@@ -131,7 +140,7 @@ find.design = function(dgfun,
     if (is.terminate) break
 
     # UPDATING: sample from the DGF
-    dat = addval(dgfun=dgfun,dat=dat,points=pred$points,each= max(ceiling(setsize/nrow(pred$points)),1),autosave_dir=autosave_dir)
+    dat = addval(simfun=simfun,dat=dat,points=pred$points,each= max(ceiling(setsize/nrow(pred$points)),1),autosave_dir=autosave_dir)
 
     # number of performed updates
     n_updates = ifelse(exists("n_updates"),n_updates + 1,1)
@@ -145,7 +154,6 @@ find.design = function(dgfun,
   # move to next line
   cat("\n")
 
-
   # Optional for the final output: Generate SD from a GP if using a different surrogate
   if (is.null(fit$fitfun.sd)) fit$fitfun.sd = fit.surrogate(dat = dat,surrogate="gpr")$fitfun.sd
 
@@ -156,10 +164,10 @@ find.design = function(dgfun,
   if (pred$badprediction) warning("No good design found after the final update.")
 
   final = list(
-    design = pred$points.notgreedy,
-    power = fit$fitfun(as.numeric(pred$points.notgreedy)),
-    cost = costfun(as.numeric(pred$points.notgreedy)),
-    se = fit$fitfun.sd(as.numeric(pred$points.notgreedy))
+    design = pred$points,
+    power = fit$fitfun(as.numeric(pred$points)),
+    cost = costfun(as.numeric(pred$points)),
+    se = fit$fitfun.sd(as.numeric(pred$points))
   )
   names(final$design) = names(boundaries)
 
@@ -178,7 +186,9 @@ find.design = function(dgfun,
     seed = seed,
     costfun = costfun,
     boundaries = boundaries,
-    dgfun = dgfun
+    simfun = simfun,
+    cost = cost,
+    power = power
     )
 
   class(re) = "designresult"

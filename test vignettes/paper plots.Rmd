@@ -15,6 +15,97 @@ library(grid)
 ```
 
 
+
+# 3D plot
+
+```{r}
+
+library(plotly)
+library(mlpwr)
+library(gridExtra)
+library(grid)
+set.seed(1)
+
+# Setup Framework
+
+runfun = mlpwr:::runfun.anova()
+runfun.true = mlpwr:::runfun.anova.true()
+boundaries = list(n = c(20,90),k=c(5,25))
+costfun = function(x) x[1]*1.9+x[2]*6
+goalpower = .8
+
+ns = seq(boundaries[[1]][1],boundaries[[1]][2],by=.5)
+ks = seq(boundaries[[2]][1],boundaries[[2]][2],by=.5)
+x = expand.grid(ns,ks)
+
+# true function
+truedat = matrix(apply(x,1,runfun.true),ncol=length(ns),byrow=TRUE)
+
+
+# Values with power = .8 (as a line) and optimal set (as point)
+ksx = sapply(ns, function(n) {
+  op = optim(10,fn=function(k)abs(runfun.true(c(n,k))-.8),lower=boundaries[[2]][1],upper=boundaries[[2]][2],method="L-BFGS-B")
+  ifelse(op$value>.01,NA,op$par)
+}
+)
+
+#actually true is c(60,10)
+
+# some random sampling
+res = find.design(runfun,boundaries,costfun=costfun,evaluations = 100*20,power=goalpower ,n.startsets = 10, init.perc = 1)
+resx = mlpwr::todataframe(res$dat)
+
+
+# surrogate modeling
+res2 = find.design(runfun,boundaries,costfun=costfun,evaluations = 100*20,power=goalpower )
+resx2 = mlpwr::todataframe(res2$dat)
+
+
+# camera position
+scene = list(
+  camera = list(
+    eye = list(x = -1.4, y = -1.4, z = .8),
+    up= list(x=0, y=0, z=1),
+    center= list(x=0, y=0, z=0)),
+  xaxis = list(title ='Participants per Group'),
+  yaxis = list(title ='Groups'),
+  zaxis = list(title ='Power')
+)
+
+# Surface True function
+fig = plot_ly(x=ns, y=ks, z=truedat,type='surface',opacity=.8) %>%
+  layout(scene = scene)
+htmlwidgets::saveWidget(as_widget(fig), "fig1.html")
+
+
+# add power = .8 values
+fig <- add_paths(fig, x=ns, y=ksx, z=.8,name='asd',line = list(width = 6,color="blue",opacity=.8))
+htmlwidgets::saveWidget(as_widget(fig), "fig2.html")
+
+# add actually true value that also respects cost
+fig <- add_markers(fig, x=60, y=10, z=.8019052,name='asd',marker=list(color="purple",opacity=1))
+fig <- add_markers(fig, x=60, y=10, z=.8019052,name='asd',marker=list(color="purple",opacity=1))
+htmlwidgets::saveWidget(as_widget(fig), "fig3.html")
+
+# add random sampling points and the estimates there
+fig1 <- add_markers(fig, x=resx$V1, y=resx$V2, z=resx$y,name='asd',marker=list(color="black",opacity=.8))
+htmlwidgets::saveWidget(as_widget(fig1), "fig4.html")
+
+
+# add surrogate modeling sampling points
+fig2 <- add_markers(fig, x=resx2$V1, y=resx2$V2, z=resx2$y,name='asd',marker=list(color="black",opacity=.8))
+htmlwidgets::saveWidget(as_widget(fig2), "fig5.html")
+
+
+# Workflow from here:
+# open and click save as png
+# crop all using https://pinetools.com/bulk-batch-crop-image
+
+```
+
+
+
+
 # analytical simbased
 
 
@@ -60,7 +151,7 @@ pl3
 
 # Simulated
 set.seed(1)
-ds = find.design(dgfun=simfun,boundaries = boundaries,power = .8, evaluations = 2000,init.perc = 1,n.startsets = 10)
+ds = find.design(simfun=simfun,boundaries = boundaries,power = .95, evaluations = 2000,init.perc = 1,n.startsets = 10)
 dat2 = ds$dat
 dat_obs = mlpwr:::todataframe(dat2)
 dat_obs$sd = mlpwr:::getweight(dat2,"sd")
@@ -113,11 +204,11 @@ simfun = function(N) {
 set.seed(1)
 
 # only initialization
-res1 = find.design(dgfun = simfun,
-    boundaries = c(50,200), power = .8, ci=1)
+res1 = find.design(simfun = simfun,
+    boundaries = c(50,200), power = .95, ci=1)
 # after termination
-res2 = find.design(dgfun = simfun,
-    boundaries = c(50,200), power = .8)
+res2 = find.design(simfun = simfun,
+    boundaries = c(50,200), power = .95)
 
 boundaries = c(50,200) 
 ns = seq(boundaries[1],boundaries[2])
