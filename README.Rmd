@@ -100,7 +100,7 @@ ds = find.design(simfun = simfun_ttest,
 
 While it is running, the function gives us some updates regarding the number of updates performed, the time used, and the the number of evaluations.
 
-We can get an overview of the results via summary.
+We can get an overview of the results via summary. 
 
 ```{r}
 summary(ds)
