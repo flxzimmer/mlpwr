@@ -1,0 +1,115 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# mlpwr
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+Implements a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent preprint (Zimmer & Debelak, 2022, http://dx.doi.org/10.31234/osf.io/tnhb2). Supports multiple study design parameters and optimization with respect to a cost function. Can find optimal designs that correspond to a desired statistical power or designs that fullfill a cost constraint.
+    
+## Installation
+
+You can install the CRAN version using:
+``` r
+install.packages("mlpwr")
+```
+
+Or, you can install the development version of mlpwr from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("flxzimmer/mlpwr")
+```
+
+## Toy Example
+
+```{r include=FALSE}
+set.seed(1)
+```
+
+This is a basic demonstration to the mlpwr pacakge by going through a toy example. We want to obtain the sample size necessary for a within-group mean comparison using a t-test. 
+
+
+
+The package can be loaded via
+
+```{r}
+library(mlpwr)
+```
+
+
+### Setting up a simulation function (simfun)
+
+A simulation function (simfun) is a function to generate artificial data and subsequently perform an hypothesis test.
+
+A simple function simulates a group mean comparison with a t-test. The input is a sample size n and the output is either TRUE or FALSE depending on the significance of the hypothesis test.
+
+```{r}
+simfun_ttest = function(N) {
+    # Generate a data set
+    dat = rnorm(n = N, mean = .3) 
+    # Test the hypothesis
+    res = t.test(dat)
+    res$p.value < .01
+}
+```
+
+We can test the data generating function as follows for the sample sizes 30 and 400.
+
+```{r}
+simfun_ttest(30)
+simfun_ttest(400)
+```
+
+### Performing the search for design parameters
+
+The find.design functions can be used to find an appropriate sample size given a power level that should be surpassed.
+
+The central arguments to be specified are the following:
+
+-   simfun: The data generating function as defined above
+
+-   boundaries: The lower and upper bound to search within, e.g. a sample size between 50 and 200.
+
+-   power: The desired power of the design.
+
+-   evaluations: The number of evaluations of the simfun 
+
+Once a termination criterion is met (e.g. the number of permissible simfun evaluation specified with evaluations), the algorithm is terminated.
+
+We can perform the search with the above arguments in use.
+
+```{r}
+ds = find.design(simfun = simfun_ttest,
+    boundaries = c(100,300), power = .95,
+    evaluations = 4000)
+```
+
+While it is running, the function gives us some updates regarding the number of updates performed, the time used, and the the number of evaluations.
+
+We can get an overview of the results via summary.
+
+```{r}
+summary(ds)
+```
+
+The results indicate that a sample size of 201 is suitable. 
+
+Also, we can plot the fitted relationship between sample size and power. The black dots show us the simulated data. The gray ribbon indicates the uncertainty of the power at the respective sample sizes.  
+```{r}
+plot(ds)
+```
+

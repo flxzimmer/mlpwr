@@ -101,7 +101,7 @@ get.sd = function(dat,value) {
 
 
 
-getweight = function(dat,weight.type="freq",correct_zero=T) {
+getweight = function(dat,weight.type="freq",correct_zero=TRUE) {
 
   # correct_zero Adds one number to the data if it consists only of 0s or only of 1s. Variance can only then be calculated.
 

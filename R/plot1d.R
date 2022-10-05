@@ -2,9 +2,6 @@ plot1d = function(ds,design,adderrorbars,addribbon) {
 
   dat = ds$dat
   fit = ds$fit
-  # if (use_gpr_SE) fitfun.sd = ds$fit_gpr$fitfun.sd
-  # if (!use_gpr_SE) fitfun.sd = ds$fit$fitfun.sd
-
 
   # Actual SD
   dat_obs = todataframe(dat)

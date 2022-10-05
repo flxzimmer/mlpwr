@@ -1,30 +1,44 @@
-#' Title
+#' Summary of the search result
 #'
-#' @param ds
+#' Produce summary statistics of the results and the algorithm run.
 #'
-#' @return
+#' @param object Object of class designresult as created by the find.design function
+#' @param ... additional arguments to be passed
+#'
+#' @return An object of class summary.designresult
 #' @export
 #'
-#' @examples
+#' @examples #Load a simulation function
+#' simfun = example.simfun("ttest")
+#' # Perform the search
+#' ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+#' # Output the results
+#' summary(ds)
 summary.designresult = function(object, ...) {
 
   ds = object
-  # remove unneeded list elements here
-
   class(ds)="summary.designresult"
 
   return(ds)
 }
 
 
-#' Title
+
+
+#' Print Summary of the search result
 #'
-#' @param ds
+#' @param x Object of class designresult as created by the find.design function
+#' @param ... additional arguments to be passed
 #'
-#' @return
+#' @return An object of class summary.designresult
 #' @export
 #'
-#' @examples
+#' @examples #Load a simulation function
+#' simfun = example.simfun("ttest")
+#' # Perform the search
+#' ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+#' # Output the results
+#' summary(ds)
 print.summary.designresult = function(x, ...) {
 
   ds = x
@@ -36,7 +50,6 @@ print.summary.designresult = function(x, ...) {
   timex = round(ds$time_used,2)
   updates = ds$n_updates
   surrogate = ds$surrogate
-
 
   surrogate = switch(surrogate,
          reg = "Linear regression",
@@ -72,7 +85,6 @@ print.summary.designresult = function(x, ...) {
 
   cat("\nSurrogate: ", paste(surrogate, sep = "\n", collapse = "\n"),
       sep = "")
-
 
 
   cat("\n")

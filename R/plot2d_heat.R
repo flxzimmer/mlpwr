@@ -68,7 +68,7 @@ plot2d_heat = function(ds) {
     ggplot2::geom_tile(ggplot2::aes(x=powerfit$n, y=powerfit$k,fill=powerfit$power))+
     ggplot2::geom_line(ggplot2::aes(x=eqcost$n, y=eqcost$k,col=costlabel))+
     ggplot2::geom_point(ggplot2::aes(x=dat_obs$V1, y=dat_obs$V2,col=pointlabel)) +
-    ggplot2::geom_point(ggplot2::aes(x=fin$n,y=fin$k,col=crosslabel),shape=3,size=5) +
+    ggplot2::geom_point(ggplot2::aes(x=fin$n,y=fin$k,col=crosslabel),shape=4,size=5,stroke=1.3) +
     ggplot2::theme_bw() +
     ggplot2::scale_fill_gradient2(low = "white",
       mid = "#2166AC",
@@ -80,7 +80,7 @@ plot2d_heat = function(ds) {
       # guide = "colourbar",
       guide = ggplot2::guide_colourbar(title="Power",title.position="left",barwidth=8),
       aesthetics = "fill") +
-    ggplot2::scale_colour_manual(breaks = levels,values = c("#B2182B","black","green")[labelorder], guide = ggplot2::guide_legend(title="",override.aes = list(linetype = c("solid", "blank","blank")[labelorder],shape = c(NA,20,3)[labelorder]))) +
+    ggplot2::scale_colour_manual(breaks = levels,values = c("#B2182B","black","darkorchid4")[labelorder], guide = ggplot2::guide_legend(title="",override.aes = list(linetype = c("solid", "blank","blank")[labelorder],shape = c(NA,20,4)[labelorder],stroke = c(NA,NA,1.3)[labelorder],size = c(1,1,3)[labelorder]))) +
     # ggplot2::theme(legend.title = ggplot2::element_blank())+
     ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
     ggplot2::theme(legend.position="bottom")

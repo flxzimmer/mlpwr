@@ -3,5 +3,5 @@
 S3method(plot,designresult)
 S3method(print,summary.designresult)
 S3method(summary,designresult)
-export(example.dgf)
+export(example.simfun)
 export(find.design)

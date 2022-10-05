@@ -1,11 +1,11 @@
 
 
 
-addval = function(simfun,dat=list(),points=NULL,each=1,minrun=F,autosave_dir=NULL) {
+addval = function(simfun,dat=list(),points=NULL,each=1,minrun=FALSE,autosave_dir=NULL) {
 
   xvalues = sapply(dat,function(y) digest::digest(as.numeric(y$x)))
 
-  for (i in 1:nrow(points)) {
+  for (i in seq_len(nrow(points))) {
 
     ind = which(xvalues==digest::digest(as.numeric(points[i,])))
 

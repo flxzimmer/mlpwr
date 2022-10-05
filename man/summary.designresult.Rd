@@ -2,13 +2,26 @@
 % Please edit documentation in R/summary.designresult.R
 \name{summary.designresult}
 \alias{summary.designresult}
-\title{Title}
+\title{Summary of the search result}
 \usage{
 \method{summary}{designresult}(object, ...)
 }
 \arguments{
-\item{ds}{}
+\item{object}{Object of class designresult as created by the find.design function}
+
+\item{...}{additional arguments to be passed}
+}
+\value{
+An object of class summary.designresult
 }
 \description{
-Title
+Produce summary statistics of the results and the algorithm run.
+}
+\examples{
+#Load a simulation function
+simfun = example.simfun("ttest")
+# Perform the search
+ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+# Output the results
+summary(ds)
 }

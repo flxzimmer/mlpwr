@@ -1,11 +1,11 @@
 
-get.pred =function(fit,dat,power,costfun,cost,boundaries,Ntry=20,task) {
+get.pred =function(fit,dat,power,costfun,cost,boundaries,task) {
 
   datx = todataframe(dat,aggregate=TRUE)
   xvars = datx[,1:(length(datx)-1),drop=FALSE]
   # 3 most promising previous candidates
   freqs = sapply(dat,function(x) length(x$y))
-  cands = as.matrix(xvars[order(freqs,decreasing=T)[1:4],])
+  cands = as.matrix(xvars[order(freqs,decreasing=TRUE)[1:4],])
 
   midpars = sapply(boundaries,mean)
   boundmins = sapply(boundaries,function(x) x[1])

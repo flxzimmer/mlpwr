@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.designresult.R
 \name{plot.designresult}
 \alias{plot.designresult}
-\title{Title}
+\title{Plot search result}
 \usage{
 \method{plot}{designresult}(
   x,
@@ -15,8 +15,31 @@
 )
 }
 \arguments{
-\item{ds}{}
+\item{x}{Object of class designresult as created by the find.design function}
+
+\item{design}{Specify a design as a list. Can be used to make a 1D plot for a two-dimensional simfun. Set NA for the dimension that should be plotted and set a value for all others. For example: design=list(n=NA,k=9)}
+
+\item{adderrorbars}{logical. Plots errorbars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL)}
+
+\item{addribbon}{logical. adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).}
+
+\item{trim}{logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE}
+
+\item{type}{character indicating the type of the 2D plot. can be "heat"(default) or "line".}
+
+\item{...}{additional arguments to be passed}
+}
+\value{
+A ggplot object
 }
 \description{
-Title
+Plot a one- or two-dimensional graph of the result.
+}
+\examples{
+#Load a simulation function
+simfun = example.simfun("ttest")
+# Perform the search
+ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+# Plot results
+plot(ds)
 }

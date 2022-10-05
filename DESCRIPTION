@@ -1,21 +1,27 @@
 Package: mlpwr
-Title: A Power Analysis Toolbox to Find Study Designs with Optimal Costs using Machine Learning
-Version: 0.0.0.9000
+Title: A Power Analysis Toolbox to Find Cost-Efficient Study Designs
+Version: 1.0.0
 Authors@R: c(
     person("Felix", "Zimmer", , "felix.zimmer@mail.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8127-0007")),
     person("Rudolf", "Debelak", , "rudolf.debelak@psychologie.uzh.ch", role = c("aut"),
            comment = c(ORCID = "0000-0001-8900-2106"))
   )
-Description: Simulation based power analysis to find a sample size.
+Description: Implements a surrogate modeling algorithm to guide simulation-based
+    sample size planning. The method is described in detail in a recent preprint
+    (Zimmer & Debelak, 2022, (<doi:10.31234/osf.io/tnhb2>).
+    Supports multiple study design parameters and optimization with respect to a
+    cost function. Can find optimal designs that correspond to a desired 
+    statistical power or designs that fulfill a cost constraint.
 License: GPL (>= 3)
+URL: https://github.com/flxzimmer/mlpwr
+BugReports: https://github.com/flxzimmer/mlpwr/issues
 Imports: 
     utils,
     stats,
     DiceKriging,
     digest,
     ggplot2,
-    optimr,
     randtoolbox,
     rlist,
     WeightSVM,
@@ -23,13 +29,14 @@ Imports:
 Suggests:
     knitr,
     lme4,
+    lmerTest,
     mirt,
     pwr,
     rmarkdown,
     simr,
-    sn
+    sn,
+    tidyr
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.1
 VignetteBuilder: knitr

@@ -1,31 +1,52 @@
 
-#' Sample Size Finding
+#' Find optimal study designs
 #'
-#' @param simfun function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)
-#' @param boundaries list containing lower and upper bounds of the design space
-#' @param power numeric; power value for the 'desired power' task
+#' Perform a surrogate modeling approach to serach for optimal study design parameters.
+#'
+#' @param simfun function to generate hypotesis test results with. takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k).
+#' @param boundaries list containing lower and upper bounds of the design space. The list should consist of named vectors, each containing the upper and lower bound for the respective design parameter dimensions. For one design parameter dimension, can also be a vector containing the upper and lower bounds.
+#' @param power numeric; desired statistical power
 #' @param evaluations integer; number of dgf evaluations to be performed before termination
 #' @param ci numeric; desired width of the confidence interval at the predicted value on termination.
 #' @param ci_perc numeric; specifying the desired confidence interval, e.g. 95% or 99%.
 #' @param time integer; seconds until termination
-#' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for simfuns with multiple input dimensions.
-#' @param cost numeric; cost threshold for the respective task
+#' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Necessary for simfuns with multiple input dimensions.
+#' @param cost numeric; cost threshold. Design parameter set with highest power is searched among sets that fullfill this cost threshold.
 #' @param surrogate character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.
 #' @param n.startsets integer; number of startsets used per dimension of simfun
-#' @param setsize The number of draws from the data generating function in each iteration
+#' @param setsize The number of draws from the simfun in each iteration
 #' @param init.perc numeric; percentage of evaluations used for the initialization phase
 #' @param dat list of data from a previous design result.
-#' @param Ntry integer; number of locations to start a search for optimal paramters in the prediction phase.
 #' @param silent logical; supresses output during the search.
 #' @param autosave_dir character; file location for saving the dat object after each update.
 #' @param control list specifying arguments passed to the surrogate models. For example, list(covtype="gauss") can be used with the gpr surrogate to use a different covariance structure than the default.
+#' @param continue Object of class designresult as created by the find.design function. Will be used to continue the search, using all collected simulation results so far.
 #'
-#' @return
+#' @return function returns an object of class designresult
 #' @export
 #'
-#' @examples
+#' @examples \dontrun{
+#' #Load a simulation function
+#' simfun = example.simfun("ttest")
+#' # Perform the search
+#' ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+#' # Output the results
+#' summary(ds)
+#' # Plot results
+#' plot(ds)
 #'
-#'
+#' # Two-dimensional simulation function:
+#' simfun = example.simfun("anova")
+#' # Perform the search
+#' res = find.design(simfun = simfun,
+#'  costfun = function(n,n.groups) 5*n+20*n.groups,
+#'  boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
+#'  power = .95)
+#' # Output the results
+#' summary(ds)
+#' # Plot results
+#' plot(ds)
+#'}
 find.design = function(simfun,
                    boundaries,
                    power=NULL,
@@ -41,7 +62,6 @@ find.design = function(simfun,
                    setsize = 100,
                    continue = NULL,
                    dat = NULL,
-                   Ntry = 2,
                    silent =FALSE,
                    autosave_dir=NULL,
                    control = list()
@@ -61,7 +81,8 @@ find.design = function(simfun,
     power = continue$power
     cost = continue$cost
     dat = continue$dat
-    surrogate = ifelse(surrogate!=continue$surrogate,surrogate,continue$surrogate)
+    # take new surrogate if it is not NULL and different than before
+    surrogate = ifelse(!is.null(surrogate) && surrogate!=continue$surrogate,surrogate,continue$surrogate)
   }
 
   # set a default costfunction (identity) if not specified
@@ -124,7 +145,7 @@ find.design = function(simfun,
     if (fit$badfit) n.bad.fits = ifelse(exists("n.bad.fits"),n.bad.fits + 1,1)
 
     # PREDICTION: Get a prediction from the fitted model
-    pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, cost=cost,boundaries=boundaries,task=task,Ntry=Ntry)
+    pred = get.pred(fit=fit,dat=dat,power=power,costfun = costfun, cost=cost,boundaries=boundaries,task=task)
 
     # count bad predictions (no sensible value found)
     if (pred$badprediction) n.bad.predictions = ifelse(exists("n.bad.predictions"),n.bad.predictions + 1,1)

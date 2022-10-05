@@ -2,7 +2,7 @@
 % Please edit documentation in R/find.design.R
 \name{find.design}
 \alias{find.design}
-\title{Sample Size Finding}
+\title{Find optimal study designs}
 \usage{
 find.design(
   simfun,
@@ -20,18 +20,17 @@ find.design(
   setsize = 100,
   continue = NULL,
   dat = NULL,
-  Ntry = 2,
   silent = FALSE,
   autosave_dir = NULL,
   control = list()
 )
 }
 \arguments{
-\item{simfun}{function to generate hypotesis test results with. takes a vector of design parameters as input and outputs logical (result of one hypothesis test)}
+\item{simfun}{function to generate hypotesis test results with. takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k).}
 
-\item{boundaries}{list containing lower and upper bounds of the design space}
+\item{boundaries}{list containing lower and upper bounds of the design space. The list should consist of named vectors, each containing the upper and lower bound for the respective design parameter dimensions. For one design parameter dimension, can also be a vector containing the upper and lower bounds.}
 
-\item{power}{numeric; power value for the 'desired power' task}
+\item{power}{numeric; desired statistical power}
 
 \item{evaluations}{integer; number of dgf evaluations to be performed before termination}
 
@@ -41,9 +40,9 @@ find.design(
 
 \item{time}{integer; seconds until termination}
 
-\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Used for simfuns with multiple input dimensions.}
+\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Necessary for simfuns with multiple input dimensions.}
 
-\item{cost}{numeric; cost threshold for the respective task}
+\item{cost}{numeric; cost threshold. Design parameter set with highest power is searched among sets that fullfill this cost threshold.}
 
 \item{surrogate}{character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.}
 
@@ -51,11 +50,11 @@ find.design(
 
 \item{init.perc}{numeric; percentage of evaluations used for the initialization phase}
 
-\item{setsize}{The number of draws from the data generating function in each iteration}
+\item{setsize}{The number of draws from the simfun in each iteration}
+
+\item{continue}{Object of class designresult as created by the find.design function. Will be used to continue the search, using all collected simulation results so far.}
 
 \item{dat}{list of data from a previous design result.}
-
-\item{Ntry}{integer; number of locations to start a search for optimal paramters in the prediction phase.}
 
 \item{silent}{logical; supresses output during the search.}
 
@@ -63,6 +62,32 @@ find.design(
 
 \item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype="gauss") can be used with the gpr surrogate to use a different covariance structure than the default.}
 }
+\value{
+function returns an object of class designresult
+}
 \description{
-Sample Size Finding
+Perform a surrogate modeling approach to serach for optimal study design parameters.
+}
+\examples{
+\dontrun{#Load a simulation function
+simfun = example.simfun("ttest")
+# Perform the search
+ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+# Output the results
+summary(ds)
+# Plot results
+plot(ds)
+
+# Two-dimensional simulation function:
+simfun = example.simfun("anova")
+# Perform the search
+res = find.design(simfun = simfun,
+ costfun = function(n,n.groups) 5*n+20*n.groups,
+ boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
+ power = .95)
+# Output the results
+summary(ds)
+# Plot results
+plot(ds)
+}
 }

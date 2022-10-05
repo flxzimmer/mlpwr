@@ -1,11 +1,19 @@
 ---
-title: "Simulation Functions"
-output: 
-  html_document: 
-    toc: yes
-editor_options: 
-  chunk_output_type: console
+title: "simulation_functions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{simulation_functions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
 
 We present examples of setting up a simulation function for various models and R packages. These are written in a basic way to serve as blueprints for further customization.
 
@@ -337,7 +345,7 @@ simfun_multi2 = function(n,n.countries) {
   pred1 = rnorm(n*n.countries),
   pred2 = rnorm(n*n.countries)
 )
-  dat$criterion = simulate(mod.original,nsim=1,newdata = dat,allow.new.levels = T,use.u = FALSE) |> unlist() # criterion data from the fitted model
+  dat$criterion = simulate(mod.original,nsim=1,newdata = dat,allow.new.levels = TRUE,use.u = FALSE) |> unlist() # criterion data from the fitted model
 
   # test hypothesis
   mod = glmer(criterion ~ pred1 + pred2 + 0 + (1|country),data = dat,family=binomial)
