@@ -44,7 +44,7 @@ find.design(
 
 \item{cost}{numeric; cost threshold. Design parameter set with highest power is searched among sets that fullfill this cost threshold.}
 
-\item{surrogate}{character; which surrogate model should be used. The default is "logreg" for one design parameter and "gpr" for multiple design parameters. The current options are: "gpr", "svr", "logreg", "reg" for one-dimensional designs and "gpr" and "svr" for multi-dimensional designs.}
+\item{surrogate}{character; which surrogate model should be used. The default is 'logreg' for one design parameter and 'gpr' for multiple design parameters. The current options are: 'gpr', 'svr', 'logreg', 'reg' for one-dimensional designs and 'gpr' and 'svr' for multi-dimensional designs.}
 
 \item{n.startsets}{integer; number of startsets used per dimension of simfun}
 
@@ -60,7 +60,7 @@ find.design(
 
 \item{autosave_dir}{character; file location for saving the dat object after each update.}
 
-\item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype="gauss") can be used with the gpr surrogate to use a different covariance structure than the default.}
+\item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype='gauss') can be used with the gpr surrogate to use a different covariance structure than the default.}
 }
 \value{
 function returns an object of class designresult
@@ -69,8 +69,9 @@ function returns an object of class designresult
 Perform a surrogate modeling approach to serach for optimal study design parameters.
 }
 \examples{
-\dontrun{#Load a simulation function
-simfun = example.simfun("ttest")
+\dontrun{
+#Load a simulation function
+simfun = example.simfun('ttest')
 # Perform the search
 ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
 # Output the results
@@ -79,7 +80,7 @@ summary(ds)
 plot(ds)
 
 # Two-dimensional simulation function:
-simfun = example.simfun("anova")
+simfun = example.simfun('anova')
 # Perform the search
 res = find.design(simfun = simfun,
  costfun = function(n,n.groups) 5*n+20*n.groups,

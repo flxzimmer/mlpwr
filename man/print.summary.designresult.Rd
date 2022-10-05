@@ -19,7 +19,7 @@ Print Summary of the search result
 }
 \examples{
 #Load a simulation function
-simfun = example.simfun("ttest")
+simfun = example.simfun('ttest')
 # Perform the search
 ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
 # Output the results

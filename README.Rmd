@@ -9,7 +9,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "100%",
+  tidy = TRUE,
+  tidy.opts=list(arrow=TRUE,width.cutoff = 50)
 )
 ```
 
@@ -58,12 +60,12 @@ A simulation function (simfun) is a function to generate artificial data and sub
 A simple function simulates a group mean comparison with a t-test. The input is a sample size n and the output is either TRUE or FALSE depending on the significance of the hypothesis test.
 
 ```{r}
-simfun_ttest = function(N) {
+simfun_ttest <- function(N) {
     # Generate a data set
-    dat = rnorm(n = N, mean = .3) 
+    dat <- rnorm(n = N, mean = 0.3)
     # Test the hypothesis
-    res = t.test(dat)
-    res$p.value < .01
+    res <- t.test(dat)
+    res$p.value < 0.01
 }
 ```
 
@@ -90,12 +92,11 @@ The central arguments to be specified are the following:
 
 Once a termination criterion is met (e.g. the number of permissible simfun evaluation specified with evaluations), the algorithm is terminated.
 
-We can perform the search with the above arguments in use.
+We can perform the search with the above arguments in use. 
 
 ```{r}
-ds = find.design(simfun = simfun_ttest,
-    boundaries = c(100,300), power = .95,
-    evaluations = 4000)
+ds <- find.design(simfun = simfun_ttest, boundaries = c(100,
+    300), power = 0.95, evaluations = 4000)
 ```
 
 While it is running, the function gives us some updates regarding the number of updates performed, the time used, and the the number of evaluations.

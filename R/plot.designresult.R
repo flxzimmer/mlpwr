@@ -7,7 +7,7 @@
 #' @param adderrorbars logical. Plots errorbars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL)
 #' @param addribbon logical. adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).
 #' @param trim logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE
-#' @param type character indicating the type of the 2D plot. can be "heat"(default) or "line".
+#' @param type character indicating the type of the 2D plot. can be 'heat'(default) or 'line'.
 #' @param x Object of class designresult as created by the find.design function
 #' @param ... additional arguments to be passed
 #'
@@ -15,26 +15,30 @@
 #' @export
 #'
 #' @examples #Load a simulation function
-#' simfun = example.simfun("ttest")
+#' simfun = example.simfun('ttest')
 #' # Perform the search
 #' ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
 #' # Plot results
 #' plot(ds)
-plot.designresult = function(x,design=NULL,adderrorbars=NULL,addribbon=NULL,trim=TRUE,type="heat",...) {
+plot.designresult <- function(x, design = NULL, adderrorbars = NULL,
+    addribbon = NULL, trim = TRUE, type = "heat", ...) {
 
-  # choose 1D or 2D plot
-  dims = length(x$final$design)
-  if(dims==2&is.null(design)) {
+    # choose 1D or 2D plot
+    dims <- length(x$final$design)
+    if (dims == 2 & is.null(design)) {
 
-    if (type=="hline")pl = plot2d_line(x,trim)
-    if (type=="heat")pl = plot2d_heat(x)
+        if (type == "hline")
+            pl <- plot2d_line(x, trim)
+        if (type == "heat")
+            pl <- plot2d_heat(x)
 
-  } else {
-    pl = plot1d(x,design=design,adderrorbars=adderrorbars,addribbon=addribbon)
-  }
+    } else {
+        pl <- plot1d(x, design = design, adderrorbars = adderrorbars,
+            addribbon = addribbon)
+    }
 
-  print(pl)
-  invisible(pl)
+    print(pl)
+    invisible(pl)
 
 }
 

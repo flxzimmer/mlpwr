@@ -25,7 +25,7 @@
 
 \item{trim}{logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE}
 
-\item{type}{character indicating the type of the 2D plot. can be "heat"(default) or "line".}
+\item{type}{character indicating the type of the 2D plot. can be 'heat'(default) or 'line'.}
 
 \item{...}{additional arguments to be passed}
 }
@@ -37,7 +37,7 @@ Plot a one- or two-dimensional graph of the result.
 }
 \examples{
 #Load a simulation function
-simfun = example.simfun("ttest")
+simfun = example.simfun('ttest')
 # Perform the search
 ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
 # Plot results
