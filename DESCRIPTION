@@ -7,12 +7,12 @@ Authors@R: c(
     person("Rudolf", "Debelak", , "rudolf.debelak@psychologie.uzh.ch", role = c("aut"),
            comment = c(ORCID = "0000-0001-8900-2106"))
   )
-Description: Implements a surrogate modeling algorithm to guide simulation-based
+Description: We implement a surrogate modeling algorithm to guide simulation-based
     sample size planning. The method is described in detail in a recent preprint
     (Zimmer & Debelak (2022) <doi:10.31234/osf.io/tnhb2>).
-    Supports multiple study design parameters and optimization with respect to a
-    cost function. Can find optimal designs that correspond to a desired 
-    statistical power or designs that fulfill a cost constraint.
+    It supports multiple study design parameters and optimization with respect to a
+    cost function. It can find optimal designs that correspond to a desired 
+    statistical power or that fulfill a cost constraint.
 License: GPL (>= 3)
 URL: https://github.com/flxzimmer/mlpwr
 BugReports: https://github.com/flxzimmer/mlpwr/issues

@@ -20,7 +20,8 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-Implements a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent preprint (Zimmer & Debelak, 2022, http://dx.doi.org/10.31234/osf.io/tnhb2). Supports multiple study design parameters and optimization with respect to a cost function. Can find optimal designs that correspond to a desired statistical power or designs that fullfill a cost constraint.
+We implement a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent preprint (Zimmer & Debelak (2022), http://dx.doi.org/10.31234/osf.io/tnhb2). It supports multiple study design parameters and optimization with respect to a cost function. It can find optimal designs that correspond to a desired statistical power or that fulfill a cost constraint.
+
     
 ## Installation
 
