@@ -9,7 +9,7 @@ Authors@R: c(
   )
 Description: Implements a surrogate modeling algorithm to guide simulation-based
     sample size planning. The method is described in detail in a recent preprint
-    (Zimmer & Debelak, 2022, (<doi:10.31234/osf.io/tnhb2>).
+    (Zimmer & Debelak (2022) <doi:10.31234/osf.io/tnhb2>).
     Supports multiple study design parameters and optimization with respect to a
     cost function. Can find optimal designs that correspond to a desired 
     statistical power or designs that fulfill a cost constraint.
