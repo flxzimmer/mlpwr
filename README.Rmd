@@ -34,7 +34,7 @@ Or, you can install the development version of mlpwr from [GitHub](https://githu
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("flxzimmer/mlpwr")
+devtools::install_github("flxzimmer/mlpwr",build_vignettes = TRUE)
 ```
 
 ## Toy Example
@@ -114,4 +114,14 @@ Also, we can plot the fitted relationship between sample size and power. The bla
 ```{r}
 plot(ds)
 ```
+
+
+## Simulation Function Templates
+
+Some templates for simulation functions can be found in the `simulation_functions` vignette. It can be accessed using:
+
+```{r}
+browseVignettes("mlpwr")
+```
+
 

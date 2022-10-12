@@ -27,7 +27,7 @@ Or, you can install the development version of mlpwr from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("flxzimmer/mlpwr")
+devtools::install_github("flxzimmer/mlpwr",build_vignettes = TRUE)
 ```
 
 ## Toy Example
@@ -96,7 +96,7 @@ We can perform the search with the above arguments in use.
 ``` r
 ds <- find.design(simfun = simfun_ttest, boundaries = c(100,
     300), power = 0.95, evaluations = 4000)
-#>  Updates: 1, Evaluations: 1000, Time: 1.4 Updates: 2, Evaluations: 1200, Time: 1.7 Updates: 3, Evaluations: 1400, Time: 1.9 Updates: 4, Evaluations: 1600, Time: 2.1 Updates: 5, Evaluations: 1800, Time: 2.2 Updates: 6, Evaluations: 2000, Time: 2.4 Updates: 7, Evaluations: 2200, Time: 2.6 Updates: 8, Evaluations: 2400, Time: 2.9 Updates: 9, Evaluations: 2600, Time: 3.1 Updates: 10, Evaluations: 2800, Time: 3.3 Updates: 11, Evaluations: 3000, Time: 3.5 Updates: 12, Evaluations: 3200, Time: 3.7 Updates: 13, Evaluations: 3400, Time: 3.8 Updates: 14, Evaluations: 3600, Time: 4 Updates: 15, Evaluations: 3800, Time: 4.2 Updates: 16, Evaluations: 4000, Time: 4.5
+#>  Updates: 1, Evaluations: 1000, Time: 0.6 Updates: 2, Evaluations: 1200, Time: 0.8 Updates: 3, Evaluations: 1400, Time: 0.9 Updates: 4, Evaluations: 1600, Time: 1.1 Updates: 5, Evaluations: 1800, Time: 1.2 Updates: 6, Evaluations: 2000, Time: 1.3 Updates: 7, Evaluations: 2200, Time: 1.4 Updates: 8, Evaluations: 2400, Time: 1.6 Updates: 9, Evaluations: 2600, Time: 1.7 Updates: 10, Evaluations: 2800, Time: 1.9 Updates: 11, Evaluations: 3000, Time: 2 Updates: 12, Evaluations: 3200, Time: 2.1 Updates: 13, Evaluations: 3400, Time: 2.3 Updates: 14, Evaluations: 3600, Time: 2.4 Updates: 15, Evaluations: 3800, Time: 2.5 Updates: 16, Evaluations: 4000, Time: 2.7
 ```
 
 While it is running, the function gives us some updates regarding the
@@ -115,7 +115,7 @@ summary(ds)
 #> Design: N = 201
 #> 
 #> Power: 0.95064,  SE: 0.00379
-#> Evaluations: 4000,  Time: 4.95,  Updates: 16
+#> Evaluations: 4000,  Time: 2.91,  Updates: 16
 #> Surrogate: Logistic regression
 ```
 
@@ -130,3 +130,13 @@ plot(ds)
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+
+## Simulation Function Templates
+
+Some templates for simulation functions can be found in the
+`simulation_functions` vignette. It can be accessed using:
+
+``` r
+browseVignettes("mlpwr")
+#> starting httpd help server ... done
+```

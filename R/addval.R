@@ -18,13 +18,13 @@ addval <- function(simfun, dat = list(), points = NULL,
         }
         a <- as.numeric(points[i, ])
 
-        resx <- c(resx, replicate(each, suppressMessages(hush(simfun(as.numeric(points[i,
-            ]))))))
+        resx <- c(resx, replicate(each, suppressWarnings(suppressMessages(hush(simfun(as.numeric(points[i,
+            ])))))))
 
         while (minrun && length(resx) > 1 && stats::var(resx) ==
             0) {
-            resx <- c(resx, replicate(1, suppressMessages(hush(simfun(as.numeric(points[i,
-                ]))))))
+            resx <- c(resx, replicate(1, suppressWarnings(suppressMessages(hush(simfun(as.numeric(points[i,
+                ])))))))
         }
         dat[[ind]]$y <- resx
     }
