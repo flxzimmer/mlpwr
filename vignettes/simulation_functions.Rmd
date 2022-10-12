@@ -134,9 +134,9 @@ simfun_glm1 <- function(N) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_glm1,
-#     boundaries = c(20,100), power = .95)
+```{r, eval = F}
+res <- find.design(simfun = simfun_glm1,
+     boundaries = c(20,100), power = .95)
 ```
 
 ## Specifying parameters manually
