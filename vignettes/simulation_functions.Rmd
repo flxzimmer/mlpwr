@@ -50,9 +50,9 @@ simfun_ttest <- function(N) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_ttest,
-#     boundaries = c(100,300), power = .95)
+```{r, eval = F}
+ res <- find.design(simfun = simfun_ttest,
+     boundaries = c(100,300), power = .95)
 ```
 
 # ANOVA
@@ -83,11 +83,11 @@ simfun_anova <- function(n, n.groups) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_anova, 
-#   costfun = function(n,n.groups) 5*n+20*n.groups,
-#   boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
-#   power = .95)
+```{r, eval = F}
+res <- find.design(simfun = simfun_anova, 
+   costfun = function(n,n.groups) 5*n+20*n.groups,
+   boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
+   power = .95)
 ```
 
 # Generalized Linear Models
@@ -168,9 +168,9 @@ simfun_glm2 <- function(N) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_glm2,
-#     boundaries = c(90,200), power = .95)
+```{r, eval = F}
+res <- find.design(simfun = simfun_glm2,
+     boundaries = c(90,200), power = .95)
 ```
 
 # Item Response Theory Models
@@ -210,9 +210,9 @@ simfun_irt1 <- function(N) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_irt1,
-#     boundaries = c(100,500), power = .95,evaluations =500)
+```{r, eval = F}
+res <- find.design(simfun = simfun_irt1,
+     boundaries = c(100,500), power = .95,evaluations =500)
 ```
 
 ## Testing for DIF
@@ -256,11 +256,11 @@ simfun_irt2 <- function(N1, N2) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_irt2,
-#     boundaries = list(N1 = c(100,700), N2 = c(100,700)),
-#     costfun = costfun_irt2,
-#     power = .95)
+```{r, eval = F}
+res <- find.design(simfun = simfun_irt2,
+     boundaries = list(N1 = c(100,700), N2 = c(100,700)),
+     costfun = costfun_irt2,
+     power = .95)
 ```
 
 
@@ -300,10 +300,10 @@ simfun_multi1 <- function(N) {
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_multi1,
-#     boundaries = c(100, 500),
-#     power = .95)
+```{r, eval = F}
+res <- find.design(simfun = simfun_multi1,
+     boundaries = c(100, 500),
+     power = .95)
 ```
 
 ## Using a fitted model 
@@ -365,11 +365,11 @@ costfun_multi2 <- function(n, n.countries) 5 * m +
 
 Example Use
 
-```{r}
-# res <- find.design(simfun = simfun_multi2,
-#     boundaries = list(n=c(10,40),n.countries=c(5,20)),
-#     costfun = costfun_multi2,
-#     power = .95)
+```{r, eval = F}
+res <- find.design(simfun = simfun_multi2,
+     boundaries = list(n=c(10,40),n.countries=c(5,20)),
+     costfun = costfun_multi2,
+     power = .95)
 ```
 
 
