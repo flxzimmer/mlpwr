@@ -182,11 +182,11 @@ library(mirt)
 
 We use the `mirt` package to show an example that applies an item response theory model.
 
-See `?simdata` for additional options and examples to generate data with the `mirt` package
+See `?simdata` for additional options and examples to generate data with the `mirt` package.
 
 ## Testing a Rasch against a 2PL model
 
-We first generate data from a 2PL  model. Then we want to find that the 2PL model actually fits the data better than a simpler Rasch model. We use a likelihood ratio test for this purpose. 
+We first generate data from a 2PL model. Then we want to check whether the 2PL model actually shows a better fit to the data better than the simpler Rasch model. We use a likelihood ratio test for this purpose. 
 
 ```{r}
 simfun_irt1 <- function(N) {
@@ -217,7 +217,7 @@ res <- find.design(simfun = simfun_irt1,
 
 ## Testing for DIF
 
-We detect differential item functioning in one item. Again, we generate data using the 2PL model, but using different parameters for two different groups in this case. The parameters for the first item are different in one group compared to other. We again apply an likelihood ratio test to test the null hypothesis that all item parameters are actually equal in both groups.
+We check for differential item functioning in one item. Again, we generate data using the 2PL model, but using different parameters for two different groups in this case. The parameters for the first item are different in one group compared to other. We again apply an likelihood ratio test to test the null hypothesis that all item parameters are actually equal in both groups.
 
 We optimize for the sizes of the two groups as the two design parameters. We assume that the second group involves higher costs than the first. 
 
