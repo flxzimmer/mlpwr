@@ -3,7 +3,7 @@
 #'
 #' Perform a surrogate modeling approach to search for optimal study design parameters.
 #'
-#' @param simfun function to generate hypotesis test results with. Takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k).
+#' @param simfun function to generate hypothesis test results with. Takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k).
 #' @param boundaries list containing lower and upper bounds of the design space. The list should consist of named vectors, each containing the upper and lower bound for the respective design parameter dimensions. For one design parameter dimension, can also be a vector containing the upper and lower bounds.
 #' @param power numeric; desired statistical power
 #' @param evaluations integer; number of dgf evaluations to be performed before termination
@@ -11,13 +11,13 @@
 #' @param ci_perc numeric; specifying the desired confidence interval, e.g. 95% or 99%.
 #' @param time integer; seconds until termination
 #' @param costfun function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Necessary for simfuns with multiple input dimensions.
-#' @param cost numeric; cost threshold. Design parameter set with highest power is searched among sets that fullfill this cost threshold.
+#' @param cost numeric; cost threshold. Design parameter set with highest power is searched among sets that fulfill this cost threshold.
 #' @param surrogate character; which surrogate model should be used. The default is 'logreg' for one design parameter and 'gpr' for multiple design parameters. The current options are: 'gpr', 'svr', 'logreg', 'reg' for one-dimensional designs and 'gpr' and 'svr' for multi-dimensional designs.
 #' @param n.startsets integer; number of startsets used per dimension of simfun
 #' @param setsize The number of draws from the simfun in each iteration
 #' @param init.perc numeric; percentage of evaluations used for the initialization phase
 #' @param dat list of data from a previous design result.
-#' @param silent logical; supresses output during the search.
+#' @param silent logical; suppresses output during the search.
 #' @param autosave_dir character; file location for saving the dat object after each update.
 #' @param control list specifying arguments passed to the surrogate models. For example, list(covtype='gauss') can be used with the gpr surrogate to use a different covariance structure than the default.
 #' @param continue Object of class designresult as created by the find.design function. Will be used to continue the search, using all collected simulation results so far.

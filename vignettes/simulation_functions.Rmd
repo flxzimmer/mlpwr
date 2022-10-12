@@ -96,7 +96,7 @@ res <- find.design(simfun = simfun_anova,
 library(mlpwr)
 ```
 
-We consider generalized linear models using the `stats` pacakge and the `glm` function.
+We consider generalized linear models using the `stats` package and the `glm` function.
 
 ## Using a fitted model
 
@@ -272,7 +272,7 @@ library(lme4)
 library(lmerTest)
 ```
 
-We consider multilevel models using the `lme4` and `lmerTest` pacakages. We use the `glmer` function for model fit and the `simulate` function to generate data. For further options for data generation in multilevel models see `?simulate.merMod`.
+We consider multilevel models using the `lme4` and `lmerTest` packages. We use the `glmer` function for model fit and the `simulate` function to generate data. For further options for data generation in multilevel models see `?simulate.merMod`.
 
 ## Specifying parameters manually
 

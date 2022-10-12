@@ -32,9 +32,9 @@ devtools::install_github("flxzimmer/mlpwr",build_vignettes = TRUE)
 
 ## Toy Example
 
-This is a basic demonstration to the mlpwr pacakge by going through a
-toy example. We want to obtain the sample size necessary for a
-within-group mean comparison using a t-test.
+This is a basic demonstration to the mlpwr package by going through a
+toy example. We want to obtain the sample size necessary for a mean
+comparison using an one-sample t-test.
 
 The package can be loaded via
 
@@ -78,7 +78,7 @@ given a power level that should be surpassed.
 
 The central arguments to be specified are the following:
 
--   simfun: The data generating function as defined above
+-   simfun: The data generating function as defined above.
 
 -   boundaries: The lower and upper bound to search within, e.g. a
     sample size between 50 and 200.
@@ -96,11 +96,11 @@ We can perform the search with the above arguments in use.
 ``` r
 ds <- find.design(simfun = simfun_ttest, boundaries = c(100,
     300), power = 0.95, evaluations = 4000)
-#>  Updates: 1, Evaluations: 1000, Time: 0.6 Updates: 2, Evaluations: 1200, Time: 0.8 Updates: 3, Evaluations: 1400, Time: 0.9 Updates: 4, Evaluations: 1600, Time: 1.1 Updates: 5, Evaluations: 1800, Time: 1.2 Updates: 6, Evaluations: 2000, Time: 1.3 Updates: 7, Evaluations: 2200, Time: 1.4 Updates: 8, Evaluations: 2400, Time: 1.6 Updates: 9, Evaluations: 2600, Time: 1.7 Updates: 10, Evaluations: 2800, Time: 1.9 Updates: 11, Evaluations: 3000, Time: 2 Updates: 12, Evaluations: 3200, Time: 2.1 Updates: 13, Evaluations: 3400, Time: 2.3 Updates: 14, Evaluations: 3600, Time: 2.4 Updates: 15, Evaluations: 3800, Time: 2.5 Updates: 16, Evaluations: 4000, Time: 2.7
+#>  Updates: 1, Evaluations: 1000, Time: 0.8 Updates: 2, Evaluations: 1200, Time: 0.9 Updates: 3, Evaluations: 1400, Time: 1.1 Updates: 4, Evaluations: 1600, Time: 1.3 Updates: 5, Evaluations: 1800, Time: 1.4 Updates: 6, Evaluations: 2000, Time: 1.6 Updates: 7, Evaluations: 2200, Time: 1.7 Updates: 8, Evaluations: 2400, Time: 1.8 Updates: 9, Evaluations: 2600, Time: 2 Updates: 10, Evaluations: 2800, Time: 2.1 Updates: 11, Evaluations: 3000, Time: 2.2 Updates: 12, Evaluations: 3200, Time: 2.4 Updates: 13, Evaluations: 3400, Time: 2.5 Updates: 14, Evaluations: 3600, Time: 2.7 Updates: 15, Evaluations: 3800, Time: 2.9 Updates: 16, Evaluations: 4000, Time: 3
 ```
 
 While it is running, the function gives us some updates regarding the
-number of updates performed, the time used, and the the number of
+number of updates performed, the time used, and the number of
 evaluations.
 
 We can get an overview of the results via summary.
@@ -115,7 +115,7 @@ summary(ds)
 #> Design: N = 201
 #> 
 #> Power: 0.95064,  SE: 0.00379
-#> Evaluations: 4000,  Time: 2.91,  Updates: 16
+#> Evaluations: 4000,  Time: 3.34,  Updates: 16
 #> Surrogate: Logistic regression
 ```
 
@@ -138,5 +138,5 @@ Some templates for simulation functions can be found in the
 
 ``` r
 browseVignettes("mlpwr")
-#> starting httpd help server ... done
+#> No vignettes found by browseVignettes("mlpwr")
 ```

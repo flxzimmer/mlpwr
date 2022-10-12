@@ -58,7 +58,7 @@ library(mlpwr)
 
 A simulation function (simfun) is a function to generate artificial data and subsequently perform an hypothesis test.
 
-A simple function simulates a group mean comparison with a t-test. The input is a sample size n and the output is either TRUE or FALSE depending on the significance of the hypothesis test.
+A simple function simulates a group mean comparison with a t-test. The input is a sample size n and the output is either TRUE or FALSE depending on the significance of the hypothesis test. 
 
 ```{r}
 simfun_ttest <- function(N) {
