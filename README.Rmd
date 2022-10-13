@@ -120,7 +120,7 @@ plot(ds)
 
 Some templates for simulation functions can be found in the `simulation_functions` vignette. It can be accessed using:
 
-```{r}
+```{r, eval = F}
 browseVignettes("mlpwr")
 ```
 
