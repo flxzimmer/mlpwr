@@ -25,7 +25,7 @@ We implement a surrogate modeling algorithm to guide simulation-based sample siz
     
 ## Installation
 
-You can install the CRAN version using:
+You can install the CRAN version using: 
 ``` r
 install.packages("mlpwr")
 ```
