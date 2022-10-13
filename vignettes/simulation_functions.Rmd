@@ -30,6 +30,9 @@ simfun <- function(N) {
 
 For all examples in this vignette, we use an alpha level of .01 and a desired power of .95.
 
+For further guidance on how to use the package and the `find.design` function specifically, see the [Readme.md file](https://github.com/flxzimmer/mlpwr)
+
+
 # T-Test
 
 ```{r}

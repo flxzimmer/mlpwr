@@ -96,7 +96,7 @@ We can perform the search with the above arguments in use.
 ``` r
 ds <- find.design(simfun = simfun_ttest, boundaries = c(100,
     300), power = 0.95, evaluations = 4000)
-#>  Updates: 1, Evaluations: 1000, Time: 0.8 Updates: 2, Evaluations: 1200, Time: 0.9 Updates: 3, Evaluations: 1400, Time: 1.1 Updates: 4, Evaluations: 1600, Time: 1.3 Updates: 5, Evaluations: 1800, Time: 1.4 Updates: 6, Evaluations: 2000, Time: 1.6 Updates: 7, Evaluations: 2200, Time: 1.7 Updates: 8, Evaluations: 2400, Time: 1.8 Updates: 9, Evaluations: 2600, Time: 2 Updates: 10, Evaluations: 2800, Time: 2.1 Updates: 11, Evaluations: 3000, Time: 2.2 Updates: 12, Evaluations: 3200, Time: 2.4 Updates: 13, Evaluations: 3400, Time: 2.5 Updates: 14, Evaluations: 3600, Time: 2.7 Updates: 15, Evaluations: 3800, Time: 2.9 Updates: 16, Evaluations: 4000, Time: 3
+#>  Updates: 1, Evaluations: 1000, Time: 0.5 Updates: 2, Evaluations: 1200, Time: 0.6 Updates: 3, Evaluations: 1400, Time: 0.8 Updates: 4, Evaluations: 1600, Time: 0.9 Updates: 5, Evaluations: 1800, Time: 1 Updates: 6, Evaluations: 2000, Time: 1.1 Updates: 7, Evaluations: 2200, Time: 1.2 Updates: 8, Evaluations: 2400, Time: 1.3 Updates: 9, Evaluations: 2600, Time: 1.4 Updates: 10, Evaluations: 2800, Time: 1.5 Updates: 11, Evaluations: 3000, Time: 1.7 Updates: 12, Evaluations: 3200, Time: 1.8 Updates: 13, Evaluations: 3400, Time: 1.9 Updates: 14, Evaluations: 3600, Time: 2 Updates: 15, Evaluations: 3800, Time: 2.1 Updates: 16, Evaluations: 4000, Time: 2.2
 ```
 
 While it is running, the function gives us some updates regarding the
@@ -115,11 +115,17 @@ summary(ds)
 #> Design: N = 201
 #> 
 #> Power: 0.95064,  SE: 0.00379
-#> Evaluations: 4000,  Time: 3.34,  Updates: 16
+#> Evaluations: 4000,  Time: 2.45,  Updates: 16
 #> Surrogate: Logistic regression
 ```
 
-The results indicate that a sample size of 201 is suitable.
+The results indicate that a sample size of 201 is suitable. It shows the
+predicted power for this sample size, as well as an estimate of its
+uncertainty (SE). The summary additionally reports the number of
+simulation function evaluations, the time until termination, and the
+number of surrogate model updates. The details of the surrogate modeling
+algorithm are described in a
+[preprint](http://dx.doi.org/10.31234/osf.io/tnhb2).
 
 Also, we can plot the fitted relationship between sample size and power.
 The black dots show us the simulated data. The gray ribbon indicates the

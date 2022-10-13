@@ -15,19 +15,19 @@
 )
 }
 \arguments{
-\item{x}{Object of class designresult as created by the find.design function}
+\item{x}{Object of class designresult as created by the find.design function.}
 
 \item{design}{Specify a design as a list. Can be used to make a 1D plot for a two-dimensional simfun. Set NA for the dimension that should be plotted and set a value for all others. For example: design=list(n=NA,k=9)}
 
-\item{adderrorbars}{logical. Plots errorbars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL)}
+\item{adderrorbars}{logical. Plots errorbars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL).}
 
-\item{addribbon}{logical. adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).}
+\item{addribbon}{logical. Adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).}
 
-\item{trim}{logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE}
+\item{trim}{logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE.}
 
-\item{type}{character indicating the type of the 2D plot. can be 'heat'(default) or 'line'.}
+\item{type}{character indicating the type of the 2D plot. Can be 'heat'(default) or 'line'.}
 
-\item{...}{additional arguments to be passed}
+\item{...}{additional arguments to be passed.}
 }
 \value{
 A ggplot object
