@@ -69,7 +69,7 @@ function returns an object of class designresult
 Perform a surrogate modeling approach to search for optimal study design parameters. For further guidance on how to use the package and the \code{find.design} function specifically, see the \href{https://github.com/flxzimmer/mlpwr}{Readme.md file}.
 }
 \examples{
-\dontrun{
+\donttest{
 #Load a simulation function
 simfun = example.simfun('ttest')
 # Perform the search

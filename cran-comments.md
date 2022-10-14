@@ -1,3 +1,9 @@
+## Resubmission
+This is a resubmission. In this version I have:
+
+* Replaced \dontrun{} with \donttest{}. I did not unwrap the example because it took >20s to run on my machine.
+
+
 ## R CMD check results
 There were no ERRORs or WARNINGs. 
 

@@ -25,7 +25,7 @@
 #' @return function returns an object of class designresult
 #' @export
 #'
-#' @examples \dontrun{
+#' @examples \donttest{
 #' #Load a simulation function
 #' simfun = example.simfun('ttest')
 #' # Perform the search
