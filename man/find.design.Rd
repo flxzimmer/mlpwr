@@ -32,7 +32,7 @@ find.design(
 
 \item{power}{numeric; desired statistical power}
 
-\item{evaluations}{integer; number of dgf evaluations to be performed before termination}
+\item{evaluations}{integer; number of simfun evaluations to be performed before termination}
 
 \item{ci}{numeric; desired width of the confidence interval at the predicted value on termination.}
 

@@ -1,6 +1,6 @@
 Package: mlpwr
 Title: A Power Analysis Toolbox to Find Cost-Efficient Study Designs
-Version: 1.0.0
+Version: 1.0.0.9000
 Authors@R: c(
     person("Felix", "Zimmer", , "felix.zimmer@mail.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8127-0007")),

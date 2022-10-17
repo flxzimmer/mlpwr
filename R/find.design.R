@@ -6,7 +6,7 @@
 #' @param simfun function to generate hypothesis test results with. Takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k).
 #' @param boundaries list containing lower and upper bounds of the design space. The list should consist of named vectors, each containing the upper and lower bound for the respective design parameter dimensions. For one design parameter dimension, can also be a vector containing the upper and lower bounds.
 #' @param power numeric; desired statistical power
-#' @param evaluations integer; number of dgf evaluations to be performed before termination
+#' @param evaluations integer; number of simfun evaluations to be performed before termination
 #' @param ci numeric; desired width of the confidence interval at the predicted value on termination.
 #' @param ci_perc numeric; specifying the desired confidence interval, e.g. 95% or 99%.
 #' @param time integer; seconds until termination
