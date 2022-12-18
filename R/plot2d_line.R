@@ -3,7 +3,7 @@ plot2d_line <- function(ds, trim) {
     dat <- ds$dat
     fit <- ds$fit
 
-    dat_obs <- todataframe(dat)
+    dat_obs <- todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun )
     boundaries <- ds$boundaries
     final <- ds$final
     costfun <- ds$costfun

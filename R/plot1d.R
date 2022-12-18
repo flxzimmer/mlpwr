@@ -4,7 +4,7 @@ plot1d <- function(ds, design, adderrorbars, addribbon) {
     fit <- ds$fit
 
     # Actual SD
-    dat_obs <- todataframe(dat)
+    dat_obs <- todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun )
     dat_obs$sd <- getweight(dat, "sd")
 
     boundaries <- ds$boundaries

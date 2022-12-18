@@ -2,7 +2,7 @@
 get.pred <- function(fit, dat, power, costfun, cost,
     boundaries, task) {
 
-    datx <- todataframe(dat, aggregate = TRUE)
+    datx <- todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun )
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
     # 3 most promising previous candidates
     freqs <- sapply(dat, function(x) length(x$y))

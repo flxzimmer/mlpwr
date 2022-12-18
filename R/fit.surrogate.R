@@ -21,7 +21,7 @@ fit.surrogate <- function(dat, surrogate, lastfit = 0,
 
 reg.fit <- function(dat) {
 
-    datx <- todataframe(dat, aggregate = TRUE)
+    datx <- todataframe(dat, aggregate = TRUE,aggregate_fun=aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
     weight <- getweight(dat, weight.type = "freq")
 

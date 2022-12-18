@@ -52,7 +52,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
     n.startsets = 4, init.perc = 0.2, setsize = 100,
     continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
-    control = list()) {
+    control = list(),goodvals="high",aggregate=mean) {
 
     # save seed for reproducibility
     seed <- .Random.seed
