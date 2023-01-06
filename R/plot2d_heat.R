@@ -2,6 +2,8 @@ plot2d_heat <- function(ds) {
 
     dat <- ds$dat
     fit <- ds$fit
+    aggregate_fun <- ds$aggregate_fun
+
 
     dat_obs <- todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun )
     boundaries <- ds$boundaries
