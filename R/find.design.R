@@ -52,7 +52,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
     n.startsets = 4, init.perc = 0.2, setsize = 100,
     continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
-    control = list()) {
+    control = list(),goodvals="high",aggregate_fun = mean,integer=TRUE,use_noise=TRUE) {
 
     # save seed for reproducibility
     seed <- .Random.seed
@@ -77,8 +77,7 @@ find.design <- function(simfun, boundaries, power = NULL,
 
     # set a default costfunction (identity) if
     # not specified
-    if (is.null(costfun))
-        costfun <- function(x) sum(x)
+    if (is.null(costfun)) costfun <- function(x) sum(x)
 
     # convert boundaries to list and set name
     # from simfun
@@ -109,7 +108,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     # available
     if (is.null(dat)) {
         points <- initpoints(boundaries = boundaries,
-            n.points = n.points)
+            n.points = n.points, integer=integer)
         dat <- addval(simfun = simfun, points = points,
             each = setsize, autosave_dir = autosave_dir)
     }
@@ -150,7 +149,7 @@ find.design <- function(simfun, boundaries, power = NULL,
         # FIT: Fit a surrogate model
         fit <- fit.surrogate(dat = dat, surrogate = surrogate,
             lastfit = ifelse(exists("fit"), fit, 0),
-            control = control)
+            control = control,aggregate_fun = aggregate_fun,use_noise=use_noise)
 
         # count bad fits (e.g. plane fitted)
         if (fit$badfit)
@@ -161,7 +160,7 @@ find.design <- function(simfun, boundaries, power = NULL,
         # fitted model
         pred <- get.pred(fit = fit, dat = dat, power = power,
             costfun = costfun, cost = cost, boundaries = boundaries,
-            task = task)
+            task = task,aggregate_fun = aggregate_fun,integer=integer,use_noise=use_noise)
 
         # count bad predictions (no sensible
         # value found)
@@ -208,8 +207,12 @@ find.design <- function(simfun, boundaries, power = NULL,
 
     # Optional for the final output: Generate SD
     # from a GP if using a different surrogate
-    if (is.null(fit$fitfun.sd))
-        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr")$fitfun.sd
+    if (use_noise&is.null(fit$fitfun.sd))
+        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun)$fitfun.sd
+
+    # calculate final SE
+    if (use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
+    if (!use_noise) final_se = NA
 
     # Stop the clock
     time_used <- timer(time_temp)
@@ -219,7 +222,7 @@ find.design <- function(simfun, boundaries, power = NULL,
         warning("No good design found after the final update.")
 
     final <- list(design = pred$points, power = fit$fitfun(as.numeric(pred$points)),
-        cost = costfun(as.numeric(pred$points)), se = fit$fitfun.sd(as.numeric(pred$points)))
+        cost = costfun(as.numeric(pred$points)), se = final_se)
     names(final$design) <- names(boundaries)
 
     # Collect Results
@@ -230,7 +233,7 @@ find.design <- function(simfun, boundaries, power = NULL,
             n.bad.predictions, 0), n.bad.fits = ifelse(exists("n.bad.fits"),
             n.bad.fits, 0), call = match.call(), seed = seed,
         costfun = costfun, boundaries = boundaries,
-        simfun = simfun, cost = cost, power = power)
+        simfun = simfun, cost = cost, power = power,aggregate_fun=aggregate_fun)
 
     class(re) <- "designresult"
 

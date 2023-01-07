@@ -48,13 +48,12 @@ usedevaluations <- function(dat) {
 
 
 
-todataframe <- function(dat, aggregate = TRUE, pseudo = FALSE) {
+todataframe <- function(dat, aggregate = TRUE, pseudo = FALSE, aggregate_fun=mean) {
 
     dim.design <- length(dat[[1]]$x)
 
     if (aggregate) {
-        temp <- t(sapply(dat, function(v) c(as.numeric(v$x),
-            mean(as.numeric(v$y)))))
+        temp <- t(sapply(dat, function(v) c(as.numeric(v$x), aggregate_fun(as.numeric(v$y)))))
     }
 
     if (!aggregate & !pseudo) {
