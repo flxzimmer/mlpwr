@@ -48,7 +48,7 @@ usedevaluations <- function(dat) {
 
 
 
-todataframe <- function(dat, aggregate = TRUE, pseudo = FALSE, aggregate_fun) {
+todataframe <- function(dat, aggregate = TRUE, pseudo = FALSE, aggregate_fun=mean) {
 
     dim.design <- length(dat[[1]]$x)
 
