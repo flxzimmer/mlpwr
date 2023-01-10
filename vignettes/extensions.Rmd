@@ -184,7 +184,6 @@ costfun = function(n, n.groups) {
 }
 ```
 
-
 We can now find a good design using:
 ```{r}
 res <- find.design(
