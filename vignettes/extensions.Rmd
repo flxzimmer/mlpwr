@@ -126,7 +126,7 @@ summary(res)
 ```
 The analysis with mlpwr leads to a desired threshold of about 1.55. The ratio of Type I and Type II errors is given as "power" in this output and close to the desired value of 1.
 
-Note that we used some additional arguments in this case. The 'integer' argument tells the algorithm whether to look for integer design parameters - this is set to 'FALSE' for our case of effect sizes. The 'use_noise=FALSE' indicates that we do not account for the Monte Carlo error at each design parameter. This functionality can be added in the future. Note also that we use the 'power' argument to indicate the desired ratio of alpha and beta error. This is a makeshift solution and  we consider rewording this argument to 'goal' in the future. 
+Note that we used some additional arguments in this case. The 'integer' argument tells the algorithm whether to look for integer design parameters - this is set to 'FALSE' for our case of effect sizes. The 'use_noise=FALSE' indicates that we do not account for the Monte Carlo error at each design parameter. This functionality can be added in the future. Note also that we use 'power' as an argument to the find.design function and in the output of summary(res) to indicate the desired ratio of alpha and beta error. This is a makeshift solution and  we consider rewording this argument to 'goal' in the future. 
 
 To check the correctness of our result, we compare it with an analytical solution obtained from the t-distribution and an numerical optimizer:
 ```{r}
