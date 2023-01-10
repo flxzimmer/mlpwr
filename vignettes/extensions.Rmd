@@ -196,3 +196,4 @@ res <- find.design(
 summary(res)
 ```
 
+The proposed solution contains 12 groups and 109 participants per group.
