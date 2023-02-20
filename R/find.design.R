@@ -75,8 +75,7 @@ find.design <- function(simfun, boundaries, power = NULL,
             continue$surrogate)
     }
 
-    # set a default costfunction (identity) if
-    # not specified
+    # set a default costfunction (identity) if not specified
     if (is.null(costfun)) costfun <- function(x) sum(x)
 
     # convert boundaries to list and set name
