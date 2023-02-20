@@ -4,9 +4,31 @@ plot1d <- function(ds, design, adderrorbars, addribbon) {
     fit <- ds$fit
     aggregate_fun <- ds$aggregate_fun
 
+    ## choose plot
+
+    if(is.null(fit$fitfun.sd)) adderrorbars = addribon = FALSE
+
+    # set default options if arguments aren't
+    # specified
+    if (is.null(addribbon) & is.null(adderrorbars)) {
+
+      addribbon <- TRUE
+      adderrorbars <- FALSE
+
+      # if (!is.null(fit$fitfun.sd)) {
+      # addribbon = TRUE adderrorbars = FALSE }
+      # else { addribbon = FALSE adderrorbars =
+      # TRUE }
+    }
+    if (is.null(addribbon))
+      addribbon <- FALSE
+    if (is.null(adderrorbars))
+      adderrorbars <- FALSE
+
+
     # Actual SD
     dat_obs <- todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun )
-    dat_obs$sd <- getweight(dat, "sd")
+    if (adderrorbars) dat_obs$sd <- getweight(dat, "sd")
 
     boundaries <- ds$boundaries
 
@@ -56,36 +78,17 @@ plot1d <- function(ds, design, adderrorbars, addribbon) {
 
 
     # Estimated SD
+    if(!(!adderrorbars&!addribbon)) {
     dat_sd <- data.frame(n = ns, pred = dat_pred$y,
         sd = sapply(nsx, fit$fitfun.sd))
     dat_sd$ymin <- dat_sd$pred - dat_sd$sd
     dat_sd$ymax <- dat_sd$pred + dat_sd$sd
-
+}
     # Optional: Censor the ribbon to plausible
     # values (between 0 and 1) dat_sd$ymin =
     # sapply(dat_sd$pred - dat_sd$sd,function(x)
     # max(0,x)) dat_sd$ymax = sapply(dat_sd$pred
     # + dat_sd$sd,function(x) min(1,x))
-
-
-    ## choose plot
-
-    # set default options if arguments aren't
-    # specified
-    if (is.null(addribbon) & is.null(adderrorbars)) {
-
-        addribbon <- TRUE
-        adderrorbars <- FALSE
-
-        # if (!is.null(fit$fitfun.sd)) {
-        # addribbon = TRUE adderrorbars = FALSE }
-        # else { addribbon = FALSE adderrorbars =
-        # TRUE }
-    }
-    if (is.null(addribbon))
-        addribbon <- FALSE
-    if (is.null(adderrorbars))
-        adderrorbars <- FALSE
 
 
     ## build plot

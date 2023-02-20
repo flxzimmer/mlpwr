@@ -50,9 +50,9 @@
 find.design <- function(simfun, boundaries, power = NULL,
     evaluations = 4000, ci = NULL, ci_perc = 0.95,
     time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
-    n.startsets = 4, init.perc = 0.2, setsize = 100,
+    n.startsets = 4, init.perc = 0.2, setsize = NULL,
     continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
-    control = list(),goodvals="high",aggregate_fun = mean,integer=TRUE,use_noise=TRUE) {
+    control = list(),goodvals="high",aggregate_fun = mean,noise_fun = "bernoulli",integer=TRUE,use_noise=TRUE) {
 
     # save seed for reproducibility
     seed <- .Random.seed
@@ -91,7 +91,7 @@ find.design <- function(simfun, boundaries, power = NULL,
 
     # Set setsize according to a percentage of
     # evaluations, if available
-    if (!is.null(evaluations))
+    if (is.null(setsize) & !is.null(evaluations))
         setsize <- ceiling(evaluations * init.perc/n.points)
 
     # adjust number of evaluations for continuing
@@ -149,7 +149,7 @@ find.design <- function(simfun, boundaries, power = NULL,
         # FIT: Fit a surrogate model
         fit <- fit.surrogate(dat = dat, surrogate = surrogate,
             lastfit = ifelse(exists("fit"), fit, 0),
-            control = control,aggregate_fun = aggregate_fun,use_noise=use_noise)
+            control = control,aggregate_fun = aggregate_fun,use_noise=use_noise,noise_fun=noise_fun)
 
         # count bad fits (e.g. plane fitted)
         if (fit$badfit)
@@ -208,7 +208,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     # Optional for the final output: Generate SD
     # from a GP if using a different surrogate
     if (use_noise&is.null(fit$fitfun.sd))
-        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun)$fitfun.sd
+        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun,noise_fun=noise_fun)$fitfun.sd
 
     # calculate final SE
     if (use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
