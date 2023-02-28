@@ -43,9 +43,9 @@
 #'  boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
 #'  power = .95)
 #' # Output the results
-#' summary(ds)
+#' summary(res)
 #' # Plot results
-#' plot(ds)
+#' plot(res)
 #'}
 find.design <- function(simfun, boundaries, power = NULL,
     evaluations = 4000, ci = NULL, ci_perc = 0.95,
