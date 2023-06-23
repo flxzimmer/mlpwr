@@ -23,7 +23,7 @@ check.term <- function(evaluations, ci, time, dat,
         # print(str(pred))
         sdval <- fit$fitfun.sd(as.numeric(pred$points))
         interval <- sdval * stats::qnorm(ci_perc +
-            (1 - ci_perc)/2)
+            (1 - ci_perc)/2) * 2
         if (interval < ci)
             re <- TRUE
 
