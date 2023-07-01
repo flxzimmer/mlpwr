@@ -8,6 +8,8 @@
 #' @param addribbon logical. Adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).
 #' @param trim logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE.
 #' @param type character indicating the type of the 2D plot. Can be 'heat'(default) or 'line'.
+#' @param color.gradient character indicating whether the 2D plot should have a "diverging" color gradient (white-blue-white, default) or a "linear" color gradient (blue-red)
+#' @param color.width numeric. Option for the diverging colormap in the 2D plot. Width of the blue-white colorband.
 #' @param x Object of class designresult as created by the find.design function.
 #' @param ... additional arguments to be passed.
 #'
@@ -21,16 +23,19 @@
 #' # Plot results
 #' plot(ds)
 plot.designresult <- function(x, design = NULL, adderrorbars = NULL,
-    addribbon = NULL, trim = TRUE, type = "heat", ...) {
+    addribbon = NULL, trim = TRUE, type = "heat", color.width = .15, color.gradient = "diverging", ...) {
 
     # choose 1D or 2D plot
     dims <- length(x$final$design)
+
+    if (dims > 2) stop("Plots for designs with more than two dimensions are currently not supported.")
+
     if (dims == 2 & is.null(design)) {
 
         if (type == "hline")
             pl <- plot2d_line(x, trim)
         if (type == "heat")
-            pl <- plot2d_heat(x)
+            pl <- plot2d_heat(x,color.width,color.gradient)
 
     } else {
         pl <- plot1d(x, design = design, adderrorbars = adderrorbars,

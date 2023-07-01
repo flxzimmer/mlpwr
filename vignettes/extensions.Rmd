@@ -193,3 +193,54 @@ res <- find.design(
 summary(res)
 ```
 
+
+# 3-Dimensional Designs
+
+As an example for a study design with more than 2 dimensions, we consider a multilevel design with the three dimensions:
+
+* Number of schools
+* Number of students per school
+* Number of observations per student
+
+
+```{r}
+library(lme4)
+library(lmerTest)
+```
+
+
+```{r}
+simfun_3d <- function(n.per.school,n.schools, n.obs) {
+
+  # generate data
+  school = rep(1:n.schools,each=n.per.school*n.obs)
+  student = rep(1:(n.schools*n.per.school),each=n.obs)
+  pred = factor(rep(c("old","new"),n.per.school*n.schools*n.obs,each=n.obs),levels=c("old","new"))
+  dat = data.frame(school = school, student = student, pred = pred)
+  
+
+  params <- list(theta = c(.5,0,.5,.5), beta = c(0,1),sigma = 1.5)
+  names(params$theta) = c("school.(Intercept)","school.prednew.(Intercept)","school.prednew","student.(Intercept)")
+  names(params$beta) = c("(Intercept)","prednew")
+  dat$y <- simulate.formula(~pred + (1 + pred | school) + (1 | student), newdata = dat, newparams = params)[[1]]
+  
+  # test hypothesis
+  mod <- lmer(y ~ pred + (1 + pred | school) + (1 | student), data = dat)
+  pvalue <- summary(mod)[["coefficients"]][2,"Pr(>|t|)"]
+  pvalue < .01
+}
+
+costfun_3d <- function(n.per.school, n.schools,n.obs) {
+  100 * n.per.school + 200 * n.schools + .1 * n.obs * n.per.school * n.schools
+  }
+```
+
+
+```{r}
+res = find.design(simfun = simfun_3d, costfun = costfun_3d, boundaries = list(n.per.school = c(5, 25), n.schools = c(10, 30), n.obs = c(3,10)), power = .95)
+
+summary(res)
+```
+In this case, going with the minimum number of observations per student seems to be the ideal choice.
+
+

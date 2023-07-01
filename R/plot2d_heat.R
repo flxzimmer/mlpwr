@@ -1,4 +1,4 @@
-plot2d_heat <- function(ds) {
+plot2d_heat <- function(ds,color.width,color.gradient) {
 
     dat <- ds$dat
     fit <- ds$fit
@@ -16,11 +16,20 @@ plot2d_heat <- function(ds) {
     names(powerfit) <- c("n", "k")
     powerfit$power <- apply(powerfit, 1, fit$fitfun)
 
-    # remove far values
-    dist <- min(1 - final$power, final$power)
-    dist <- min(dist, 0.05)
+    # control colorband width (only for diverging)
+    if (color.gradient == "diverging") {
+    dist = color.width/2
     toofar <- abs(powerfit$power - final$power) > dist
     powerfit$power[toofar] <- NA
+    }
+
+    # control colorband width (only for linear)
+    if (color.gradient == "linear") {
+      dist = .3
+      toofar <- abs(powerfit$power - final$power) > dist
+      powerfit$power[toofar] <- NA
+    }
+
 
     # cost
     ns <- seq(boundaries[[1]][1], boundaries[[1]][2],
@@ -77,20 +86,32 @@ plot2d_heat <- function(ds) {
         y = eqcost$k, col = costlabel)) + ggplot2::geom_point(ggplot2::aes(x = dat_obs$V1,
         y = dat_obs$V2, col = pointlabel)) + ggplot2::geom_point(ggplot2::aes(x = fin$n,
         y = fin$k, col = crosslabel), shape = 4, size = 5,
-        stroke = 1.3) + ggplot2::theme_bw() + ggplot2::scale_fill_gradient2(low = "white",
-        mid = "#2166AC", high = "white", midpoint = final$power,
-        space = "Lab", na.value = NA, guide = ggplot2::guide_colourbar(title = "Power",
-            title.position = "left", barwidth = 8),
-        aesthetics = "fill") + ggplot2::scale_colour_manual(breaks = levels,
-        values = c("#B2182B", "black", "darkorchid4")[labelorder],
-        guide = ggplot2::guide_legend(title = "", override.aes = list(linetype = c("solid",
-            "blank", "blank")[labelorder], shape = c(NA,
-            20, 4)[labelorder], stroke = c(NA, NA,
-            1.3)[labelorder], size = c(1, 1, 3)[labelorder]))) +
-        ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
+        stroke = 1.3) + ggplot2::theme_bw()
+
+
+      if (color.gradient=="diverging") {
+        pl2 = pl2 + ggplot2::scale_fill_gradient2(low = "white",
+                                                        mid = "#2166AC", high = "white", midpoint = final$power,
+                                                        space = "Lab", na.value = NA, guide = ggplot2::guide_colourbar(title = "Power",
+                                                                                                                       title.position = "left", barwidth = 8),
+                                                        aesthetics = "fill")
+      }
+
+    if (color.gradient=="linear") {
+      pl2 = pl2 + ggplot2::scale_fill_gradient2(low = "white", mid = "#2166AC", high = "#D62828",  midpoint = final$power,                                               space = "Lab", na.value = NA, guide = ggplot2::guide_colourbar(title = "Power",
+                                                                                                               title.position = "left", barwidth = 8),
+                                                aesthetics = "fill")
+    }
+
+      pl2 = pl2 + ggplot2::scale_colour_manual(breaks = levels,
+                                                 values = c("#B2182B", "black", "darkorchid4")[labelorder],
+                                                 guide = ggplot2::guide_legend(title = "", override.aes = list(linetype = c("solid",
+                                                                                                                            "blank", "blank")[labelorder], shape = c(NA,
+                                                                                                                                                                     20, 4)[labelorder], stroke = c(NA, NA, 1.3)[labelorder], size = c(1, 1, 3)[labelorder])))  + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
         ggplot2::theme(legend.position = "bottom")
 
     pl2
+
 }
 
 

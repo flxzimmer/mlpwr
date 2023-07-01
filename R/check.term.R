@@ -14,7 +14,7 @@ check.term <- function(evaluations, ci, time, dat,
     }
 
     # check termination (ci)
-    if (!is.null(ci)) {
+    if (!is.null(ci) && !is.na(ci)) {
 
         if (is.null(fit$fitfun.sd))
             fit$fitfun.sd <- fit.surrogate(dat = dat,
