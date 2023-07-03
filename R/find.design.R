@@ -215,8 +215,11 @@ find.design <- function(simfun, boundaries, power = NULL,
     time_used <- timer(time_temp)
 
     # Warning if ending with a bad prediction
-    if (pred$badprediction)
+    if (pred$badprediction) {
+        pred$points <- pred$bad.points
         warning("No good design found after the final update.")
+    }
+
 
     final <- list(design = pred$points, power = fit$fitfun(as.numeric(pred$points)),
         cost = costfun(as.numeric(pred$points)), se = fit$fitfun.sd(as.numeric(pred$points)))

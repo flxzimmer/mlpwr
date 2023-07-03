@@ -62,12 +62,14 @@ get.pred <- function(fit, dat, power, costfun, cost,
     # 'bad' predictions (e.g. because of too few
     # data)
     if (badprediction & !edgeprediction) {
+        bad.points <- points
         points <- datx[, 1:(length(datx) - 1), drop = FALSE]
     }
 
 
     re <- list(points = points, badprediction = badprediction,
-        edgeprediction = edgeprediction)
+        edgeprediction = edgeprediction,
+        bad.points = ifelse(exists("bad.points"), bad.points, NA))
 
     return(re)
 }
