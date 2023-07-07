@@ -1,15 +1,11 @@
 
 
-fit.surrogate <- function(dat, surrogate, lastfit = 0,
+fit.surrogate <- function(dat, surrogate, lastfit,
     control = list()) {
 
-
-    if (!is.list(lastfit))
-        lastfit <- NULL
-
-    switch(surrogate, reg = reg.fit(dat), logreg = logi.fit(dat),
-        svr = svm.fit(dat, lastfit = lastfit), gpr = gauss.fit(dat,
-            patience = 100, control))
+    switch(surrogate, reg = reg.fit(dat), logreg = logi.fit(dat,
+          lastfit = lastfit), svr = svm.fit(dat, lastfit = lastfit),
+          gpr = gauss.fit(dat, patience = 100, control))
 
 }
 
@@ -43,7 +39,7 @@ reg.fit <- function(dat) {
 
 
 
-logi.fit <- function(dat, trans = TRUE) {
+logi.fit <- function(dat, trans = TRUE,lastfit) {
 
     datx <- todataframe(dat, aggregate = TRUE)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
@@ -66,25 +62,35 @@ logi.fit <- function(dat, trans = TRUE) {
         fam$mu.eta <- function(mu) 2 * exp(-mu)/(exp(-mu) +
             1)^2
 
-        mod <- stats::glm(y ~ ., datx, weights = weight,
-            family = fam)
+        mod <- tryCatch(stats::glm(y ~ ., datx, weights = weight,
+            family = fam, control = list(maxit = 50)), error = \(e) NULL)
+
+        # try again with starting values from previous run
+        if (is.null(mod) & !is.null(lastfit$last.mod)) {
+          mod <- tryCatch(stats::glm(y ~ ., datx, weights = weight,family = fam,
+              control = list(maxit = 50),start = stats::coef(lastfit$last.mod)),
+              error = \(e) NULL)
+        }
     }
 
-    fitfun <- function(x) {
+    if (!is.null(mod)) {
+      last.mod = mod
+      badfit = FALSE
+      fitfun <- function(x) {
         names(x) <- names(xvars)
         stats::predict(mod, newdata = data.frame(t(x)),
             type = "response")
+      }
+    } else {
+      last.mod = NULL
+      badfit = TRUE
+      fitfun <- function(x) 0.5
     }
 
-    # fitfun.sd = function(x) { names(x) =
-    # names(xvars)
-    # stats::predict(mod,newdata=data.frame(t(x)),type='response',se.fit=TRUE)$se.fit}
-
-    re <- list(fitfun = fitfun, fitfun.sd = NULL, badfit = FALSE)
+    re <- list(fitfun = fitfun, fitfun.sd = NULL, badfit = badfit,last.mod = last.mod)
 
     return(re)
 }
-
 
 # svr
 # ---------------------------------------------------------------------
@@ -192,13 +198,13 @@ svm.fit <- function(dat, lastfit, tune = TRUE) {
     somevals <- apply(xvars, 1, function(x) fitfun(x))
     isplane <- suppressWarnings(summary(stats::lm(y ~
         ., cbind(xvars, y = somevals)))$r.squared >
-        0.98)
+        0.999)
     if (!is.na(isplane) && !isplane)
         badfit <- FALSE
 
 
     re <- list(fitfun = fitfun, fitfun.sd = NULL, badfit = badfit,
-        lastfit = list(pars_history = pars_history))
+        pars_history = pars_history)
 
     return(re)
 }

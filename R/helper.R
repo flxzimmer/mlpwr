@@ -145,7 +145,7 @@ getweight <- function(dat, weight.type = "freq", correct_zero = TRUE) {
 }
 
 
-print.progress <- function(n_updates, evaluations_used,
+print_progress <- function(n_updates, evaluations_used,
     time_used) {
     # cat('\r',paste(c('Updates','evaluations','Time'),c(n_updates,evaluations_used,round(time_used,1)),sep=':
     # ',collapse=', '),'\n')

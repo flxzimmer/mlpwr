@@ -148,9 +148,13 @@ find.design <- function(simfun, boundaries, power = NULL,
     repeat {
 
         # FIT: Fit a surrogate model
+        if (exists("fit")) {
+          lastfit <- fit
+        } else {
+          lastfit <- NULL
+        }
         fit <- fit.surrogate(dat = dat, surrogate = surrogate,
-            lastfit = ifelse(exists("fit"), fit, 0),
-            control = control)
+            lastfit = lastfit, control = control)
 
         # count bad fits (e.g. plane fitted)
         if (fit$badfit)
@@ -197,7 +201,7 @@ find.design <- function(simfun, boundaries, power = NULL,
 
         # print current progress
         if (!silent)
-            print.progress(n_updates = n_updates, evaluations_used = usedevaluations(dat),
+            print_progress(n_updates = n_updates, evaluations_used = usedevaluations(dat),
                 time_used = timer(time_temp))
 
     }
@@ -215,11 +219,10 @@ find.design <- function(simfun, boundaries, power = NULL,
     time_used <- timer(time_temp)
 
     # Warning if ending with a bad prediction
-    if (pred$badprediction) {
+    if (pred$badprediction | fit$badfit) {
         pred$points <- pred$bad.points
         warning("No good design found after the final update.")
     }
-
 
     final <- list(design = pred$points, power = fit$fitfun(as.numeric(pred$points)),
         cost = costfun(as.numeric(pred$points)), se = fit$fitfun.sd(as.numeric(pred$points)))
