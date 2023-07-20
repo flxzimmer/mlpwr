@@ -89,207 +89,212 @@
 #'
 #'}
 find.design <- function(simfun, boundaries, power = NULL,
-    evaluations = 4000, ci = NULL, ci_perc = 0.95,
-    time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
-    n.startsets = 4, init.perc = 0.2, setsize = NULL,
-    continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
-    control = list(),goodvals="high",aggregate_fun = mean,noise_fun = "bernoulli",integer=TRUE,use_noise=TRUE) {
+                        evaluations = 4000, ci = NULL, ci_perc = 0.95,
+                        time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
+                        n.startsets = 4, init.perc = 0.2, setsize = NULL,
+                        continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
+                        control = list(),goodvals="high",aggregate_fun = mean,noise_fun = "bernoulli",integer=TRUE,use_noise=TRUE,anchor=NULL) {
 
-    # save seed for reproducibility
-    seed <- .Random.seed
+  # save seed for reproducibility
+  seed <- .Random.seed
 
-    # Start the clock
-    time_temp <- timer()
+  # Start the clock
+  time_temp <- timer()
 
-    # initiate continue
-    if (!is.null(continue)) {
-        simfun <- continue$simfun
-        costfun <- continue$costfun
-        boundaries <- continue$boundaries
-        power <- continue$power
-        cost <- continue$cost
-        dat <- continue$dat
-        # take new surrogate if it is not NULL
-        # and different than before
-        surrogate <- ifelse(!is.null(surrogate) &&
-            surrogate != continue$surrogate, surrogate,
-            continue$surrogate)
-    }
+  # initiate continue
+  if (!is.null(continue)) {
+    simfun <- continue$simfun
+    costfun <- continue$costfun
+    boundaries <- continue$boundaries
+    power <- continue$power
+    cost <- continue$cost
+    dat <- continue$dat
+    # take new surrogate if it is not NULL
+    # and different than before
+    surrogate <- ifelse(!is.null(surrogate) &&
+                          surrogate != continue$surrogate, surrogate,
+                        continue$surrogate)
+  }
 
-    # set a default costfunction (identity) if not specified
-    if (is.null(costfun)) costfun <- function(x) sum(x)
+  # set a default costfunction (identity) if not specified
+  if (is.null(costfun)) costfun <- function(x) sum(x)
 
-    # convert boundaries to list and set name
-    # from simfun
-    if (!is.list(boundaries)) {
-        boundaries <- list(boundaries)
-        names(boundaries) <- names(as.list(args(simfun)))[1]
-    }
+  # convert boundaries to list and set name
+  # from simfun
+  if (!is.list(boundaries)) {
+    boundaries <- list(boundaries)
+    names(boundaries) <- names(as.list(args(simfun)))[1]
+  }
 
-    # determine number of points
-    n.points <- n.startsets * length(boundaries)
+  # determine number of points
+  n.points <- n.startsets * length(boundaries)
 
-    # Set setsize according to a percentage of
-    # evaluations, if available
-    if (is.null(setsize) & !is.null(evaluations))
-        setsize <- ceiling(evaluations * init.perc/n.points)
+  # Set setsize according to a percentage of
+  # evaluations, if available
+  if (is.null(setsize) & !is.null(evaluations))
+    setsize <- ceiling(evaluations * init.perc/n.points)
 
-    # adjust number of evaluations for continuing
-    # a search
-    if (!is.null(dat)) {
-        evaluations <- usedevaluations(dat) + evaluations
-    }
+  # adjust number of evaluations for continuing
+  # a search
+  if (!is.null(dat)) {
+    evaluations <- usedevaluations(dat) + evaluations
+  }
 
-    simfun <- fix.argtype(simfun, boundaries)
-    costfun <- fix.argtype(costfun, boundaries)
-
-
-    # Generate initialization data if not
-    # available
-    if (is.null(dat)) {
-        points <- initpoints(boundaries = boundaries,
-            n.points = n.points, integer=integer)
-        dat <- addval(simfun = simfun, points = points,
-            each = setsize, autosave_dir = autosave_dir)
-    }
-
-    # choose surrogate (if not specified)
-    if (is.null(surrogate)) {
-        if (length(boundaries) == 1)
-            surrogate <- "logreg"
-        if (length(boundaries) > 1)
-            surrogate <- "gpr"
-    }
-
-    # warn if ci is termination critrerion
-    # without gpr surrogate
-    if (!is.null(ci) && surrogate != "gpr")
-        warning("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
+  simfun <- fix.argtype(simfun, boundaries)
+  costfun <- fix.argtype(costfun, boundaries)
 
 
+  # Generate initialization data if not
+  # available
+  if (is.null(dat)) {
+    points <- initpoints(boundaries = boundaries,
+                         n.points = n.points, integer=integer)
+    dat <- addval(simfun = simfun, points = points,
+                  each = setsize, autosave_dir = autosave_dir)
+  }
 
-    # Error if neither power or cost is given or
-    # both are given
-    if (is.null(power) & is.null(cost))
-        stop("Either the power or cost argument must be supplied")
-    if (!is.null(power) & !is.null(cost))
-        stop("Only one of power or cost argument can be supplied")
+  # choose surrogate (if not specified)
+  if (is.null(surrogate)) {
+    if (length(boundaries) == 1)
+      surrogate <- "logreg"
+    if (length(boundaries) > 1)
+      surrogate <- "gpr"
+  }
 
-    # determine the optimization task to perform
-    if (!is.null(cost))
-        task <- "costthreshold"
-    if (!is.null(power))
-        task <- "desiredpower"
+  # warn if ci is termination critrerion
+  # without gpr surrogate
+  if (!is.null(ci) && surrogate != "gpr")
+    warning("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
 
-    ############################################################################## start
-    ############################################################################## the
-    ############################################################################## search
-    repeat {
 
-        # FIT: Fit a surrogate model
-        fit <- fit.surrogate(dat = dat, surrogate = surrogate,
-            lastfit = ifelse(exists("fit"), fit, 0),
-            control = control,aggregate_fun = aggregate_fun,use_noise=use_noise,noise_fun=noise_fun)
 
-        # count bad fits (e.g. plane fitted)
-        if (fit$badfit)
-            n.bad.fits <- ifelse(exists("n.bad.fits"),
-                n.bad.fits + 1, 1)
+  # Error if neither power or cost is given or
+  # both are given
+  if (is.null(power) & is.null(cost))
+    stop("Either the power or cost argument must be supplied")
+  if (!is.null(power) & !is.null(cost))
+    stop("Only one of power or cost argument can be supplied")
 
-        # PREDICTION: Get a prediction from the
-        # fitted model
-        pred <- get.pred(fit = fit, dat = dat, power = power,
-            costfun = costfun, cost = cost, boundaries = boundaries,
-            task = task,aggregate_fun = aggregate_fun,integer=integer,use_noise=use_noise)
+  # determine the optimization task to perform
+  if (!is.null(cost))
+    task <- "costthreshold"
+  if (!is.null(power))
+    task <- "desiredpower"
 
-        # count bad predictions (no sensible
-        # value found)
-        if (pred$badprediction)
-            n.bad.predictions <- ifelse(exists("n.bad.predictions"),
-                n.bad.predictions + 1, 1)
+  ############################################################################## start
+  ############################################################################## the
+  ############################################################################## search
+  repeat {
 
-        # count edge predictions (value on edge
-        # of parameter space) and issue warning
-        # if happened too often
-        if (pred$edgeprediction) {
-            n.edgepredictions <- ifelse(exists("n.edgepredictions"),
-                n.edgepredictions + 1, 1)
-            if (n.edgepredictions == 5)
-                warning("The predicted value consistently lies at the edge of the parameter space. Consider adjusting the boundaries.")
-        }
+    # FIT: Fit a surrogate model
+    fit <- fit.surrogate(dat = dat, surrogate = surrogate,
+                         lastfit = ifelse(exists("fit"), fit, 0),
+                         control = control,aggregate_fun = aggregate_fun,use_noise=use_noise,noise_fun=noise_fun,anchor = anchor)
 
-        # check TERMINATION
-        is.terminate <- check.term(evaluations = evaluations,
-            ci = ci, time = time, dat = dat, time_temp = time_temp,
-            fit = fit, pred = pred, ci_perc = ci_perc)
-        if (is.terminate)
-            break
+    # count bad fits (e.g. plane fitted)
+    if (fit$badfit)
+      n.bad.fits <- ifelse(exists("n.bad.fits"),
+                           n.bad.fits + 1, 1)
 
-        # UPDATING: sample from the DGF
-        dat <- addval(simfun = simfun, dat = dat, points = pred$points,
-            each = max(ceiling(setsize/nrow(pred$points)),
-                1), autosave_dir = autosave_dir)
+    # PREDICTION: Get a prediction from the
+    # fitted model
+    pred <- get.pred(fit = fit, dat = dat, power = power,
+                     costfun = costfun, cost = cost, boundaries = boundaries,
+                     task = task,aggregate_fun = aggregate_fun,integer=integer,use_noise=use_noise)
 
-        # number of performed updates
-        n_updates <- ifelse(exists("n_updates"), n_updates +
-            1, 1)
-
-        # print current progress
-        if (!silent)
-            print.progress(n_updates = n_updates, evaluations_used = usedevaluations(dat),
-                time_used = timer(time_temp))
-
-    }
-    ##############################################################################
-
-    # move to next line
-    cat("\n")
-
-    # Warning if ending with a bad prediction
+    # count bad predictions (no sensible
+    # value found)
     if (pred$badprediction)
-      warning("No good design found after the final update.")
+      n.bad.predictions <- ifelse(exists("n.bad.predictions"),
+                                  n.bad.predictions + 1, 1)
 
-    # bad prediction and no edge result -> no specific result to report
-    noresult = pred$badprediction & !pred$edgeprediction
-
-    # calculate final power and cost
-    if(!noresult) {
-      power_final = fit$fitfun(as.numeric(pred$points))
-      cost_final = costfun(as.numeric(pred$points))
-    } else {
-      power_final = NA
-      cost_final = NA
+    # count edge predictions (value on edge
+    # of parameter space) and issue warning
+    # if happened too often
+    if (pred$edgeprediction) {
+      n.edgepredictions <- ifelse(exists("n.edgepredictions"),
+                                  n.edgepredictions + 1, 1)
+      if (n.edgepredictions == 5)
+        warning("The predicted value consistently lies at the edge of the parameter space. Consider adjusting the boundaries.")
     }
 
-    # Optional for the final output: Generate SD
-    # from a GP if using a different surrogate
-    if (!noresult && use_noise && is.null(fit$fitfun.sd))
-        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun,noise_fun=noise_fun)$fitfun.sd
+    # check TERMINATION
+    is.terminate <- check.term(evaluations = evaluations,
+                               ci = ci, time = time, dat = dat, time_temp = time_temp,
+                               fit = fit, pred = pred, ci_perc = ci_perc)
+    if (is.terminate)
+      break
 
-    # calculate final SE
-    if (!noresult & use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
-    else final_se = NA
+    # UPDATING: sample from the DGF
+    dat <- addval(simfun = simfun, dat = dat, points = pred$points,
+                  each = max(ceiling(setsize/nrow(pred$points)),
+                             1), autosave_dir = autosave_dir)
 
-    # Stop the clock
-    time_used <- timer(time_temp)
+    # number of performed updates
+    n_updates <- ifelse(exists("n_updates"), n_updates +
+                          1, 1)
 
-    final <- list(design = pred$points, power = power_final,
-        cost = cost_final, se = final_se)
-    names(final$design) <- names(boundaries)
+    # print current progress
+    if (!silent)
+      print.progress(n_updates = n_updates, evaluations_used = usedevaluations(dat),
+                     time_used = timer(time_temp))
 
-    # Collect Results
-    re <- list(final = final, dat = dat, evaluations_used = usedevaluations(dat),
-        surrogate = surrogate, fit = fit, time_used = time_used,
-        n_updates = ifelse(exists("n_updates"), n_updates,
-            0), n.bad.predictions = ifelse(exists("n.bad.predictions"),
-            n.bad.predictions, 0), n.bad.fits = ifelse(exists("n.bad.fits"),
-            n.bad.fits, 0), call = match.call(), seed = seed,
-        costfun = costfun, boundaries = boundaries,
-        simfun = simfun, cost = cost, power = power,aggregate_fun=aggregate_fun)
+  }
+  ##############################################################################
 
-    class(re) <- "designresult"
+  # move to next line
+  cat("\n")
 
-    return(re)
+  # get final prediction without optimism/noise
+  pred <- get.pred(fit = fit, dat = dat, power = power,
+                   costfun = costfun, cost = cost, boundaries = boundaries,
+                   task = task,aggregate_fun = aggregate_fun,integer=integer,use_noise=FALSE)
+
+  # Warning if ending with a bad prediction
+  if (pred$badprediction)
+    warning("No good design found after the final update.")
+
+  # bad prediction and no edge result -> no specific result to report
+  noresult = pred$badprediction & !pred$edgeprediction
+
+  # calculate final power and cost
+  if(!noresult) {
+    power_final = fit$fitfun(as.numeric(pred$points))
+    cost_final = costfun(as.numeric(pred$points))
+  } else {
+    power_final = NA
+    cost_final = NA
+  }
+
+  # Optional for the final output: Generate SD
+  # from a GP if using a different surrogate
+  if (!noresult && use_noise && is.null(fit$fitfun.sd))
+    fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun,noise_fun=noise_fun,anchor = anchor)$fitfun.sd
+
+  # calculate final SE
+  if (!noresult & use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
+  else final_se = NA
+
+  # Stop the clock
+  time_used <- timer(time_temp)
+
+  final <- list(design = pred$points, power = power_final,
+                cost = cost_final, se = final_se)
+  names(final$design) <- names(boundaries)
+
+  # Collect Results
+  re <- list(final = final, dat = dat, evaluations_used = usedevaluations(dat),
+             surrogate = surrogate, fit = fit, time_used = time_used,
+             n_updates = ifelse(exists("n_updates"), n_updates,
+                                0), n.bad.predictions = ifelse(exists("n.bad.predictions"),
+                                                               n.bad.predictions, 0), n.bad.fits = ifelse(exists("n.bad.fits"),
+                                                                                                          n.bad.fits, 0), call = match.call(), seed = seed,
+             costfun = costfun, boundaries = boundaries,
+             simfun = simfun, cost = cost, power = power,aggregate_fun=aggregate_fun)
+
+  class(re) <- "designresult"
+
+  return(re)
 }
 
 
