@@ -1,7 +1,7 @@
 
 
 fit.surrogate <- function(dat, surrogate, lastfit = 0,
-                          control = list(),aggregate_fun=mean,use_noise=TRUE,noise_fun="bernoulli",anchor=NULL) {
+                          control = list(),aggregate_fun=mean,use_noise=TRUE,noise_fun="bernoulli",anchor=NULL,plot_progress = FALSE,power = NULL) {
 
 
   if (!is.list(lastfit))
@@ -9,7 +9,7 @@ fit.surrogate <- function(dat, surrogate, lastfit = 0,
 
   switch(surrogate, reg = reg.fit(dat,aggregate_fun=aggregate_fun), logreg = logi.fit(dat,aggregate_fun=aggregate_fun),
          svr = svm.fit(dat, lastfit = lastfit,aggregate_fun=aggregate_fun),
-         gpr = gauss.fit(dat, patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun,noise_fun=noise_fun,anchor=anchor))
+         gpr = gauss.fit(dat, patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun,noise_fun=noise_fun,anchor=anchor,plot_progress = plot_progress,power=power))
 
 }
 
@@ -207,7 +207,7 @@ svm.fit <- function(dat, lastfit, tune = TRUE,aggregate_fun) {
 # ---------------------------------------------------------------------
 
 
-gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise_fun="bernoulli",anchor=NULL) {
+gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise_fun="bernoulli",anchor=NULL,plot_progress = FALSE,power=NULL) {
 
 
   datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
@@ -310,11 +310,13 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
 
   # if(!exists("fitfun")) browser()
 
-  # x = seq(min(datx$V1),max(datx$V1))
-  # y = sapply(x,fitfun)
-  # plot(x,y,type="l")
-  # points(datx$V1,datx$y)
-  # abline(h=0.76)
+  if (plot_progress) {
+  x = seq(min(datx$V1),max(datx$V1))
+  y = sapply(x,fitfun)
+  plot(x,y,type="l")
+  points(datx$V1,datx$y)
+  abline(h=power)
+  }
 
   re <- list(fitfun = fitfun, fitfun.sd = fitfun.sd,
              badfit = badfit)

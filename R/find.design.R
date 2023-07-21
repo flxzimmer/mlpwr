@@ -93,7 +93,7 @@ find.design <- function(simfun, boundaries, power = NULL,
                         time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
                         n.startsets = 4, init.perc = 0.2, setsize = NULL,
                         continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
-                        control = list(),goodvals="high",aggregate_fun = mean,noise_fun = "bernoulli",integer=TRUE,use_noise=TRUE,anchor=NULL) {
+                        control = list(),goodvals="high",aggregate_fun = mean,noise_fun = "bernoulli",integer=TRUE,use_noise=TRUE,anchor=NULL,plot_progress = FALSE) {
 
   # save seed for reproducibility
   seed <- .Random.seed
@@ -189,7 +189,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     # FIT: Fit a surrogate model
     fit <- fit.surrogate(dat = dat, surrogate = surrogate,
                          lastfit = ifelse(exists("fit"), fit, 0),
-                         control = control,aggregate_fun = aggregate_fun,use_noise=use_noise,noise_fun=noise_fun,anchor = anchor)
+                         control = control,aggregate_fun = aggregate_fun,use_noise=use_noise,noise_fun=noise_fun,anchor = anchor,plot_progress=plot_progress,power = power)
 
     # count bad fits (e.g. plane fitted)
     if (fit$badfit)
