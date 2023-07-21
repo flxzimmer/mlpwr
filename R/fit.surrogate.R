@@ -9,7 +9,9 @@ fit.surrogate <- function(dat, surrogate, lastfit = 0,
 
     switch(surrogate, reg = reg.fit(dat,aggregate_fun=aggregate_fun), logreg = logi.fit(dat,aggregate_fun=aggregate_fun),
         svr = svm.fit(dat, lastfit = lastfit,aggregate_fun=aggregate_fun), gpr = gauss.fit(dat,
-            patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun))
+            patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun),
+        splines = splines.fit(dat,use_noise=use_noise,aggregate_fun=aggregate_fun,noise_fun=noise_fun),
+        power = power.fit(dat,use_noise=use_noise,aggregate_fun=aggregate_fun,noise_fun=noise_fun))
 
 }
 
@@ -280,6 +282,221 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun) {
 }
 
 
+
+
+# powerfun -----------------------------------------------------------------
+
+power.fit <- function(dat,use_noise,aggregate_fun,noise_fun="freq") {
+
+  library(mgcv)
+  library(caret)
+  library(boot)
+
+  datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
+  xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
+
+  # if(!is.function(noise_fun) && noise_fun == "freq") weight <- getweight(dat, weight.type = "freq")
+  # else weight = sapply(dat,noise_fun)
+  weight <- getweight(dat, weight.type = "freq")
+
+  #add anchor at n = 0
+  # datx = rbind(datx,c(0,.5))
+  # xvars = rbind(xvars,0)
+  # weight = c(weight,max(weight)*5)
+
+  weight <- weight/mean(weight) # normalize weights
+  datx$weight = weight # add weight to dataframe
+
+  re = fitpowerlaw(datx=datx)
+  mod = re$mod
+
+
+  fitfun <- function(x) {
+    names(x) <- names(xvars)
+    re = stats::predict(mod, newdata = data.frame(t(x)),
+                        type = "response")
+    if(length(x)<length(re)) re = re[1]
+    return(re)
+  }
+
+  # print(best_k)
+  # fitfun(1392)
+  # x = seq(min(datx$V1),max(datx$V1))
+  # x = seq(min(datx$V1),700)
+  # x = datx$V1
+  # plot(x,sapply(x,fitfun))
+
+  re <- list(fitfun = fitfun, fitfun.sd = NULL, badfit = FALSE)
+
+  return(re)
+}
+
+
+
+fitpowerlaw = function(datx) {
+  strx = "y"
+  names(datx)[1] = "n"
+
+  inv.power.law = as.formula(paste0(strx,"~(1 - a) - b * n^c1"))
+
+  alg="default"
+  ctrl = nls.control(warnOnly = T)
+
+
+  startsets = list(
+    list(a=1,b=-.5,c1=-.01),
+    list(a=1.0701839,b=-0.1922454,c1=-0.1280311),
+    list(a=0.9992658,b= -0.91970387,c1= -0.50102893),
+    list(a=1.0075304,b= -0.62656251,c1= -0.44011308),
+    list(a=1.0623583,b= -0.17973726,c1= -0.12874478),
+    list(a=1.0812181,b=  -4.889454,c1= -0.4177285),
+    list(a=0.9588333,b= -14.663574,c1= -0.8061297),
+    list(a=0.9572533,b=  -8.868742,c1= -0.6343645),
+    list(a=1.1094262,b=  -1.423001,c1= -0.2730920),
+    list(a=0.9249856,b= -11.082680,c1= -0.7504548),
+    list(a=0.9659449 ,b= -7.337569,c1= -0.6676266)
+  )
+  r2 = 0
+
+  for (i in 1:length(startsets)) {
+
+    tryCatch({
+      mod = nls(inv.power.law,datx,start=startsets[[i]],weights = weight,algorithm=alg,control = ctrl)
+      # Fit indices
+      r2 = 1- sum(resid(mod)^2) / sum((datx[[strx]]-mean(datx[[strx]]))^2)
+    },error=function(e) NA)
+
+    if (r2>.95) break
+
+  }
+
+  # try other algorithm if still bad
+  if(r2<.9) {
+    alg="port"
+    ctrl = nls.control(warnOnly = T)
+    mod = nls(inv.power.law,datx,start=list(a=1,b=-.5,c1=-.01),weights = weight,algorithm=alg,control = ctrl)
+    r2 = 1- sum(resid(mod)^2) / sum((datx[[strx]]-mean(datx[[strx]]))^2)
+  }
+
+  a = summary(mod)$parameters[1,1]
+  b = summary(mod)$parameters[2,1]
+  c1 = summary(mod)$parameters[3,1]
+
+
+  return(list(mod=mod,r2=r2))
+}
+
+
+
+# splines -----------------------------------------------------------------
+
+splines.fit <- function(dat,use_noise,aggregate_fun,noise_fun="freq") {
+
+  library(mgcv)
+  library(caret)
+  library(boot)
+
+  datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
+  xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
+
+  # if(!is.function(noise_fun) && noise_fun == "freq") weight <- getweight(dat, weight.type = "freq")
+  # else weight = sapply(dat,noise_fun)
+  weight <- getweight(dat, weight.type = "freq")
+
+  #add anchor at n = 0
+  datx = rbind(datx,c(0,.5))
+  xvars = rbind(xvars,0)
+  weight = c(weight,max(weight)*5)
+  weight <- weight/mean(weight) # normalize weights
+
+  datx$weight = weight
+
+  method = "scam"
+
+  if (method=="gam") {
+    # Define the tuning grid
+    tuneGrid <- expand.grid(k = 3:(nrow(datx)-1))
+
+    # Define a function to fit a gam model for a given value of k
+    fit_gam <- function(k) {
+      # Fit the model
+      fit <- mgcv::gam(y ~ s(V1, k = k), data = datx,weights=weight)
+
+      # Perform cross-validation
+      cv_results <- cv.glm(datx, fit, K = nrow(datx))
+
+      # Return the cross-validation results
+      cv_results$delta[1]
+    }
+
+    # Fit a gam model for each value of k in the tuning grid
+    results <- sapply(tuneGrid$k, fit_gam)
+
+    # Select the best value of k based on the cross-validation results
+    best_k <- tuneGrid$k[which.min(results)]
+
+    # Fit the final model using the best value of k
+    mod <- mgcv::gam(y ~ s(V1, k = best_k), data = datx,weights=weight)
+
+    # old code
+    # degree = min(nrow(datx),7)
+    # mod <- mgcv::gam(y ~ s(V1, k = degree), data = datx,weights=weight)
+
+    fitfun <- function(x) {
+      names(x) <- names(xvars)
+      mgcv::predict.gam(mod, newdata = data.frame(t(x)),
+                        type = "response")
+    }
+  }
+
+  if (method=="smooth.spline") {
+
+    mod <- smooth.spline(datx$V1, datx$y)
+
+    fitfun <- function(x) {
+      names(x) <- names(xvars)
+      stats:::predict.smooth.spline(mod, x = data.frame(t(x)),
+                                    type = "response")$y |> as.numeric()
+    }
+  }
+
+  if (method=="scam") {
+
+    library(scam)
+
+    # Fit a monotonic spline to the data
+    mod <- tryCatch(
+      scam(y ~ s(V1, k = nrow(datx), bs = "cr"),weights=weight, data = datx)
+      ,error=\(e)NULL)
+    if(is.null(mod)) {
+      mod = scam(y ~ s(V1, k = nrow(datx), bs = "cr"),weights=weight, data = datx,optimizer="optim")
+    }
+
+    fitfun <- function(x) {
+      names(x) <- names(xvars)
+      scam:::predict.scam(mod, newdata = data.frame(t(x)),
+                          type = "response") |> as.numeric()
+    }
+  }
+
+
+
+  # print(best_k)
+  # fitfun(1392)
+  # x = seq(min(datx$V1),max(datx$V1))
+  # x = seq(min(datx$V1),700)
+  # x = datx$V1
+  # plot(x,sapply(x,fitfun))
+
+  # x = seq(min(datx$V1),max(datx$V1))
+  # y = sapply(x,fitfun)
+  # plot(x,y,type="l")
+  # points(datx$V1,datx$y)
+
+  re <- list(fitfun = fitfun, fitfun.sd = NULL, badfit = FALSE)
+
+  return(re)
+}
 
 
 
