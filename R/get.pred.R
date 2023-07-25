@@ -65,7 +65,7 @@ get.pred <- function(fit, dat, power, costfun, cost,
 
     points <- data.frame(t(newre$par))
     edgeprediction <- FALSE
-    if (any(points == boundmins) | any(points == boundmaxs)) {
+    if (!fit$badfit & (any(points == boundmins) | any(points == boundmaxs))) {
         edgeprediction <- TRUE
     }
     # sample all locations if prediction is bad
@@ -73,13 +73,15 @@ get.pred <- function(fit, dat, power, costfun, cost,
     # falsification, it is not the same as other
     # 'bad' predictions (e.g. because of too few
     # data)
-    if (badprediction & !edgeprediction) {
+    if (fit$badfit | (badprediction & !edgeprediction)) {
+        bad.points <- points
         points <- datx[, 1:(length(datx) - 1), drop = FALSE]
+    } else {
+      bad.points <- NA
     }
 
-
     re <- list(points = points, badprediction = badprediction,
-        edgeprediction = edgeprediction)
+        edgeprediction = edgeprediction, bad.points = bad.points)
 
     return(re)
 }
