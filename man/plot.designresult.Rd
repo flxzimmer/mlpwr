@@ -11,6 +11,8 @@
   addribbon = NULL,
   trim = TRUE,
   type = "heat",
+  width.color = 0.15,
+  color.gradient = "diverging",
   ...
 )
 }
@@ -27,7 +29,11 @@
 
 \item{type}{character indicating the type of the 2D plot. Can be 'heat'(default) or 'line'.}
 
+\item{color.gradient}{character indicating whether the 2D plot should have a "diverging" color gradient (white-blue-white, default) or a "linear" color gradient (blue-red)}
+
 \item{...}{additional arguments to be passed.}
+
+\item{color.width}{numeric. Option for the diverging colormap in the 2D plot. Width of the blue-white colorband.}
 }
 \value{
 A ggplot object

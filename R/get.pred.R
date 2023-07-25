@@ -35,13 +35,18 @@ get.pred <- function(fit, dat, power, costfun, cost,
         if(!integer)
           newre <- rgenoud::genoud(fn, nvars = nrow(Domains), data.type.int = integer, Domains = Domains, print.level = 0, boundary.enforcement = 2,pop.size = 20, starting.values = cands,gradient.check=F)
 
-        # somevals = seq(1,1.6,by=.001)
-        # y = sapply(somevals,fit$fitfun)
-        # plot(somevals,y)
 
+        # x = 20:400
+        # y = sapply(x,fit$fitfun)
+
+          # badprediction <- abs(fit$fitfun(newre$par) -
+          #   power) > 0.05
           badprediction <- abs(fit$fitfun(newre$par) -
-            power) > 0.05
+            power) > 0.4
+
         # if(badprediction) browser()
+          # print(badprediction)
+          # print(newre$par)
     }
 
 

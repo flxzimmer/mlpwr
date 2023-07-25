@@ -26,19 +26,22 @@
 #' @export
 #'
 #' @examples \donttest{
-#' #Load a simulation function
-#' simfun = example.simfun('ttest')
+#' ## T-test example:
+#'
+#' # Load a simulation function
+#' simfun <- example.simfun('ttest')
 #' # Perform the search
-#' ds = find.design(simfun = simfun, boundaries = c(100,300), power = .95)
+#' ds <- find.design(simfun = simfun, boundaries = c(100,300), power = .95)
 #' # Output the results
 #' summary(ds)
 #' # Plot results
 #' plot(ds)
 #'
-#' # Two-dimensional simulation function:
-#' simfun = example.simfun('anova')
+#' ## Two-dimensional simulation function:
+#'
+#' simfun <- example.simfun('anova')
 #' # Perform the search
-#' res = find.design(simfun = simfun,
+#' ds <- find.design(simfun = simfun,
 #'  costfun = function(n,n.groups) 5*n+20*n.groups,
 #'  boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
 #'  power = .95)
@@ -46,13 +49,51 @@
 #' summary(ds)
 #' # Plot results
 #' plot(ds)
+#'
+#'
+#' ##  Mixed model example with a custom, two-dimensional simulation function:
+#'
+#' library(lme4)
+#' library(lmerTest)
+#'
+#' # Simulation function
+#' simfun_multilevel <- function(n.per.school,n.schools) {
+#'
+#'   # generate data
+#'   group = rep(1:n.schools,each=n.per.school)
+#'   pred = factor(rep(c("old","new"),n.per.school*n.schools),levels=c("old","new"))
+#'   dat = data.frame(group = group, pred = pred)
+#'
+#'   params <- list(theta = c(.5,0,.5), beta = c(0,1),sigma = 1.5)
+#'   names(params$theta) = c("group.(Intercept)","group.prednew.(Intercept)","group.prednew")
+#'   names(params$beta) = c("(Intercept)","prednew")
+#'   dat$y <- simulate.formula(~pred + (1 + pred | group), newdata = dat, newparams = params)[[1]]
+#'
+#'   # test hypothesis
+#'   mod <- lmer(y ~ pred + (1 + pred | group), data = dat)
+#'   pvalue <- summary(mod)[["coefficients"]][2,"Pr(>|t|)"]
+#'   pvalue < .01
+#' }
+#' # Cost function
+#' costfun_multilevel <- function(n.per.school, n.schools) {
+#'   100 * n.per.school + 200 * n.schools
+#' }
+#' # Perform the search, can take a few minutes to run
+#' ds <- find.design(simfun = simfun_multilevel, costfun = costfun_multilevel,
+#' boundaries = list(n.per.school = c(5, 25), n.schools = c(10, 30)), power = .95,
+#' evaluations = 1000)
+#' # Output the results
+#' summary(ds)
+#' # Plot results
+#' plot(ds)
+#'
 #'}
 find.design <- function(simfun, boundaries, power = NULL,
     evaluations = 4000, ci = NULL, ci_perc = 0.95,
     time = NULL, costfun = NULL, cost = NULL, surrogate = NULL,
-    n.startsets = 4, init.perc = 0.2, setsize = 100,
+    n.startsets = 4, init.perc = 0.2, setsize = NULL,
     continue = NULL, dat = NULL, silent = FALSE, autosave_dir = NULL,
-    control = list(),goodvals="high",aggregate_fun = mean,integer=TRUE,use_noise=TRUE) {
+    control = list(),goodvals="high",aggregate_fun = mean,noise_fun = "bernoulli",integer=TRUE,use_noise=TRUE) {
 
     # save seed for reproducibility
     seed <- .Random.seed
@@ -75,8 +116,7 @@ find.design <- function(simfun, boundaries, power = NULL,
             continue$surrogate)
     }
 
-    # set a default costfunction (identity) if
-    # not specified
+    # set a default costfunction (identity) if not specified
     if (is.null(costfun)) costfun <- function(x) sum(x)
 
     # convert boundaries to list and set name
@@ -91,7 +131,7 @@ find.design <- function(simfun, boundaries, power = NULL,
 
     # Set setsize according to a percentage of
     # evaluations, if available
-    if (!is.null(evaluations))
+    if (is.null(setsize) & !is.null(evaluations))
         setsize <- ceiling(evaluations * init.perc/n.points)
 
     # adjust number of evaluations for continuing
@@ -153,7 +193,7 @@ find.design <- function(simfun, boundaries, power = NULL,
           lastfit <- NULL
         }
         fit <- fit.surrogate(dat = dat, surrogate = surrogate,
-            lastfit = lastfit, control = control, aggregate_fun = aggregate_fun, use_noise = use_noise)
+            lastfit = lastfit, control = control, aggregate_fun = aggregate_fun, use_noise = use_noise,noise_fun=noise_fun)
 
         # count bad fits (e.g. plane fitted)
         if (fit$badfit)
@@ -209,26 +249,39 @@ find.design <- function(simfun, boundaries, power = NULL,
     # move to next line
     cat("\n")
 
-    # Optional for the final output: Generate SD
-    # from a GP if using a different surrogate
-    if (use_noise&is.null(fit$fitfun.sd))
-        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun)$fitfun.sd
-
-    # calculate final SE
-    if (use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
-    if (!use_noise) final_se = NA
-
-    # Stop the clock
-    time_used <- timer(time_temp)
-
-    # Warning if ending with a bad prediction
+      # Warning if ending with a bad prediction
     if (pred$badprediction | fit$badfit) {
         pred$points <- pred$bad.points
         warning("No good design found after the final update.")
     }
 
-    final <- list(design = pred$points, power = fit$fitfun(as.numeric(pred$points)),
-        cost = costfun(as.numeric(pred$points)), se = final_se)
+    # bad prediction and no edge result -> no specific result to report
+    noresult = pred$badprediction & !pred$edgeprediction
+
+    # calculate final power and cost
+    if(!noresult) {
+      power_final = fit$fitfun(as.numeric(pred$points))
+      cost_final = costfun(as.numeric(pred$points))
+    } else {
+      power_final = NA
+      cost_final = NA
+    }
+
+    # Optional for the final output: Generate SD
+    # from a GP if using a different surrogate
+    if (!noresult && use_noise && is.null(fit$fitfun.sd))
+        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun,noise_fun=noise_fun)$fitfun.sd
+
+    # calculate final SE
+    if (!noresult & use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
+    else final_se = NA
+
+    # Stop the clock
+    time_used <- timer(time_temp)
+
+    final <- list(design = pred$points, power = power_final,
+        cost = cost_final, se = final_se)
+
     names(final$design) <- names(boundaries)
 
     # Collect Results

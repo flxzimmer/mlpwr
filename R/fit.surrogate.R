@@ -1,11 +1,11 @@
 
 
 fit.surrogate <- function(dat, surrogate, lastfit,
-    control = list(),aggregate_fun=mean,use_noise=TRUE) {
+    control = list(),aggregate_fun=mean,use_noise=TRUE,noise_fun="bernoulli") {
 
     switch(surrogate, reg = reg.fit(dat,aggregate_fun=aggregate_fun), logreg = logi.fit(dat,aggregate_fun=aggregate_fun, lastfit = lastfit),
         svr = svm.fit(dat, lastfit = lastfit,aggregate_fun=aggregate_fun), gpr = gauss.fit(dat,
-            patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun))
+            patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun,noise_fun=noise_fun))
 
 }
 
@@ -214,12 +214,13 @@ svm.fit <- function(dat, lastfit, tune = TRUE,aggregate_fun) {
 # ---------------------------------------------------------------------
 
 
-
-gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun) {
+gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise_fun="bernoulli") {
 
     datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
-    weight <- getweight(dat, weight.type = "var")
+
+    if(!is.function(noise_fun) && noise_fun == "bernoulli") weight <- getweight(dat, weight.type = "var")
+    else weight = sapply(dat,noise_fun)
 
     if (any(ind <- duplicated(datx$y))) {
         a <- datx$y[ind]
