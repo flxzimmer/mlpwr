@@ -1,6 +1,6 @@
 
 
-initpoints <- function(boundaries, n.points, method = "halton") {
+initpoints <- function(boundaries, n.points, integer, method = "halton") {
 
     if (method == "halton") {
         s <- as.matrix(randtoolbox::halton(n = n.points -
@@ -13,8 +13,8 @@ initpoints <- function(boundaries, n.points, method = "halton") {
             pmin[i] <- dmin
             pmax[i] <- dmax
         }
-        points <- round(s)
-        points <- rbind(points, as.numeric(pmin), as.numeric(pmax))
+        if(integer) s <- round(s)
+        points <- rbind(s, as.numeric(pmin), as.numeric(pmax))
     }
 
     if (method == "sobol") {
@@ -27,7 +27,7 @@ initpoints <- function(boundaries, n.points, method = "halton") {
             dmax <- boundaries[[i]][2]
             s[, i] <- dmin + s[, i] * (dmax - dmin)
         }
-        points <- round(s)
+        if(integer) points <- round(s) else points <- s
     }
 
 
@@ -41,7 +41,7 @@ initpoints <- function(boundaries, n.points, method = "halton") {
             dmax <- boundaries[[i]][2]
             s[, i] <- dmin + s[, i] * (dmax - dmin)
         }
-        points <- round(s)
+        if(integer) points <- round(s) else points <- s
     }
 
 

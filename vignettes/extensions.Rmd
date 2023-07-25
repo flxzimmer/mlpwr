@@ -1,0 +1,198 @@
+---
+title: "extensions"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{extensions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  tidy = TRUE,
+  tidy.opts=list(arrow=TRUE,width.cutoff = 50),
+  eval=T
+)
+```
+
+We present some extensions to the package. These aim to demonstrate additional functionality of the package which has not yet been subject to extensive testing.
+
+```{r setup, echo = F}
+library(mlpwr)
+set.seed(1)
+```
+
+
+# Beyond Power Analysis
+
+Here, we demonstrate two other application scenarios, sensitivity analysis and compromise analysis.
+
+## Sensitivity Analysis
+
+Sensitivity analysis involves fixing the sample size, desired power, and alpha level, and determining the effect size that can be detected with the desired power. We demonstrate this functionality using a t-test.
+
+The fixed parameters are the sample size N, the alpha level, and the goal power. We want to determine the corresponding effect size:
+```{r}
+N = 100
+alpha = .01
+goal_power = .95
+```
+
+We define our simulation function:
+```{r}
+simfun_sensitivity = function(esize) {
+
+  # Generate a data set
+  dat <- rnorm(n = N, mean = esize)
+  # Test the hypothesis
+  res <- t.test(dat)
+  res$p.value < alpha
+}
+```
+
+We can find the corresponding effect size using: 
+```{r}
+# Effect Size Finding
+res <- find.design(simfun = simfun_sensitivity,
+                   boundaries = c(0,1),integer=FALSE, power = goal_power,surrogate = "gpr",evaluations=8000)
+summary(res)
+```
+
+This leads us to an effect size of about 0.43, as measured by Cohen's d. To confirm the correctness of this result, we check it analytically using the pwr package.
+```{r}
+library(pwr)
+esize_correct = pwr.t.test(n=N,sig.level=alpha,power=goal_power,type="one.sample")$d
+esize_correct
+```
+
+The analytical result is very close to the result obtained with mlpwr. With a  small simulation study, we further confirm that the analytical result is correct.
+```{r}
+a = replicate(10000,simfun_sensitivity(esize_correct))
+mean(a)
+```
+
+
+## Compromise Analysis
+
+In compromise analysis, the sample size and effect size are fixed in the DGF, and the goal is to find a decision criterion that optimizes the desired ratio of alpha and beta errors. Again, we demonstrate this functionality using a t-test scenario.
+
+The fixed parameters are the sample size N, the effect size (given by Cohen's d) and the desired ratio of the alpha and beta errors:
+```{r}
+N = 100
+esize = .3
+desired_ratio = 1
+```
+
+We now define our simulation function. Its argument is a given threshold for the test statistic. This function then generates two data sets - one under the null, one under the alternative hypothesis - and evaluates whether the use of this threshold leads to a Type I error (for the data set generated under the null hypothesis) or a Type II error (for the data set generated under the alternative hypothesis).
+```{r}
+simfun_compromise = function(crit) {
+
+  # Generate a data set
+  dat <- rnorm(n = N, mean = 0)
+ 
+  # Test the hypothesis
+  res <- t.test(dat)
+  a = res$statistic>crit
+  
+  # Generate a data set
+  dat <- rnorm(n = N, mean = esize)
+  
+  # Test the hypothesis
+  res <- t.test(dat)
+  b = res$statistic<crit
+
+  return(c(a,b))
+}
+```
+
+We run this function one to see how the output looks - TRUE indicates that a Type I (1st entry) or Type II error (2nd entry) was observed:
+```{r}
+simfun_compromise(.1)
+```
+
+However, we are not interested in the Type I and Type II errors themselves, but in their ratio. We therefore need to define a function that organizes how the individual simulations are aggregated: 
+```{r}
+aggregate_fun = function(x) {y=rowMeans(matrix(x,nrow=2));y[2]/y[1]}
+```
+
+We can find the optimal decision criterion for reaching the desired ratio of alpha and beta errors using: 
+```{r}
+res <- find.design(simfun = simfun_compromise, boundaries = c(1,2), power = desired_ratio,integer = FALSE, aggregate_fun = aggregate_fun,surrogate="svr",use_noise=FALSE,evaluations=8000)
+summary(res)
+```
+The analysis with mlpwr leads to a desired threshold of about 1.55. The ratio of Type I and Type II errors is given as "power" in this output and close to the desired value of 1.
+
+Note that we used some additional arguments in this case. The 'integer' argument tells the algorithm whether to look for integer design parameters - this is set to 'FALSE' for our case of effect sizes. The 'use_noise=FALSE' indicates that we do not account for the Monte Carlo error at each design parameter. This functionality can be added in the future. Note also that we use 'power' as an argument to the find.design function and in the output of summary(res) to indicate the desired ratio of alpha and beta error. This is a makeshift solution and  we consider rewording this argument to 'goal' in the future. 
+
+To check the correctness of our result, we compare it with an analytical solution obtained from the t-distribution and an numerical optimizer:
+```{r}
+fun = \(alpha) {
+  beta = alpha * desired_ratio
+  abs(
+    qt(1-alpha,ncp=0, df=N-1) # crit for alpha
+    -qt(beta,ncp=esize*sqrt(N), df=N-1) # crit for beta
+  )
+}
+alpha = optim(0.1,fun,lower=10e-10,upper=1-10e-10,method = "L-BFGS-B")$par
+crit = qt(1-alpha,ncp=0, df=N-1)
+crit
+```
+
+This leads to a threshold of about 1.50, which is very close to the solution of mlpwr. Using simulations, we can show that the analytical solution is indeed correct:
+```{r}
+a = replicate(10000,simfun_compromise(crit))
+aggregate_fun(a)
+```
+
+
+# Inhomogenous Cost Functions
+
+Some uses cases feature more complex cost functions. We cover an example here. It builds on the "ANOVA" simulation function in the "simulation_functions" vignette.
+
+```{r}
+library(tidyr)
+simfun_anova <- function(n, n.groups) {
+
+  # Generate a data set
+  groupmeans <- rnorm(n.groups, sd = 0.2)  # generate groupmeans using cohen's f=.2
+  dat <- sapply(groupmeans, function(x) rnorm(n,
+                                              mean = x, sd = 1))  # generate data
+  dat <- dat |>
+    as.data.frame() |>
+    gather()  # format
+
+  # Test the hypothesis
+  res <- aov(value ~ key, data = dat)  # perform ANOVA
+  summary(res)[[1]][1, 5] < 0.01  # extract significance
+}
+
+```
+
+We assume that there are different costs for different clusters. We assume that the costs per cluster is cheaper if there is only a small number of clusters. Adding additional clusters gets increasingly expensive (for example, because assessing a large number of groups is more costly).
+
+Specifically, we assume that the first five clusters cost 10, the next five cost 15, the next five cost 20, and so on.
+
+```{r}
+prices = c(rep(10,5),rep(15,5),rep(20,5),rep(25,5),rep(30,5),rep(35,5),rep(40,5))
+
+costfun = function(n, n.groups) {
+  5 * n + n.groups * sum(prices[1:n.groups])
+}
+```
+
+We can now find a good design using:
+```{r}
+res <- find.design(
+  simfun = simfun_anova,
+  costfun = costfun,
+  boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
+  power = .95
+)
+summary(res)
+```
+
+The proposed solution contains 12 groups and 109 participants per group.

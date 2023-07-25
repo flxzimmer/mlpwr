@@ -1,11 +1,11 @@
 
 
 fit.surrogate <- function(dat, surrogate, lastfit,
-    control = list()) {
+    control = list(),aggregate_fun=mean,use_noise=TRUE) {
 
-    switch(surrogate, reg = reg.fit(dat), logreg = logi.fit(dat,
-          lastfit = lastfit), svr = svm.fit(dat, lastfit = lastfit),
-          gpr = gauss.fit(dat, patience = 100, control))
+    switch(surrogate, reg = reg.fit(dat,aggregate_fun=aggregate_fun), logreg = logi.fit(dat,aggregate_fun=aggregate_fun, lastfit = lastfit),
+        svr = svm.fit(dat, lastfit = lastfit,aggregate_fun=aggregate_fun), gpr = gauss.fit(dat,
+            patience = 100, control,use_noise=use_noise,aggregate_fun=aggregate_fun))
 
 }
 
@@ -15,9 +15,9 @@ fit.surrogate <- function(dat, surrogate, lastfit,
 
 
 
-reg.fit <- function(dat) {
+reg.fit <- function(dat,aggregate_fun) {
 
-    datx <- todataframe(dat, aggregate = TRUE)
+    datx <- todataframe(dat, aggregate = TRUE,aggregate_fun=aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
     weight <- getweight(dat, weight.type = "freq")
 
@@ -39,9 +39,9 @@ reg.fit <- function(dat) {
 
 
 
-logi.fit <- function(dat, trans = TRUE,lastfit) {
+logi.fit <- function(dat, trans = TRUE, aggregate_fun, lastfit) {
 
-    datx <- todataframe(dat, aggregate = TRUE)
+    datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
     weight <- getweight(dat, weight.type = "freq")
 
@@ -111,9 +111,9 @@ logloss <- function(true.y, pred, true.w) {
         true.y) * log2(1 - pred)), true.w)
 }
 
-svm.fit <- function(dat, lastfit, tune = TRUE) {
+svm.fit <- function(dat, lastfit, tune = TRUE,aggregate_fun) {
 
-    datx <- todataframe(dat, aggregate = TRUE, pseudo = FALSE)
+    datx <- todataframe(dat, aggregate = TRUE, pseudo = FALSE,aggregate_fun = aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
     weight <- getweight(dat, weight.type = "freq")
 
@@ -215,9 +215,9 @@ svm.fit <- function(dat, lastfit, tune = TRUE) {
 
 
 
-gauss.fit <- function(dat, patience = 100, control) {
+gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun) {
 
-    datx <- todataframe(dat, aggregate = TRUE)
+    datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
     weight <- getweight(dat, weight.type = "var")
 
@@ -233,6 +233,7 @@ gauss.fit <- function(dat, patience = 100, control) {
     # setup gpr arguments
     args <- list(design = xvars, response = datx$y,
         noise.var = weight, control = list(trace = FALSE))
+    if(!use_noise) args$noise.var = NULL
     # args = rlist::list.append(args, control)
     args <- c(args, control)
 
@@ -276,6 +277,9 @@ gauss.fit <- function(dat, patience = 100, control) {
         DiceKriging::predict.km(mod, newdata = data.frame(t(x)),
             type = "UK")$sd
     }
+    if(!use_noise) fitfun.sd = NULL
+
+    # if(!exists("fitfun")) browser()
 
     re <- list(fitfun = fitfun, fitfun.sd = fitfun.sd,
         badfit = badfit)

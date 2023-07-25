@@ -45,7 +45,7 @@ set.seed(1)
 
 This is a basic demonstration to the mlpwr package by going through a toy example. We want to obtain the sample size necessary for a mean comparison using an one-sample t-test. 
 
-
+ 
 
 The package can be loaded via
 
