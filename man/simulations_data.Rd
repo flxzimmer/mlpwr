@@ -4,17 +4,10 @@
 \alias{simulations_data}
 \title{Display info on the generated data}
 \usage{
-<<<<<<< HEAD
 simulations_data(ds)
 }
 \arguments{
 \item{ds}{Object of class designresult as created by the find.design function}
-=======
-simulations_data(object)
-}
-\arguments{
-\item{object}{Object of class designresult as created by the find.design function}
->>>>>>> c26cef77694f889c84e94a8f308a46dee5bec23f
 }
 \value{
 A data frame
@@ -27,11 +20,6 @@ The raw power is estimated using the ratio of significant hypothesis tests among
 }
 \examples{
 
-<<<<<<< HEAD
-=======
-#' ## t-test example:
-
->>>>>>> c26cef77694f889c84e94a8f308a46dee5bec23f
 # Load a simulation function
 simfun <- example.simfun('ttest')
 # Perform the search
