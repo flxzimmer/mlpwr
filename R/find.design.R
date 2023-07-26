@@ -270,7 +270,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     # Optional for the final output: Generate SD
     # from a GP if using a different surrogate
     if (!noresult && use_noise && is.null(fit$fitfun.sd))
-        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun,noise_fun=noise_fun)$fitfun.sd
+        fit$fitfun.sd <- fit.surrogate(dat = dat, surrogate = "gpr",aggregate_fun = aggregate_fun,use_noise = use_noise, noise_fun=noise_fun)$fitfun.sd
 
     # calculate final SE
     if (!noresult & use_noise) final_se = fit$fitfun.sd(as.numeric(pred$points))
