@@ -50,7 +50,6 @@ simulations_data <- function(ds) {
   # re = re[do.call(order, xvars[colnames(xvars)]),, drop = FALSE]
   rownames(re) <- seq(nrow(re))
 
-
   return(re)
 }
 
