@@ -66,6 +66,16 @@ find.design(
 \item{autosave_dir}{character; file location for saving the dat object after each update.}
 
 \item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype='gauss') can be used with the gpr surrogate to use a different covariance structure than the default.}
+
+\item{goodvals}{character indicating whether higher or lower criterion values are preferable given equal cost; the default is "high" for statistical power, the other option is "low".}
+
+\item{aggregate_fun}{function to aggregate results of the evaluations of the simulation function; the default is \code{mean}, as for statistical power.}
+
+\item{noise_fun}{function to calculate the noise or variance of the aggregated results of the Monte Carlo evaluations; can also be the character value "bernoulli" (default) to indicate the variance of the Bernoulli distribution used for statistical power. This function is \eqn{p(1-p)/n}, where \eqn{p} is the statistical power and \eqn{n} is the number of performed evaluations.}
+
+\item{integer}{logical  indicating whether the design parameters are integers or not; the default is \code{TRUE}, which is suitable for sample size, for example.}
+
+\item{use_noise}{logical indicating whether noise variance should be used; the default is \code{TRUE}.}
 }
 \value{
 function returns an object of class designresult

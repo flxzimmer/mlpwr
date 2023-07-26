@@ -21,6 +21,16 @@
 #' @param autosave_dir character; file location for saving the dat object after each update.
 #' @param control list specifying arguments passed to the surrogate models. For example, list(covtype='gauss') can be used with the gpr surrogate to use a different covariance structure than the default.
 #' @param continue Object of class designresult as created by the find.design function. Will be used to continue the search, using all collected simulation results so far.
+#' @param goodvals character to indicate whether higher or lower criterion values are preferable given equal cost. For statistical power, higher values are better, so its "high", otherwise "low".
+#' @param aggregate_fun function to aggregate results of the evaluations of the simulation function. The default is mean as for statistical power.
+#' @param noise_fun function to calculate the noise or variance of the aggregated results of the Monte Carlo evaluations. Can also be the character "bernoulli" (default) to indicate the variance of the bernoulli distribution used for statistical power. This function is \eqn{p(1-p)/n} with \eqn{p} being the statistical power and \eqn{n} being the number of performed evaluations.
+#' @param integer logical to indicate whether the design paramaters are integers or not. The default is "TRUE" which is suitable for example for sample size.
+#' @param use_noise logical to indicate whether noise variance should be used. The default is TRUE.
+#' @param goodvals character indicating whether higher or lower criterion values are preferable given equal cost; the default is "high" for statistical power, the other option is "low".
+#' @param aggregate_fun function to aggregate results of the evaluations of the simulation function; the default is `mean`, as for statistical power.
+#' @param noise_fun function to calculate the noise or variance of the aggregated results of the Monte Carlo evaluations; can also be the character value "bernoulli" (default) to indicate the variance of the Bernoulli distribution used for statistical power. This function is \eqn{p(1-p)/n}, where \eqn{p} is the statistical power and \eqn{n} is the number of performed evaluations.
+#' @param integer logical  indicating whether the design parameters are integers or not; the default is `TRUE`, which is suitable for sample size, for example.
+#' @param use_noise logical indicating whether noise variance should be used; the default is `TRUE`.
 #'
 #' @return function returns an object of class designresult
 #' @export
@@ -164,7 +174,7 @@ find.design <- function(simfun, boundaries, power = NULL,
     # warn if ci is termination critrerion
     # without gpr surrogate
     if (!is.null(ci) && surrogate != "gpr")
-        warning("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
+        message("Additionally fitting a GPR each update for calculating the SE. Consider switchting to GPR to speed up the estimation")
 
 
 

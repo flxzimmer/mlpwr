@@ -29,9 +29,6 @@ simulations_data <- function(ds) {
   xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
   # use user-defined design parameter names
   names(xvars) = names(ds$boundaries)
-  # sort
-  xvars = xvars[do.call(order, xvars[colnames(xvars)]),, drop = FALSE]
-  rownames(xvars) <- seq(nrow(xvars))
 
   # design pars, cost, power, SE, power_raw, SE_raw
   re = list()
@@ -47,6 +44,12 @@ simulations_data <- function(ds) {
 
   # kick cost if redundant
   if (ncol(xvars) == 1 && all(re$cost==re[,1])) re = re[,-2]
+
+  # sort
+  re = re[order(re$power),]
+  # re = re[do.call(order, xvars[colnames(xvars)]),, drop = FALSE]
+  rownames(re) <- seq(nrow(re))
+
 
   return(re)
 }

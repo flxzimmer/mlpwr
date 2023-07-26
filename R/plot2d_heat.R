@@ -107,7 +107,7 @@ plot2d_heat <- function(ds,color.width,color.gradient) {
                                                  values = c("#B2182B", "black", "darkorchid4")[labelorder],
                                                  guide = ggplot2::guide_legend(title = "", override.aes = list(linetype = c("solid",
                                                                                                                             "blank", "blank")[labelorder], shape = c(NA,
-                                                                                                                                                                     20, 4)[labelorder], stroke = c(NA, NA, 1.3)[labelorder], size = c(1, 1, 3)[labelorder])))  + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
+                                                                                                                                                                     19, 4)[labelorder], stroke = c(NA, NA, 1.3)[labelorder], size = c(1, 3, 3)[labelorder])))  + ggplot2::xlab(xlab) + ggplot2::ylab(ylab) +
         ggplot2::theme(legend.position = "bottom")
 
     pl2

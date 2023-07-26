@@ -124,7 +124,7 @@ We can find the optimal decision criterion for reaching the desired ratio of alp
 res <- find.design(simfun = simfun_compromise, boundaries = c(1,2), power = desired_ratio,integer = FALSE, aggregate_fun = aggregate_fun,surrogate="svr",use_noise=FALSE,evaluations=8000)
 summary(res)
 ```
-The analysis with mlpwr leads to a desired threshold of about 1.55. The ratio of Type I and Type II errors is given as "power" in this output and close to the desired value of 1.
+The analysis with mlpwr leads to a desired threshold of about 1.48. The ratio of Type I and Type II errors is given as "power" in this output and close to the desired value of 1.
 
 Note that we used some additional arguments in this case. The 'integer' argument tells the algorithm whether to look for integer design parameters - this is set to 'FALSE' for our case of effect sizes. The 'use_noise=FALSE' indicates that we do not account for the Monte Carlo error at each design parameter. This functionality can be added in the future. Note also that we use 'power' as an argument to the find.design function and in the output of summary(res) to indicate the desired ratio of alpha and beta error. This is a makeshift solution and  we consider rewording this argument to 'goal' in the future. 
 
@@ -240,8 +240,8 @@ costfun_3d <- function(n.per.school, n.schools,n.obs) {
 
 
 ```{r}
-res = find.design(simfun = simfun_3d, costfun = costfun_3d, boundaries = list(n.per.school = c(5, 25), n.schools = c(10, 30), n.obs = c(3,10)), power = .95)
+#res = find.design(simfun = simfun_3d, costfun = costfun_3d, boundaries = list(n.per.school = c(5, 25), n.schools = c(10, 30), n.obs = c(3,10)), power = .95)
 
-summary(res)
+#summary(res)
 ```
 In this case, going with the minimum number of observations per student seems to be the ideal choice.

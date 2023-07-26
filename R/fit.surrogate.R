@@ -280,8 +280,6 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
     }
     if(!use_noise) fitfun.sd = NULL
 
-    # if(!exists("fitfun")) browser()
-
     re <- list(fitfun = fitfun, fitfun.sd = fitfun.sd,
         badfit = badfit)
 

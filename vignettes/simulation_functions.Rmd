@@ -104,14 +104,14 @@ We consider generalized linear models using the `stats` package and the `glm` fu
 
 ## Using a fitted model
 
-We use an "original" data set and fit a generalized linear model assuming a poisson distributed criterion `counts`.
+We use an "original" data set and fit a generalized linear model assuming a Poisson distributed criterion `counts`. Here, `counts` is the criterion, `treatment` and `outcome` are the predictors.
 
 ```{r}
 dat.original <- data.frame(
   counts = c(18, 17, 15, 20,
-    10, 20, 25, 13, 12), # criterion variable
-  treatment = gl(3, 1, 9), # predictor 1 
-  outcome = gl(3, 3)) # predictor 2
+    10, 20, 25, 13, 12),
+  treatment = gl(3, 1, 9),
+  outcome = gl(3, 3))
 mod.original <- glm(counts ~ outcome + treatment, data = dat.original,
     family = poisson) # setting up the generalized linear model
 summary(mod.original)
