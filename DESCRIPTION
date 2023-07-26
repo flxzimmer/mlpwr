@@ -14,6 +14,7 @@ Description: We implement a surrogate modeling algorithm to guide simulation-bas
     cost function. It can find optimal designs that correspond to a desired 
     statistical power or that fulfill a cost constraint.
 License: GPL (>= 3)
+LazyData: true
 URL: https://github.com/flxzimmer/mlpwr
 BugReports: https://github.com/flxzimmer/mlpwr/issues
 Imports: 
@@ -40,3 +41,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 VignetteBuilder: knitr
+Depends: R (>= 2.10)
