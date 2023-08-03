@@ -1,8 +1,10 @@
 #' Display info on the generated data
 #'
-#' Output a data frame that, for each set of design parameters, includes the cost, GPR estimated power and SE, the "raw" power and SE, and the number of performed evaluations.
+#' Output a data frame that, for each set of design parameters, includes the cost, the estimated power and SE, the surrogate model estimated power and SE, and the number of performed evaluations.
 #'
 #' The raw power is estimated using the ratio of significant hypothesis tests among the performed evaluations. The raw SE is estimated using \eqn{p(1-p)/n} with \eqn{p} being the raw power and \eqn{n} being the number of performed evaluations.
+#'
+#' For the estimation of SE using a surrogate model, GPR is employed because it is capable of variance estimation, unlike the other surrogate models.
 #'
 #' @param ds Object of class designresult as created by the find.design function
 #'
@@ -30,13 +32,13 @@ simulations_data <- function(ds) {
   # use user-defined design parameter names
   names(xvars) = names(ds$boundaries)
 
-  # design pars, cost, power, SE, power_raw, SE_raw
+  # design pars, cost, power_surrogate, SE_surrogate, power, SE
   re = list()
   re$cost = apply(xvars,1,costfun)
-  re$power = apply(xvars,1,fitfun)
-  re$SE = apply(xvars,1,fitfun.sd)
-  re$power_raw = datx$y
-  re$SE_raw = getweight(dat, weight.type = "sd")
+  re$power_surrogate = apply(xvars,1,fitfun)
+  re$SE_surrogate = apply(xvars,1,fitfun.sd)
+  re$power = datx$y
+  re$SE = getweight(dat, weight.type = "sd")
   re$Evaluations = getweight(dat, weight.type = "freq")
 
   re = as.data.frame(re)
