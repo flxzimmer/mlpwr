@@ -13,10 +13,12 @@ simulations_data(ds)
 A data frame
 }
 \description{
-Output a data frame that, for each set of design parameters, includes the cost, GPR estimated power and SE, the "raw" power and SE, and the number of performed evaluations.
+Output a data frame that, for each set of design parameters, includes the cost, the estimated power and SE, the surrogate model estimated power and SE, and the number of performed evaluations.
 }
 \details{
 The raw power is estimated using the ratio of significant hypothesis tests among the performed evaluations. The raw SE is estimated using \eqn{p(1-p)/n} with \eqn{p} being the raw power and \eqn{n} being the number of performed evaluations.
+
+For the estimation of SE using a surrogate model, GPR is employed because it is capable of variance estimation, unlike the other surrogate models.
 }
 \examples{
 

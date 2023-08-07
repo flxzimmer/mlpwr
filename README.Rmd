@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 # mlpwr
 
 <!-- badges: start -->
+[![R-CMD-check](https://github.com/flxzimmer/mlpwr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/flxzimmer/mlpwr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 We implement a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent preprint (Zimmer & Debelak (2022), http://dx.doi.org/10.31234/osf.io/tnhb2). It supports multiple study design parameters and optimization with respect to a cost function. It can find optimal designs that correspond to a desired statistical power or that fulfill a cost constraint.
@@ -105,7 +106,7 @@ While it is running, the function gives us some updates regarding the number of 
 We can get an overview of the results via summary. 
 
 ```{r}
-summary(ds)
+summary(ds) 
 ```
 
 The results indicate that a sample size of 201 is suitable. It shows the predicted power for this sample size, as well as an estimate of its uncertainty (SE). The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [preprint](http://dx.doi.org/10.31234/osf.io/tnhb2). 
