@@ -51,7 +51,7 @@ This is a basic demonstration to the mlpwr package by going through a toy exampl
 The package can be loaded via
 
 ```{r}
-library(mlpwr)
+library(mlpwr) 
 ```
 
 

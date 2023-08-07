@@ -16,14 +16,14 @@ plot2d_heat <- function(ds,color.width,color.gradient) {
     names(powerfit) <- c("n", "k")
     powerfit$power <- apply(powerfit, 1, fit$fitfun)
 
-    # control colorband width (only for diverging)
+    # control color band width (only for diverging)
     if (color.gradient == "diverging") {
     dist = color.width/2
     toofar <- abs(powerfit$power - final$power) > dist
     powerfit$power[toofar] <- NA
     }
 
-    # control colorband width (only for linear)
+    # control color band width (only for linear)
     if (color.gradient == "linear") {
       dist = .3
       toofar <- abs(powerfit$power - final$power) > dist

@@ -156,7 +156,7 @@ aggregate_fun(a)
 ```
 
 
-# Inhomogenous Cost Functions
+# Inhomogeneous Cost Functions
 
 Some uses cases feature more complex cost functions. We cover an example here. It builds on the "ANOVA" simulation function in the "simulation_functions" vignette.
 
