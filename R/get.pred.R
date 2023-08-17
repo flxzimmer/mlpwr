@@ -2,6 +2,7 @@
 get.pred <- function(fit, dat, power, costfun, cost,
                      boundaries, task,aggregate_fun,integer,use_noise) {
 
+
   datx <- todataframe(dat, aggregate = TRUE, aggregate_fun = aggregate_fun )
   xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
   # 3 most promising previous candidates
@@ -14,6 +15,15 @@ get.pred <- function(fit, dat, power, costfun, cost,
   boundmaxs <- sapply(boundaries, function(x) x[2])
   Domains <- cbind(boundmins, boundmaxs)
 
+
+  # if surrogate could not be fitted, just use the last locations
+  if (is.null(fit$fitfun)) {
+    points <- datx[, 1:(length(datx) - 1), drop = FALSE]
+
+  re <- list(points = points, badprediction = TRUE,
+             edgeprediction = FALSE)
+  return(re)
+  }
 
   if (task == "desiredpower") {
 

@@ -232,17 +232,16 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
   }
 
   # setup gpr arguments
-  # "gauss"
-  #matern5_2
   args <- list(design = xvars,covtype="matern5_2", response = datx$y,
                noise.var = weight, control = list(trace = FALSE))
   if(!use_noise) args$noise.var = NULL
-  # args = rlist::list.append(args, control)
   args <- c(args, control)
 
   n.try <- 0
 
   badfit <- TRUE
+
+  fallback_mod = NULL
 
   while (n.try < patience & badfit) {
 
@@ -250,7 +249,7 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
     if(n.try==80) args$noise.var = args$noise.var*10
     if(n.try==90) args$noise.var = args$noise.var*10
 
-    # Fit the GPR
+   # Fit the GPR
     mod <- tryCatch(do.call(DiceKriging::km, args = args),
                     error = function(x) {
                       return(NULL)
@@ -300,6 +299,8 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
 
   }
 
+
+
   # setup function that outputs sd
   fitfun.sd <- function(x) {
     names(x) <- names(xvars)
@@ -308,9 +309,13 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
   }
   if(!use_noise) fitfun.sd = NULL
 
-  # if(!exists("fitfun")) browser()
+  # check if no model could be fitted
+  if (is.null(fallback_mod)) {
+    fitfun = NULL;fitfun.sd = NULL
+  }
 
-  if (plot_progress) {
+  # (optional) plot fitted model
+  if (plot_progress & !is.null(fitfun)) {
   x = seq(min(datx$V1),max(datx$V1))
   y = sapply(x,fitfun)
   plot(x,y,type="l")

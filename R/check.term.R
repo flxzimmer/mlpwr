@@ -19,6 +19,7 @@ check.term <- function(evaluations, ci, time, dat,
         if (is.null(fit$fitfun.sd))
             fit$fitfun.sd <- fit.surrogate(dat = dat,
                 surrogate = "gpr")$fitfun.sd
+        if(is.null(fit$fitfun.sd)) return(re)
 
         # print(str(pred))
         sdval <- fit$fitfun.sd(as.numeric(pred$points))
