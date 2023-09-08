@@ -1,0 +1,174 @@
+---
+title: "GLM Application"
+author: "Marc Egli"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{GLM Application}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Generalized Linear Models (GLM) Vignette
+
+## Introduction to mlpwr
+
+The `mlpwr` package is a powerful tool for comprehensive power analysis and design optimization in research. It addresses challenges in optimizing study designs for power across multiple dimensions while considering cost constraints. By combining Monte Carlo simulations, surrogate modeling techniques, and cost functions, `mlpwr` enables researchers to model the relationship between design parameters and statistical power, allowing for efficient exploration of the parameter space.
+
+Using Monte Carlo simulation, `mlpwr` estimates statistical power across different design configurations by generating simulated datasets and performing hypothesis tests on these. A surrogate model, such as linear regression, logistic regression, support vector regression (SVR), or Gaussian process regression, is then fitted to approximate the power function. This facilitates the identification of optimal design parameter values.
+
+The `mlpwr` package offers two primary types of outputs based on specified goals and constraints. Researchers can obtain study design parameters that yield the desired power level at the lowest possible cost, taking budget limitations and resource availability into account. Alternatively, researchers can identify design parameters that maximize power within a given cost threshold, enabling informed resource allocation.
+
+In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
+
+For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+
+In this Vignette we will apply the `mlpwr` package to a generalized linear model (GLM) setting.
+
+## Introduction to Generalized Linear Models (GLMs) - The Poisson Model
+
+Generalized Linear Models (GLMs) extend linear regression to handle non-normal response variables and non-linear relationships between predictors and the response. GLMs are versatile and can accommodate a wide range of response distributions and link functions. One example for a GLM is the poisson model.
+
+The Poisson model is a specific type of GLM used for count data analysis. It is suitable when the response variable represents the number of occurrences of an event within a fixed interval or in a specified region.
+
+### Assumptions of the Poisson Model
+
+The Poisson model makes the following assumptions:
+
+1. **Independence**: The counts for each observation are assumed to be independent of each other.
+2. **Count Data**: The response variable consists of non-negative integer counts.
+3. **Homogeneity of Variance**: The variance of the counts is equal to the mean (equidispersion assumption).
+
+### Formula for the Poisson Model
+
+In the Poisson model, the response variable Y follows a Poisson distribution, and the link function is the logarithm (log) function. The model can be represented as:
+
+\[
+\log(E(Y)) = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \ldots + \beta_p X_p
+\]
+
+where:
+
+- \(E(Y)\) represents the expected value or mean of the response variable Y.
+- \(\beta_0, \beta_1, \beta_2, \ldots, \beta_p\) are the coefficients or regression parameters associated with the predictors \(X_1, X_2, \ldots, X_p\).
+
+The link function (log) in the Poisson model ensures that the linear predictor is always positive, satisfying the non-negativity constraint of count data.
+
+The Poisson model estimates the regression coefficients using maximum likelihood estimation and allows for inference about the relationship between the predictors and the count of the response.
+
+By fitting a Poisson GLM to the data, you can identify significant predictors and quantify their effects on response counts.
+
+
+### Scenario
+
+In this example, we have a dataset that records the number of accidents in different cities. We want to investigate if the type of road (Factor A: road1="common", road2 = "concrete", road3 = "new") has a significant influence on the accident counts, while controlling for the weather conditions (Factor B: weather1 = "sunny", weather2 = "rainy", weather3 = "snowing"). Specifically we are interested if our new type of road `road3` is significantly different from the most common one `road1`.
+
+A corresponding dataset would look like this:
+
+```{r echo=FALSE}
+set.seed(111)
+dat.original <- data.frame(accidents = rep(1:3, 20) + sample(1:30, 20, replace = TRUE), road = gl(3, 1, 20), weather = gl(3,20))
+dat.original[1:5,]
+```
+
+We could conduct a poisson regression like this:
+
+```{r}
+mod.original <- glm(accidents ~  road + weather, data = dat.original,
+    family = poisson)
+summary(mod.original)
+```
+
+From the summary output it seems that the coefficient of `road3` does not significantly differ from 0 at a level of `alpha=0.05`. We want to investigate this further and decide to conduct a study. We already have the data from above but collecting additional data is time intensive. Thus we want to conduct an a-priori power analysis to make sure that we will collect enough data in order to find an effect if it is present with sufficient power.
+
+
+## Power Analysis
+
+Statistical significance of a parameter in a poisson model depends on the number of samples we have available. Collecting more data would result in more stable outcomes and a higher chance of detecting an effect if it exists. So before we conduct our study we will want to know how much data we need to collect in order to have enough power to show an effect. We use the `mlpwr` package for this purpose.  If it is your first time using this package, you have to install it like so:
+
+```{r eval=FALSE}
+install.packages("mlpwr")
+```
+
+Now the package is permanently installed on your computer. To use it in R you need to (re-)load it every time you start a session.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+```
+
+### Data Preparation
+
+`mlpwr` relies on simulations for the power analysis. Thus we need to write a function that simulates the data and conducts a test based on our assumptions. The input to this function need to be the parameters we want to investigate/optimize for in our power analysis. Luckily we already have some data for our study which we used to fit the `mod.original`model. We can now use this model to simulate additional data in an accurate way. For our scenario a simulation function would look something like this:
+
+```{r}
+simfun_glm1 <- function(N) {
+
+    # generate data
+    dat <- data.frame(road = gl(3, 1, ceiling(N/3)),
+        weather = gl(3, ceiling(N/3)))[1:N, ]
+    a <- predict(mod.original, newdata = dat, type = "response")
+    dat$accidents <- rpois(N, a)
+
+    # test hypothesis
+    mod <- glm(accidents ~ road + weather, data = dat,
+        family = poisson)
+    summary(mod)$coefficients["road3", "Pr(>|z|)"] <
+        0.05
+}
+```
+
+This function takes one input `N`, the number of observations in the dataset. The `simfun_glm1` function performs a simulation-based analysis using generalized linear models (GLMs) with a Poisson family. Let's break down the steps of this function:
+
+1. **Data Generation**: The function generates a dataset called `dat` with a specified number of observations (`N`). The dataset includes two factors: `road` and `weather`, both with 3 factors. They are generated a bit differently in order to mix up the combinations but essentially this generation allows for a balanced number of factor combinations in the dataset. The data is created using the `gl()` function.
+
+2. **Outcome Generation**: The function predicts the outcome variable, `accidents`, using the `predict()` function. It utilizes the previously fitted GLM model called `mod.original`. The predicted means (`a`) are calculated by applying the model to the `dat` dataset with the specified type of prediction set to "response". Next, the observed `accidents` counts are generated by sampling from a Poisson distribution using the `rpois()` function. The size of the sample (`N`) and the mean parameter (`a`) are specified to determine the count values. The sampling is necessary in order to introduce some noise into the data, otherwise it would not be realistic and we would only fit the original model over and over again.
+
+3. **Model fitting**: The function fits a Poisson GLM model, named `mod`, to the `dat` dataset. The model includes `road` and `weather` as predictors. The family is specified as Poisson.
+
+4. **Hypothesis Test**: Finally, the function examines the p-value associated with the coefficient of the third level of the `road` factor (`road3`) from the summary of the `mod` model. If the p-value is less than 0.05, the function returns a logical value indicating that there is a statistically significant difference in accidents between the third level of the `road` factor and the other levels.
+
+A similar function for a poisson model is implemented in the example simulation function of mlpwr and can be seen [here](https://cran.r-project.org/web/packages/mlpwr/vignettes/simulation_functions.html).
+
+### Power Analysis
+
+The previous section showed how we can perform a data simulation with a subsequent hypothesis test. Now we perform a power simulation with ```mlpwr```.
+
+A power simulation can be done using the ```find.design```function. For our purpose we submit 4 parameters to it:
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function described before.
+2. **boundaries**: the boundaries of the design space that are searched. This should be set to a large enough interval in order to explore the design space sufficiently.
+3. **power**: the desired power level. We set 0.8 as the desired power level.
+4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
+
+The ```find.design``` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes the design parameters (here `N`) as input and must output a logical value of whether the hypothesis test was TRUE or FALSE. 
+
+With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
+
+```{r, warning=FALSE}
+set.seed(111)
+res <- find.design(simfun = simfun_glm1, boundaries = c(10,1000),
+                   power = .8, evaluations = 2000)
+```
+
+Now we can summarize the results using the ```summary``` command. 
+
+```{r, echo=TRUE}
+summary(res)
+```
+
+As we can see the calculated sample size for the desired power of 0.8 is `r res$final$design$nA`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the `plot` function.
+
+```{r}
+plot(res)
+```
+
+Confidence Intervals (gray) are printed in addition to the estimated power curve (black), so we can get a feel for how the design parameter (here sample size `N`) influence the power level and also where the prediction is more or less uncertain. The black dots show us the simulated data. This concludes our power analysis.
+
+

@@ -1,0 +1,318 @@
+---
+title: "Multilevel Application"
+author: "Marc Egli"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Multilevel Application}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Mixed Models Vignette
+
+## Introduction to mlpwr
+
+The `mlpwr` package is a powerful tool for comprehensive power analysis and design optimization in research. It addresses challenges in optimizing study designs for power across multiple dimensions while considering cost constraints. By combining Monte Carlo simulations, surrogate modeling techniques, and cost functions, `mlpwr` enables researchers to model the relationship between design parameters and statistical power, allowing for efficient exploration of the parameter space.
+
+Using Monte Carlo simulation, `mlpwr` estimates statistical power across different design configurations by generating simulated datasets and performing hypothesis tests on these. A surrogate model, such as linear regression, logistic regression, support vector regression (SVR), or Gaussian process regression, is then fitted to approximate the power function. This facilitates the identification of optimal design parameter values.
+
+The `mlpwr` package offers two primary types of outputs based on specified goals and constraints. Researchers can obtain study design parameters that yield the desired power level at the lowest possible cost, taking budget limitations and resource availability into account. Alternatively, researchers can identify design parameters that maximize power within a given cost threshold, enabling informed resource allocation.
+
+In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
+
+For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+
+In this Vignette we will apply the `mlpwr` package in a mixed model setting to two problems: 1) calculating the sample size for a study investigating the points in a math test and 2) calculating the number of participants and countries for a study investigating the probability of passing a math test. Both examples work with hierarchical data (classes > participants, countries > participants)
+
+## Generalized Linear Mixed Models: Poisson
+
+# Introduction to Generalized Linear Mixed Models (GLMMs)
+
+Generalized Linear Mixed Models (GLMMs) are an extension of Generalized Linear Models (GLMs) that account for both fixed effects and random effects. GLMMs are used when analyzing data with correlated or clustered observations, where the random effects capture the dependency structure among the clustered observations.
+
+## The Poisson Model
+
+The Poisson model is a type of GLMM suitable for count data, where the response variable represents the number of occurrences or events in a fixed interval. The Poisson distribution is strictly positive meaning it expects positive count data.
+
+### Assumptions of the Poisson Model
+
+1. **Count Data**: The response variable should be count data, representing non-negative integers.
+2. **Independence**: The occurrences of events should be independent of each other.
+3. **Mean equals Variance**: In poisson models the mean should equal the variance.
+4. **Linearity**: The relationship between the predictors and the log-transformed expected counts should be linear.
+
+### Formula of the Poisson Model
+
+The formula for the random intercept Poisson model for the count of an observation i in group j can be written as:
+
+\[
+\log(y_{ij}) = \beta_{00} + \beta_{10}x_{1ij} + \beta_{20}x_{2ij} + \ldots + \beta_{p0}x_{pij} + \delta_{0j} + \epsilon_{ji}
+\]
+
+where:
+
+- $j$ is the group, observation $i$ belongs to
+- \(\log(y_{ij})\) is the log-transformed count for the \(ij\)th observation.
+- \(\beta_{00}\) is the fixed intercept term.
+- \(\beta_{10}, \beta_{20}, \ldots, \beta_{p0}\) are the fixed effect coefficients for the predictor variables \(x_{1ij}, x_{2ij}, \ldots, x_{pij}\).
+- \(\delta_{0j}\) is the random effect term capturing the random variation in intercepts among groups.
+- \(\epsilon_{ji}\) is the random error term of an individual observation from its predicted group function.
+
+The Poisson model estimates the coefficients (\(\beta\) values) and accounts for the random effects by modeling the variation among groups or clusters.
+
+GLMMs, including the Poisson model, can be fitted in R using packages such as `lme4`, allowing for flexible and comprehensive modeling of count data with both fixed and random effects.
+
+
+### Scenario
+
+A school plans to introduce a new study plan. They want to compare this new plan to their existing program using a study. To this end they want to randomly pick out participants from different classes and either let them continue learning with the old study plan or learn with the new plan. A maximum of 4 students per class will be picked and the administration of new vs. old plan is approximately 50/50. In the end they want to use a math test to assess, whether the new plan lead to a significant improvement in points. They deem a GLMM poisson model suitable for this study design, as the students are clustered into classes and the response is the integer valued score they achieve in the math test. To plan their study they want to conduct an a-priori power analysis using ```mlpwr```. They want to achieve a power of 0.8 with a minimum of participants.
+
+
+### Set Up
+
+To simulate data for an multilevel model task like the one described above, we will use the ```lme4``` package, for the subsequent power simulation we will use the ```mlpwr``` package. If it is your first time using them, you have to install them like so:
+
+```{r eval = FALSE, message=FALSE, warning=FALSE, results='hide'}
+install.packages("mlpwr")
+install.packages("lme4")
+install.packages("lmerTest")
+```
+
+Now the packages are permanently installed on your computer. To use them in R you need to (re-)load them every time you start a session.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+library(lme4)
+library(lmerTest)
+```
+
+
+### Data preparation
+
+To simulate the data we discuss realistic parameters for a GLMM poisson model with the school's experts. The experts suspect underdispersion and a small positive effect of the new study plan so we set `theta=0.5` and `beta=c(2,0.2)`. The data is then simulated according to this model using the ```simulate```function. An example of data is given here:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# generate data
+N = 10
+# generate data
+  params <- list(theta = 0.5, beta = c(2, 0.2))
+  num_classes <- ceiling(N/4)
+  class_id <- rep(1:num_classes, length.out = N)
+  group <- rep(1:2, times=c(floor(N/2), ceiling(N/2)))
+  
+  dat <- data.frame(class_id = class_id, group = group)
+  dat$x <- simulate(~group + (1 | class_id), newdata = dat,
+      family = poisson, newparams = params)[[1]]
+dat[1:5,]
+```
+
+`class_id`is the class the students originated from, `group` indicates what study plan a student was assigned to `(1=="old", 2=="new")`and `x` is the score in the math test the students achieve.
+
+Afterwards a GLMM poisson model is fitted using the ```glmer```package and we test the hypothesis if the new plan had a statistically significant improvement over the old plan at the level `alpha=0.05`. The whole simulation can be written in a single function. The input of the function corresponds to the design parameter `N= nr. of participants` and the output is logical `TRUE`or `FALSE` depending on the outcome of the hypothesis test. With this function we can simulate the whole scenario and perform a power analysis with `mlpwr`.
+
+```{r, warning=FALSE}
+simfun_multi1 <- function(N) {
+  
+  # generate data
+  params <- list(theta = 0.5, beta = c(2, 0.2))
+  num_classes <- ceiling(N/4) # We can recruit a max of 4 people per class
+  class_id <- rep(1:num_classes, length.out = N)
+  group <- rep(1:2, times=c(floor(N/2), ceiling(N/2)))
+  
+  dat <- data.frame(class_id = class_id, group = group)
+  dat$x <- simulate(~group + (1 | class_id), newdata = dat,
+      family = poisson, newparams = params)[[1]]
+
+  # model
+  mod <- glmer(x ~ group + (1 | class_id), data = dat,
+      family = poisson)  # fit model
+  
+  # Extract P-Value and coefficient
+  p_value <- summary(mod)$coefficient["group", "Pr(>|z|)"]
+  group_coef <- summary(mod)$coefficient["group", "Estimate"]
+
+  # Check if coefficient is significantly positive
+  p_value < 0.01 & group_coef > 0
+}
+
+```
+
+The function takes as input our design parameter `N`. Let's break down what the function does:
+
+1. **Parameter Definition**: The function defines the parameters (intercept, slope and theta) for the model based on our assumptions.
+2. **Covariates Generation**: In our scenario we can recruit a maximum of 4 students per class in order not to be disruptive. Thus we use the ceiling function to calculate the number of classes in which we need to recruit. We then use a simple rep, changing the arguments slightly for class and group in order to get a balanced dataset (group: 1,1,1...2,2,2...; class_id: 1,2,3...n.classes,1,2,3...). Then create a dataframe from this.
+3. **Response Generation**: We use the `sim` function to generate our test score according to a GLMM poisson model.
+4. **Model Fit**: We fit a GLMM poisson model to the created data.
+5. **Hypothesis Test**: Through the glmerTest package we have access to p-values for the group parameter estimate. We check if it is significant at our specified alpha level and if it is positive. This generates the output of the function as a TRUE or FALSE value.
+
+### Power Analysis
+
+The previous section showed how we can perform a data simulation with a subsequent hypothesis test. To perform a power analysis this simulation function is needed, as the package relies on repeated simulation of the hypothesis test to find an optimal design parameter (here `N`)
+
+A power simulation can be done using the ```find.design```function. For our purpose we submit 4 parameters to it:
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function defined above.
+2. **boundaries**: the boundaries of the design space (number of participants) that are searched. This should be set to a large enough value such that a large enough space is searched. Here we choose c(20, 200)
+3. **power**: the desired power level. We set 0.8 as the desired power level.
+4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+Note: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here `(N = sample size)` we don't need to submit a cost function.
+
+With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
+
+```{r, warning=FALSE}
+set.seed(111)
+res <- find.design(simfun = simfun_multi1, boundaries = c(20,
+    200), power = .8, evaluations = 2000)
+```
+
+Now we can summarize the results using the ```summary``` command.
+
+```{r, echo=TRUE}
+summary(res)
+```
+
+As we can see the calculated sample size for the desired power of `r res$call$power` is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+
+```{r}
+plot(res)
+```
+
+Confidence Intervals (gray) are printed in addition to the estimated power curve (black), so one can get a feel for how the design parameter (here sample size N) influences the power level and also where the prediction is more or less uncertain. The black dots show us the simulated data. 
+
+## Simulating from an existing model
+
+In some cases there already exists data or models from a pilot study for example, which one can use. This helps to get more realistic estimates and simulations of the problem.
+
+### Scenario
+
+An international committee wants to conduct a study investigating the effects of stress on the probability of passing a math exam. To this end they want to recruit participants from different countries and assess their cortisol levels before filling out a math test. Additionally they measure intelligence to control for different IQ levels. In the end they want to fit a mixed effects logistic regression to estimate if stress (measured by cortisol) has a significant effect on the probability of passing the math test. In order to plan their study the committee has issued us to perform an a-priori power analysis. Our goal is to find the number of participants and number of countries to include in the study that maximize the power under set cost constraints.
+
+### Set Up
+
+To simulate data for an IRT task like the one described above, we will use the ```lme4``` package, for the subsequent power simulation we will use the ```mlpwr``` package. 
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+library(lme4)
+library(lmerTest)
+```
+
+### Data Preparation
+
+All the data here is simulated, but assume for this first part that the simulated "original" data would correspond to some existing real world data (perhaps from a pilot study). If you have original data you can then fit a model to it and simulate datasets from this model. This would give you a more realistic data generation and make the power simulation more accurate to real life scenarios. From this "original" model we will simulate more data and then perform a simulation power analysis using the ```mlpwr```package. The original data looks as follows:
+
+```{r}
+logistic <- function(x) 1/(1 + exp(-x))
+set.seed(109)
+
+# 300 participants from 20 countries
+N.original <- 300
+n.countries.original <- 20
+
+# generate original data
+dat.original <- data.frame(country = rep(1:n.countries.original,
+    length.out = N.original), iq = rnorm(N.original),
+    cortisol = rnorm(N.original))
+country.intercepts <- rnorm(n.countries.original, sd = 0.5)
+dat.original$intercepts <- country.intercepts[dat.original$country]
+beta <- c(1, 0.4, -0.3)  # parameter weights
+prob <- logistic(as.matrix(dat.original[c("intercepts",
+    "iq", "cortisol")]) %*% as.matrix(beta))  # get probability
+dat.original$criterion <- rbinom(N.original, 1, prob)  # draw according to probability
+dat.original <- dat.original[,names(dat.original)!="intercepts"]
+
+# fit original model to obtain parameters
+mod.original <- glmer(criterion ~ iq + cortisol + 0 +
+    (1 | country), data = dat.original, family = binomial)
+dat.original[1:5,]
+```
+
+**Note**: The logit function was explicitly defined here but could also be imported from packages like `boot` and used with `boot:logit`
+
+Thus we assume to have a dataset of 300 people, residing in 20 countries. For every observation we have an indicator if the math test was passed (`criterion`), normalized IQ-value (`iq`), and cortisol level (`cortisol`). From this data we can fit an original model, which can be used to simulate further datasets. Similar to the first example we set up a simulation function that simulates data, then performs a hypothesis test.
+
+```{r, warning=FALSE}
+simfun_multi2 <- function(n, n.countries) {
+
+    # generate data
+    dat <- data.frame(country = rep(1:n.countries,
+        length.out = n * n.countries), iq = rnorm(n *
+        n.countries), cortisol = rnorm(n * n.countries))
+    dat$criterion <- simulate(mod.original, nsim = 1,
+        newdata = dat, allow.new.levels = TRUE, use.u = FALSE) |>
+        unlist()  # criterion data from the fitted model
+
+    # test hypothesis
+    mod <- glmer(criterion ~ iq + cortisol + 0 + (1 |
+        country), data = dat, family = binomial)
+    summary(mod)[["coefficients"]]["cortisol", "Pr(>|z|)"] <
+        0.01
+}
+```
+
+This function follows the following steps:
+
+1. **Data Generation**: Creating a dataframe with columns "iq", "cortisol", "country". Then simulating a response using the previously estimated original model.
+2. **Model Fit**: A binomial `glmer`model from ```lme4```is fit to the data.
+3. **Hypothesis testing**: If the p-value of the "cortisol" coefficient is significant at an alpha of 0.01, we deem a statistically significant effect of stress on the performance in the math test has been found and return TRUE.
+
+This function is also implemented the same way in the ```mlpwr``` package and can be accessed using:
+
+```{r, eval = FALSE}
+example.simfun("multi2")
+```
+
+### Cost function
+Now that the data generation and hypothesis test is done, we also need to specify a cost function. The committee told us that recruiting in a lot of different countries is costly because recruitment has to be set up multiple times, while just recruiting one additional participant is less expensive. We incorporate this in the following cost function:
+
+```{r}
+costfun_multi2 <- function(n, n.countries) 5 * n +
+    100 * n.countries
+```
+
+This assumes that the committee spends on average 5\$ USD for an additional participant but 100\$ USD to recruit in an additional country.
+
+### Power Analysis
+
+The previous sections showed how we can perform a data simulation with a subsequent hypothesis test and how to build a custom cost function. To perform a power analysis the simulation function is needed, as the package relies on repeated simulation of the hypothesis test to find an optimal design parameter (here `n` and `n.countries`)
+
+A power simulation can be done using the ```find.design```function. For our purpose we submit 4 parameters to it:
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function defined above.
+2. **boundaries**: the boundaries of the design space (number of participants, number of countries) that are searched. This should be set to a large enough value such that a large enough space is searched. We need to submit a named vector as we have multiple design parameters like so: list(n = c(10,100), n.countries = c(5, 20))
+3. **cost**: We have a budget of 3000 USD, we want to obtain the best design parameters for maximum power under this cost constraint.
+4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+Note: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. Some parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here (N = sample size) we don't need to submit a cost function.
+
+With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
+
+```{r, warning=FALSE}
+set.seed(112)
+res <- find.design(simfun = simfun_multi2, boundaries = list(n = c(10,
+    300), n.countries = c(5, 20)), costfun = costfun_multi2,
+    cost = 2000, evaluations = 2000)
+```
+
+Now we can summarize the results using the ```summary``` command.
+
+```{r, echo=TRUE}
+summary(res)
+```
+
+As we can see the calculated sample size for a cost of max. `r res$call$cost` is `r res$final$design$n` the number of countries `r res$final$design$n.countries` with a power of `r round(res$final$power, 5)` and a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [preprint](https://psyarxiv.com/tnhb2/).We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+
+```{r}
+plot(res)
+```
+
+The black dots show us the simulated data. The red line corresponds to the cost constraint. The violet cross corresponds to the optimal design. The power level is indicated by the blue color. More fine grained results can be obtained using more evaluations.
+
+We report back to the committee that under their cost constraint of `r res$call$cost` their sample size is`r res$final$design$n` participants and the number of countries to recruit in is `r res$final$design$n.countries`. This results in an estimated power of `r res$final$power`.

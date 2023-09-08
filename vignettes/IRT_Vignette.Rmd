@@ -1,0 +1,320 @@
+---
+title: "IRT Application"
+author: "Marc Egli"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{IRT Application}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Item Response Theory (IRT) Vignette
+
+## Introduction to mlpwr
+
+The `mlpwr` package is a powerful tool for comprehensive power analysis and design optimization in research. It addresses challenges in optimizing study designs for power across multiple dimensions while considering cost constraints. By combining Monte Carlo simulations, surrogate modeling techniques, and cost functions, `mlpwr` enables researchers to model the relationship between design parameters and statistical power, allowing for efficient exploration of the parameter space.
+
+Using Monte Carlo simulation, `mlpwr` estimates statistical power across different design configurations by generating simulated datasets and performing hypothesis tests on these. A surrogate model, such as linear regression, logistic regression, support vector regression (SVR), or Gaussian process regression, is then fitted to approximate the power function. This facilitates the identification of optimal design parameter values.
+
+The `mlpwr` package offers two primary types of outputs based on specified goals and constraints. Researchers can obtain study design parameters that yield the desired power level at the lowest possible cost, taking budget limitations and resource availability into account. Alternatively, researchers can identify design parameters that maximize power within a given cost threshold, enabling informed resource allocation.
+
+In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
+
+For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+
+In this Vignette we will apply the `mlpwr` package to an Item Response problem. We will tackle two types of problems: 1) testing whether a Rasch or a 2PL model is more suitable to our data and 2) conducting a DIF analysis in a 2PL model. Both of these problems require an a-priori power analysis to ensure enough participants are recruited to appropriately test our hypothesis. To facilitate the understanding we will apply our analysis to a concrete research setting: evaluating a math test in school.
+
+## Rasch vs. 2PL
+
+### Introduction to the Rasch and 2PL Model
+
+The Rasch model, also known as the Rasch measurement model or the Rasch model for item response theory (IRT), is a widely used psychometric model for analyzing data in educational and psychological measurement. It provides a framework for assessing the relationship between respondents' abilities and item difficulties.
+
+The Rasch model assumes that \[Pr(U_{pi} = 1 | \theta_p, \beta_i)\], the probability of an individual $p$ correctly solving a test item $i$, is influenced by both the characteristics of the item (item parameters) and the person (person parameters). Specifically, the probability of a person with a math ability $\theta_p$ answering an item correctly increases as their math ability becomes more pronounced. Conversely, as the difficulty of an item $\beta_i$ increases, the probability of answering that item correctly decreases. This relationship can be represented by the following formula:
+
+\[
+Pr(U_{pi} = 1 | \theta_p, \beta_i) = \frac{e^{\theta_p - \beta_i}}{1 + e^{\theta_p - \beta_i}}
+\]
+
+The Rasch model assumes a strict **equality of item discrimination** across all items. In general, the item discrimination parameter measures the extent to which an item is capable of distinguishing between individuals with different abilities. In analytical terms, the item discrimination parameter represents the slope of the item response function graph. A steeper slope indicates a stronger relationship between the ability ($\theta$) and a correct response, indicating how effectively the item discriminates among examinees along the ability scale continuum. A higher value of the item discrimination parameter suggests that the item is more effective in differentiating examinees. Practically, a higher discrimination parameter value means that the probability of a correct response increases more rapidly as the latent trait ($\theta$) increases. The Rasch model assumes this item discrimination to be equal among all items, which might not be the optimal fit for the data. Thus a second model, the 2PL model, was introduced.
+
+The two-parameter logistic (2PL) model is a more flexible alternative and can be seen as an extension of the Rasch model. When the assumption of equal item discrimination is no good fit for the data, the 2PL model is preferred over the Rasch model. The 2PL model introduces a second item parameter, called the discrimination or slope parameter (denoted as $\alpha$), in addition to the difficulty parameter (denoted as $\beta_i$) for each item $i$. Mathematically, the 2PL model can be described as follows:
+
+$$
+Pr(U_{pi} = 1 | \theta_p, \alpha_i, \beta_i) = \frac{e^{\alpha_i(\theta_p - \beta_i)}}{1 + e^{\alpha_i(\theta_p - \beta_i)}}
+$$
+
+A high value of $\alpha_i$ indicates that the item has a strong ability to distinguish among test takers. This means that the probability of giving a correct response increases more rapidly as the ability $\theta$ increases.
+
+When evaluating psychological and educational tests, researchers often face the question of which IRT model better describes the data. In this chapter, our specific hypothesis test aims to address whether the inclusion of the additional discrimination parameter in the 2PL model is essential for describing the data, or if the discrimination parameters are sufficiently similar for the Rasch model to adequately describe the data. Therefore, it becomes relevant to test the null hypothesis of equal slope parameters, as this may allow us to reject an incorrectly assumed Rasch model. Conducting a power analysis can help determine the minimum sample size needed to reject the simpler Rasch model. In the following sections, we will first perform an a priori power analysis and then a posteriori power analysis to test the Rasch model against the 2PL model.
+
+
+### Scenario
+
+A school is interested in accurately assessing the math skills of their students to inform instructional strategies and curriculum development. They want to administer a math test to a group of students and collect their item response data. In the end the goal is to find an adequate model for the data to better understand how the math test assesses the math ability of students. We propose two modeling approaches: the Rasch model or the Two-Parameter Logistic (2PL) model.
+
+The Rasch model assumes that an item only influences the response probability through item difficulty, disregarding variations in item discrimination. We are primarily interested in estimating the difficulty level of each math item to identify areas where students might struggle the most. The Rasch model can provide precise estimates of item difficulty, allowing the school to focus on improving those specific concepts or skills.
+
+However, we also recognize that the 2PL model can offer additional insights by considering item discrimination. By incorporating discrimination parameters, the 2PL model captures the extent to which an item differentiates between students with high and low math abilities. This information can help identify items that are particularly effective at discriminating between students with varying skill levels.
+
+To make an informed decision, we plan to compare the Rasch and 2PL by testing them against each other using a likelihood ratio test. Once we have data we could simply test if there is a statistically significant difference between the models. But this test is only reliable if there is enough data to begin with. To ensure that our planned test will be able to detect differences up to a margin of error, we decide to do an a-priori power analysis to determine the required sample size before we start collecting data. For this we use the `mlpwr` package.
+
+### Set Up
+
+To simulate data for an IRT task like the one described above, we will use the ```mirt``` package. For the subsequent power simulation we will use the ```mlpwr``` package. If it is your first time using them, you have to install them like so:
+
+```{r eval=FALSE}
+install.packages("mlpwr")
+install.packages("mirt")
+```
+
+Now the packages are permanently installed on your computer. To use them in R you need to (re-)load them every time you start a session.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+library(mirt)
+```
+
+### Data Preparation
+
+To simulate the data for our scenario, we need the following specifications:
+
+1. In discussion with the schools experts we define the discriminability of the items `a`, and the item difficulty `d`. This corresponds to slopes and intercepts in the 2PL model. 
+2. For illustration purposes we simulate N = 100 observations.
+3. The data items should be simulated from a 2PL model with binary response format (0 = incorrectly solved, 1 = correctly solved)
+ 
+```{r message=FALSE, warning=FALSE, results='hide'}
+# Defining intercepts and slopes
+a <- c(1.04, 1.2, 1.19, 0.61, 1.31, 0.83, 1.46, 1.27, 0.51, 0.81)
+d <- c(0.06, -1.79, -1.15, 0.88, -0.2, -1.87, 1.23, -0.08, -0.71, 0.6)
+
+# Setting number of observations 
+N <- 100
+
+# Itemtype 
+itemtype <- "2PL"
+```
+
+Afterwards we can simulate a dataset using the function `simdata` in the package `mirt`.
+
+```{r, echo=TRUE}
+# Simulate Data
+sim_data <- simdata(a = a, d = d, N = N, itemtype = itemtype)
+
+# First 5 rows if simulated data
+sim_data[1:5,]
+```
+### Model fit
+After discussions with the schools experts we deem items 1-4 the most important for their test. Thus we want to ensure a good model fit for these items. Both a Rasch model or 2PL model are plausible for these items, thus we fit them both then administrate a likelihood ratio test to check which model fits better. The rest of the items are fit with a 2PL model.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+# Fit 2PL model
+mod <- mirt(sim_data)
+
+# Rasch contsraint for items 1-4
+constrained <- "F = 1-4
+          CONSTRAIN = (1-4, a1)"
+# Fit constrained model
+mod_constrained <- mirt(sim_data, constrained)  # Fit 2PL with equal item discrimination
+
+# Compare model fit
+res <- anova(mod_constrained, mod)  
+```
+We rely on the p-value of the likelihood ratio test to compare the models. We deem the 2PL model significantly better if the p-value is below 0.01 and extract this in the form of a logical TRUE/FALSE response.
+
+```{r, echo=TRUE}
+res$p[2] < 0.01  # extract significance
+```
+### Power Analysis
+
+The previous section showed how we can perform a data simulation test with a subsequent hypothesis test. Now we know the test's items approximately follow the specifications above and we want to make sure that the school recruits enough participants to take their test in order to later select the correct model. Thus we perform a power simulation with `mlpwr`.
+
+A power simulation can be done using the ```find.design```function. For our purpose we submit 4 parameters to it:
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function described before.
+2. **boundaries**: the boundaries of the design space that are searched. This should be set to a large enough value in order to explore the design space sufficiently.
+3. **power**: the desired power level. We set 0.95 as the desired power level.
+4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here (`N` = sample size) we don't need to submit a cost function that weighs the design parameters.
+
+The ```find.design``` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes an observation number `N` as input and must return a logical value of whether the hypothesis test was TRUE or FALSE. We can formulate the above simulation process in a function like so:
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+simfun_irt1 <- function(N) {
+
+    # generate data
+    dat <- simdata(a = c(1.04, 1.2, 1.19, 0.61, 1.31,
+        0.83, 1.46, 1.27, 0.51, 0.81), d = c(0.06,
+        -1.79, -1.15, 0.88, -0.2, -1.87, 1.23, -0.08,
+        -0.71, 0.6), N = N, itemtype = "2PL")
+
+    # test hypothesis
+    mod <- mirt(dat)  # Fit 2PL Model
+    constrained <- "F = 1-4
+          CONSTRAIN = (1-4, a1)"
+    mod_constrained <- mirt(dat, constrained)  # Fit 2PL with equal slopes
+
+    res <- anova(mod_constrained, mod)  # perform model comparison
+    res$p[2] < 0.01  # extract significance
+}
+```
+
+This function is also implemented the same way in the ```mlpwr``` package and can be accessed using:
+
+```{r, eval = FALSE}
+example.simfun("irt1")
+```
+
+With the specified parameters we can perform the power analysis. The boundaries were set based on an educated guess from experience, but if the analysis fails one can always readjust them and do the analysis again. We set a random seed for reproducibility reasons.
+
+```{r, results='hide'}
+set.seed(123)
+res <- find.design(simfun = simfun_irt1, boundaries = c(40,
+    100), power = .95, evaluations = 2000)
+```
+
+Now we can summarize the results using the ```summary``` command. 
+
+```{r, echo=TRUE}
+summary(res)
+```
+As we can see the calculated sample size for the desired power of 0.95 is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`.The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+
+```{r}
+plot(res)
+```
+
+Confidence Intervals (gray) are printed in addition to the estimated power curve (black), so we can get a feel for how the design parameter (here sample size N) influences the power level and also where the prediction is more or less uncertain. The black dots show us the simulated data. 
+
+We finished our power analysis and report back to the school that a sample size of `r res$final$design$N` should be sufficient to determine an appropriate model for their IRT problem.
+
+## DIF Analysis
+
+Differential Item Functioning (DIF) is the phenomenon that an item behaves differently for different groups of people.
+
+DIF tests are essential in educational testing, particularly when examining common sociodemographic characteristics such as gender, age, language, and academic background. Detecting DIF helps ensure fairness in testing. If a test is unfair, it can disadvantage certain groups of individuals and potentially lead to incorrect decisions. For instance, in the context of aptitude tests for college admissions, an unfair test could wrongly determine whether a student is admitted to a specific course of study or not. Therefore, it is crucial to reliably detect and address DIF in the data.
+
+
+### Scenario
+
+A school is developing a math test. They want to ensure that the test items are fair and do not favor or disadvantage any specific group of students based on their first language. The school's experts suspect that especially the first test item could be problematic. Thus, they plan to investigate the presence of DIF in the first item of the test in a study. The school will need to recruit native English speakers and non-native English speakers for this study, but they don't know how many. Additionally their time resources for recruitment are limited. To determine an appropriate sample size under the given cost constraint (limited time restraints) we use the ```mlpwr``` package for the power analysis.
+
+### Set Up
+
+To simulate data for an IRT task like the one described above, we will use the ```mirt``` package. For the subsequent power simulation we will use the ```mlpwr``` package. If you did not run the first part of the script, the ```mlpwr``` and ```mirt``` packages have to be installed and loaded.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+library(mirt)
+```
+
+### Data Preparation
+
+The data simulation follows a similar approach to that in the Rasch vs. 2PL section. Thus we will directly set up the simulation function. 
+
+ 
+```{r message=FALSE, warning=FALSE, results='hide'}
+simfun_irt2 <- function(N1, N2) {
+  # generate data
+  a1 <- a2 <- c(1.04, 1.2, 1.19, 0.61, 1.31, 0.83,
+                1.46, 1.27, 0.51, 0.81)
+  d1 <- d2 <- c(0.06, -1.79, -1.15, 0.88, -0.2, -1.87,
+                1.23, -0.08, -0.71, 0.6)
+  a2[1] <- a2[1] + 0.3
+  d2[1] <- d2[1] + 0.5
+  dat1 <- simdata(a = a1, d = d1, N = N1, itemtype = "2PL")
+  dat2 <- simdata(a = a2, d = d2, N = N2, itemtype = "2PL")
+  dat <- as.data.frame(rbind(dat1, dat2))
+  group <- c(rep("1", N1), rep("2", N2))
+  
+  # Fit model
+  model <- multipleGroup(dat, 1, group = group)
+  # Perform DIF for item 1
+  dif <- DIF(model, which.par = c("a1", "d"), items2test = c(1))
+  #Extract significance
+  dif$p[1] < 0.05
+}
+```
+
+The simulation consists of the following steps:
+
+1. Data Generation: The function generates simulated data using the `simdata` function. It defines two sets of item parameters, `a1` and `d1`, for the first group, and `a2` and `d2` for the second group. These parameters represent slope and intercept (equates to item discrimination and item difficulty), respectively. The `N1` and `N2` parameters are the design parameters and specify the sample sizes for the first and second groups, respectively. We assume DIF for item 1, meaning native English speakers `(group == 1)` have an easier time solving this item than non-native English speakers `(group == 2)` Thus, the parameters for the first item differ between the groups (higher difficulty and discrimination for non-native English speakers), while all the others are the same.
+
+2. Data Preparation: The generated data for both groups are combined into a single data frame `dat`, and a vector `group` is created to indicate the group membership (native vs. non-native) of each observation.
+
+3. Fit model: The `multipleGroup` function is used to fit a multiple-group IRT model to the combined data (`dat`) with one latent trait dimension. The group information is provided using the `group` argument.
+
+4. Perform DIF for item 1: The `DIF` function is applied to the fitted model (`model`) to perform DIF analysis. The `which.par` argument specifies the parameters to test for DIF, including discrimination (`a`) and difficulty (`d`). The `items2test` argument specifies the specific item(s) to test for DIF, with item 1 selected in this case.
+
+5. Extract significance: The significance of the DIF analysis for item 1 is extracted by comparing the p-value (`dif$p[1]`) with a significance threshold of 0.05. If the p-value is less than 0.05, the function returns `TRUE`, indicating the presence of DIF for item 1. Otherwise, it returns `FALSE`, suggesting no significant DIF for item 1. In other words if the function returns true, there is evidence that the difficulty of item 1 varies for native vs. non-native speakers of the same ability.
+
+Following is one example of a dataframe simulated by the function. The group argument corresponds to native vs. non-native speaker, the rows to individual students, the columns to the 10 items in the math test. 
+
+```{r echo=FALSE}
+a1 <- a2 <- c(1.04, 1.2, 1.19, 0.61, 1.31, 0.83,
+    1.46, 1.27, 0.51, 0.81)
+d1 <- d2 <- c(0.06, -1.79, -1.15, 0.88, -0.2, -1.87,
+    1.23, -0.08, -0.71, 0.6)
+a2[1] <- a2[1] + 0.3
+d2[1] <- d2[1] + 0.5
+dat1 <- simdata(a = a1, d = d1, N = 5, itemtype = "2PL")
+dat2 <- simdata(a = a2, d = d2, N = 5, itemtype = "2PL")
+group <- c(rep("1", 5), rep("2", 5))
+dat <- as.data.frame(rbind(dat1, dat2))
+dat$group <- group
+dat[, c("group", names(dat)[names(dat) != "group"])]
+```
+
+### Cost function
+Now that the data generation and hypothesis test is done, we also need to specify a cost function because we have more than one design parameter. For this artificial scenario we assume that recruiting non-native speakers is harder than recruiting native English speakers, because the school has to spend more time recruiting. Put differently the cost for recruiting non-native participants is higher. We include this into the power analysis by defining a cost function like so:
+
+```{r}
+costfun_irt2 <- function(N1, N2) 5 * N1 + 7 * N2
+```
+
+This assumes that the school spends on average 5 minutes recruiting a native speaker vs. 7 minutes for non-native speakers. Contrary to the previous example, the school now has a set budget of time to recruit participants. They want to know how they should allocate their resources in order to gain maximum power.
+
+### Power Analysis
+
+Now that all components are defined, a power analysis using `find.design` from `mlpwr` is possible. We need the following inputs,
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function described before.
+2. **boundaries**: the boundaries of the design space that are searched. This should be put to large intervals in order to ensure a sufficient portion of the design space is explored by the algorithm. We have to submit this as a list of named vectors, so the function knows which boundaries correspond to what design parameter.
+3. **cost**: the maximum cost (= time budget of the school) that the school has. The algorithm will maximize for power given the budget constraint.
+4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+Note 1: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices.
+
+With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
+
+```{r}
+set.seed(111)
+res <- find.design(simfun = simfun_irt2, boundaries = list(N1 = c(100,
+    700), N2 = c(100, 700)), costfun = costfun_irt2,
+    cost = 4000, evaluations = 1000)
+```
+
+Now we can summarize the results using the ```summary``` command.
+
+```{r, echo=TRUE}
+summary(res)
+```
+
+As we can see the calculated sample sizes for a cost of max. 4000 are `r res$final$design$N1` for native speakers and `r res$final$design$N2` for the non-native speakers. The estimated power for the sample sizes is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [preprint](https://psyarxiv.com/tnhb2/).
+
+We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+
+```{r}
+plot(res)
+```
+
+The black dots show us the simulated data. The red line corresponds to the cost constraint. The violet cross corresponds to the optimal design. The power level is indicated by the blue color.
+
+We conclude our power analysis with the before stated results: `r res$final$design$N1` for native speakers and `r res$final$design$N2` for the non-native speakers and let the school take over the recruitment for their study.

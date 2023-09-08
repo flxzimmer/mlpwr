@@ -5,7 +5,8 @@ Authors@R: c(
     person("Felix", "Zimmer", , "felix.zimmer@mail.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8127-0007")),
     person("Rudolf", "Debelak", , "rudolf.debelak@psychologie.uzh.ch", role = c("aut"),
-           comment = c(ORCID = "0000-0001-8900-2106"))
+           comment = c(ORCID = "0000-0001-8900-2106")),
+    person("Marc", "Egli", , "eglimar@ethz.ch", role = c("ctb"))
   )
 Description: We implement a surrogate modeling algorithm to guide simulation-based
     sample size planning. The method is described in detail in a recent preprint

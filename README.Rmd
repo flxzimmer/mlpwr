@@ -23,7 +23,14 @@ knitr::opts_chunk$set(
 
 We implement a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent preprint (Zimmer & Debelak (2022), http://dx.doi.org/10.31234/osf.io/tnhb2). It supports multiple study design parameters and optimization with respect to a cost function. It can find optimal designs that correspond to a desired statistical power or that fulfill a cost constraint.
 
-    
+
+Below is a toy example of how to use the package. More in-depth resources are:
+
+* A tutorial paper to the package is available at https://psyarxiv.com/r9w6t/
+* Basic walkthroughs are available in separate vignettes for ANOVA, GLM, IRT, multilevel model, and t-test. They can be accessed    [here](https://github.com/flxzimmer/mlpwr/blob/master/vignettes/).
+
+
+
 ## Installation
 
 You can install the CRAN version using: 
@@ -35,7 +42,7 @@ Or, you can install the development version of mlpwr from [GitHub](https://githu
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("flxzimmer/mlpwr",build_vignettes = TRUE)
+devtools::install_github("flxzimmer/mlpwr")
 ```
 
 ## Toy Example
@@ -119,10 +126,6 @@ plot(ds)
 
 ## Simulation Function Templates
 
-Some templates for simulation functions can be found in the `simulation_functions` vignette. It can be accessed using:
-
-```{r, eval = F}
-browseVignettes("mlpwr")
-```
+Some templates for simulation functions can be found in the `simulation_functions` vignette. It can be accessed at https://github.com/flxzimmer/mlpwr/blob/master/vignettes/simulation_functions.Rmd.
 
 

@@ -1,0 +1,194 @@
+---
+title: "t-test Application"
+author: "Marc Egli"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{t-test Application}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# T-Test Vignette
+
+## Introduction to mlpwr
+
+The `mlpwr` package is a powerful tool for comprehensive power analysis and design optimization in research. It addresses challenges in optimizing study designs for power across multiple dimensions while considering cost constraints. By combining Monte Carlo simulations, surrogate modeling techniques, and cost functions, `mlpwr` enables researchers to model the relationship between design parameters and statistical power, allowing for efficient exploration of the parameter space.
+
+Using Monte Carlo simulation, `mlpwr` estimates statistical power across different design configurations by generating simulated datasets and performing hypothesis tests on these. A surrogate model, such as linear regression, logistic regression, support vector regression (SVR), or Gaussian process regression, is then fitted to approximate the power function. This facilitates the identification of optimal design parameter values.
+
+The `mlpwr` package offers two primary types of outputs based on specified goals and constraints. Researchers can obtain study design parameters that yield the desired power level at the lowest possible cost, taking budget limitations and resource availability into account. Alternatively, researchers can identify design parameters that maximize power within a given cost threshold, enabling informed resource allocation.
+
+In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
+
+For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+
+In this Vignette we will apply the `mlpwr` package to a t-test setting. 
+
+## Introduction to Two-Sample t-test
+
+The two-sample t-test is a statistical test used to determine whether there is a significant difference between the means of two independent groups. It is commonly employed when comparing the means of two different treatments, groups, or populations.
+
+### Assumptions
+
+Before conducting a two-sample t-test, certain assumptions should be met:
+
+1. Independence: The observations within each group must be independent of each other.
+2. Normality: The data within each group should be approximately normally distributed. However, the t-test is known to be robust to deviations from normality, especially when the sample sizes are large.
+3. Homogeneity of variances: The variances of the two groups should be approximately equal. If this assumption is violated a Welch's t-test should be conducted instead of a standard student's t-test. Performing a Welch's test instead of a standard student's test is standard practice.
+
+For further resources on the assumptions consult [Kim & Park, (2019)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6676026/#:~:text=Most%20parametric%20tests%20start%20with,size%2C%20and%20homogeneity%20of%20variance.)
+
+We will use the Welch's t-test instead of the original student's t-test for our analysis, which is standard practice and also the default in R's `t.test`.
+
+## Welch's t-test
+
+Welch's t-test is a modification of the two-sample t-test that relaxes the assumption of equal variances between the two groups. It is particularly useful when the variances of the two groups are unequal.
+
+### Formula
+
+The formula for calculating the test statistic (t-value) in Welch's t-test is as follows:
+
+\[
+t = \frac{{\bar{x}_1 - \bar{x}_2}}{{\sqrt{\frac{{s_1^2}}{{n_1}} + \frac{{s_2^2}}{{n_2}}}}}
+\]
+
+where
+- \(\bar{x}_1\) and \(\bar{x}_2\) are the sample means of Group A and Group B, respectively.
+- \(s_1\) and \(s_2\) are the corrected sample standard deviations of Group A and Group B, respectively.
+- \(n_1\) and \(n_2\) are the sample sizes of Group A and Group B, respectively.
+
+The degrees of freedom (\(df\)) for Welch's t-test are calculated using the following formula:
+
+\[
+df = \frac{{\left(\frac{{s_1^2}}{{n_1}} + \frac{{s_2^2}}{{n_2}}\right)^2}}{{\frac{{\left(\frac{{s_1^2}}{{n_1}}\right)^2}}{{n_1 - 1}} + \frac{{\left(\frac{{s_2^2}}{{n_2}}\right)^2}}{{n_2 - 1}}}}
+\]
+
+where
+- \(s_1^2\) and \(s_2^2\) are the sample variances of Group A and Group B, respectively.
+- \(n_1\) and \(n_2\) are the sample sizes of Group A and Group B, respectively.
+
+### Performing Welch's T-Test in R
+
+In R, you can perform Welch's t-test using the `t.test()` function with the argument `var.equal = FALSE`, which explicitly indicates that the variances are not assumed to be equal.
+
+```{r eval=FALSE}
+# Example code for performing Welch's t-test in R
+t.test(group_a, group_b, var.equal = FALSE)
+
+```
+
+
+### Scenario
+
+Let's consider an example to illustrate the use of the two-sample t-test. Suppose a pharmaceutical company is developing a new drug to reduce blood pressure. They conduct a study to compare the effectiveness of the new drug (Group A) to an existing drug on the market (Group B) in reducing blood pressure. The company wants to determine if there is a significant difference in the mean reduction of blood pressure between the two drugs.
+
+A corresponding dataset would look like this:
+
+```{r echo=FALSE}
+groupA <- rnorm(5, mean = 5, sd = 2)
+groupB <- rnorm(5, mean = 7, sd = 1)
+dat <- data.frame("blood_pressure" = c(groupA, groupB), "group" = rep(c("A","B"), each=5))
+dat
+```
+
+We could conduct a t-test like this:
+
+```{r}
+t.test(dat[dat$group=="A",]$blood_pressure, dat[dat$group=="B",]$blood_pressure, 
+       alternative = "less", var.equal = FALSE)
+
+```
+We have conducted a one-sided t-test (`alternative = "less"`), as we assumed that the drug would be effective and lessen the blood pressure. We also assumed non-equal variances between the groups (`var.equal=FALSE`) and used a Welch's t-test. If we take a Type-I error of `alpha = 0.01` our t-test is not significant, based on the p-value being greater than 0.01. This means we failed to show a statistically significant difference in means between the groups at the `alpha = 0.01` level.
+
+
+## Power Analysis
+
+Statistical significance in a t-test depends on the number of samples we have available. Recruiting more people for our study would result in more stable results and a higher chance of detecting an effect if it exists. So before we conduct our study we will want to know how many people we should recruit in order to have enough power to show an effect if it exists. We use the `mlpwr` package for this purpose.  If it is your first time using this package, you have to install it like so:
+
+```{r eval=FALSE}
+install.packages("mlpwr")
+```
+
+Now the package is permanently installed on your computer. To use it in R you need to (re-)load it every time you start a session.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+```
+
+### Data Preparation
+
+`mlpwr` relies on simulations for the power analysis. Thus we need to write a function that simulates the data and conducts a t-test based on our assumptions. The input to this function need to be the parameters we want to investigate/optimize for in our power analysis. For our scenario a function like this would do:
+
+```{r}
+simfun_ttest <- function(nA, nB) {
+  groupA <- rnorm(nA, mean = 5, sd = 2)
+  groupB <- rnorm(nB, mean = 6, sd = 1)
+  res <- t.test(groupA, groupB, alternative = "less", var.equal = FALSE)
+  res$p.value < 0.01
+}
+```
+
+This function takes two inputs: nA, nB. These are the group sizes of group A and B respectively. These are the design parameters we want to optimize for in the power analysis. We want to find out how many participants we need per group to achieve a certain power level. 
+
+The function first generates data for each group. We assume the data to be normally distributed, thus `rnorm` is used. We expect group A to have a lower mean than group B, because the drug is more effective. We expect group A to have a higher variance than group B, as the reaction to the new drug is not as consistent across participants as it was for the older one. We then conduct a one sided Welch's t-test to compare the means. We set `alpha = 0.01` and accept the alternative hypothesis if the p-value is below that. Our function outputs the result of the hypothesis test in a TRUE/FALSE format. This is important, as the `find.design` function of `mlpwr` we will use for the power analysis expects this kind of output from the simulation.
+
+A similar function for a one sample t.test is implemented in the example simulation function of `mlpwr` and can be accessed like so:
+
+```{r eval=FALSE}
+simfun_ttest_example <- example.simfun("ttest")
+```
+
+### Cost function
+ 
+`mlpwr` allows for the option to weigh the design parameters with a cost function. When optimizing multiple parameters, subitting a cost function is necessary. This allows for easy study design optimization under cost considerations. For our example let us assume that recruiting participants for the new drug, group A, is more difficult (thus more costly) than recruiting for group B, as the drug has not been tested as extensively. We can put this in a cost function like so:
+```{r}
+costfun_ttest <- function(nA, nB) {1.5*nA + 1*nB}
+```
+
+This assumes that the cost for an additional participant in group A is 1.5, while for group B it is 1.
+
+### Power Analysis
+
+The previous section showed how we can perform a data simulation with a subsequent hypothesis test and construct a cost function for automatic weighing between the design parameters. Now we perform a power simulation with `mlpwr`.
+
+A power simulation can be done using the `find.design` function. For our purpose we submit 5 parameters to it:
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function described before.
+2. **boundaries**: the boundaries of the design space that are searched. This should be set to a large enough interval in order to explore the design space sufficiently.
+3. **power**: the desired power level. We set 0.8 as the desired power level.
+4. **costfun**: the costfunction that defines the weighting between the design parameters. We use the one defined before.
+5. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
+
+The `find.design` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes the design parameters (here `nA,nB`) as input and must output a logical value of whether the hypothesis test was TRUE or FALSE. 
+
+With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
+
+```{r, warning=FALSE}
+set.seed(111)
+res <- find.design(simfun = simfun_ttest, boundaries = list(nA = c(5,200), nB = c(5,200)),
+                   power = .8, costfun = costfun_ttest, evaluations = 1000)
+```
+
+Now we can summarize the results using the ```summary``` command. 
+
+```{r, echo=TRUE}
+summary(res)
+```
+
+As we can see the calculated sample size for the desired power of 0.8 is `nA =``r res$final$design$nA`, `nB =``r res$final$design$nB`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+
+```{r}
+plot(res)
+```
+
+Confidence Intervals (gray) are printed in addition to the estimated power curve (black), so we can get a feel for how the design parameter (here sample sizes `nA`and `nB`) influence the power level and also where the prediction is more or less uncertain. The black dots show us the simulated data. This concludes our power analysis.
+
+

@@ -1,0 +1,201 @@
+---
+title: "ANOVA Application"
+author: "Marc Egli"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{ANOVA Application}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# ANOVA Vignette
+
+## Introduction to mlpwr
+
+The `mlpwr` package is a powerful tool for comprehensive power analysis and design optimization in research. It addresses challenges in optimizing study designs for power across multiple dimensions while considering cost constraints. By combining Monte Carlo simulations, surrogate modeling techniques, and cost functions, `mlpwr` enables researchers to model the relationship between design parameters and statistical power, allowing for efficient exploration of the parameter space.
+
+Using Monte Carlo simulation, `mlpwr` estimates statistical power across different design configurations by generating simulated datasets and performing hypothesis tests on these. A surrogate model, such as linear regression, logistic regression, support vector regression (SVR), or Gaussian process regression, is then fitted to approximate the power function. This facilitates the identification of optimal design parameter values.
+
+The `mlpwr` package offers two primary types of outputs based on specified goals and constraints. Researchers can obtain study design parameters that yield the desired power level at the lowest possible cost, taking budget limitations and resource availability into account. Alternatively, researchers can identify design parameters that maximize power within a given cost threshold, enabling informed resource allocation.
+
+In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
+
+For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+
+In this Vignette we will apply the mlpwr package to an ANOVA setting. 
+
+## Introduction to ANOVA
+
+ANOVA, or Analysis of Variance, is a statistical test used to compare the means of three or more groups. It is commonly employed when examining the differences between multiple treatments, interventions, or populations.
+
+### Assumptions
+
+Before conducting an ANOVA test, certain assumptions should be met:
+
+1. Independence: The observations within each group must be independent of each other.
+2. Normality: The data within each group should be approximately normally distributed. This assumption is particularly important when the sample sizes are small.
+3. Homogeneity of variances: The variances of the groups should be approximately equal. Violation of this assumption can affect the validity of the test.
+
+ANOVA is robust to violations of the second and third assumption, especially with large sample sizes.
+
+### Formula
+
+The formula for calculating the test statistic (F-value) in ANOVA is as follows:
+ANOVA formula:
+
+\[ F = \frac{{\text{MS}_{\text{between}}}}{{\text{MS}_{\text{within}}}} \]
+
+where:
+
+\( \text{MS}_{\text{between}} \) represents the mean sum of squares between groups, calculated as:
+
+\[ \text{MS}_{\text{between}} = \frac{{SS_{\text{between}}}}{{df_{\text{between}}}} \]
+
+\( \text{MS}_{\text{within}} \) represents the mean sum of squares within groups, calculated as:
+
+\[ \text{MS}_{\text{within}} = \frac{{SS_{\text{within}}}}{{df_{\text{within}}}} \]
+
+\( SS_{\text{between}} \) represents the sum of squares between groups, calculated as the sum of squared deviations of the group means from the overall mean, weighted by the number of observations in each group.
+
+\( SS_{\text{within}} \) represents the sum of squares within groups, calculated as the sum of squared deviations of the individual observations from their respective group means.
+
+\( df_{\text{between}} \) represents the degrees of freedom between groups, which is equal to the number of groups minus one.
+
+\( df_{\text{within}} \) represents the degrees of freedom within groups, which is equal to the total number of observations minus the number of groups.
+
+The F-value is then compared against the critical value from the F-distribution with degrees of freedom \( df_{\text{between}} \) and \( df_{\text{within}} \).
+
+
+In R, you can perform ANOVA using the `aov()` function, specifying the outcome variable and the grouping variable as arguments.
+
+```{r eval=FALSE}
+# Example code for performing ANOVA in R
+result <- aov(outcome ~ group, data = dataset)
+``` 
+
+For further information about ANOVA consult [Armstrong et al. (2000)](https://doi.org/10.1046/j.1475-1313.2000.00502.x).
+
+### Scenario
+
+Let's consider an example to illustrate the use of ANOVA. Suppose someone has developed a psychological test to assess cognitive abilities. After deployment of the test, practitioners report varying performance in the test by individuals from different cultural backgrounds. The test is designed to measure problem-solving skills, which should not be affected by cultural background, and would be unfair if it was. We now want to investigate if the test score really differs between people from different backgrounds and conduct an ANOVA for that purpose, comparing the test score for people from different countries.
+
+A corresponding dataset would look like this:
+
+```{r echo=FALSE}
+groupA <- rnorm(2, mean = 5, sd = 1)
+groupB <- rnorm(2, mean = 7, sd = 1)
+groupC <- rnorm(2, mean = 6, sd = 1)
+dat <- data.frame("score" = c(groupA, groupB, groupC), "group" = rep(c("A","B", "C"), each=2))
+dat
+```
+
+Where the group variable encodes the country of origin. We could conduct an ANOVA test like so:
+
+```{r}
+res <- aov(score ~ group, data = dat)
+summary(res)
+```
+We have conducted a one-way ANOVA and the group factor was significant at an alpha level of 0.05. This indicates a statistically significant different in group means, or put differently a statistically significant difference between our three countries. To see which groups differ exactly, we would need to perform post-hoc tests. A post-hoc test can be performed using Tukey's Honestly Significant Difference (HSD). For more details consult [this tuorial](https://biostats.w.uib.no/post-hoc-tests-tukey-hsd/).
+
+```{r}
+TukeyHSD(res)
+```
+We see that at our specified `alpha = 0.05` only the difference between group A and B is statistically significant as the p-value is below 0.05. 
+
+
+## Power Analysis
+
+To ensure that we find statistical significant evidence for this unfairness effect, if it exists, we perform an a-priori power analysis before our ANOVA test. We want to find out how many countries and participants per country we would need to find a statistically significant effect. We use the `mlpwr` package for this purpose and `tidyr`is used for the simulation.  If it is your first time using these packages, you have to install them like so:
+
+```{r eval=FALSE}
+install.packages("mlpwr")
+install.packages("tidyr")
+```
+
+Now the packages are permanently installed on your computer. To use them in R you need to (re-)load them every time you start a session.
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+library(mlpwr)
+library(tidyr)
+```
+
+### Data Preparation
+
+`mlpwr` relies on simulations for the power analysis. Thus we need to write a function that simulates the data and conducts an ANOVA based on our assumptions. The input to this function need to be the parameters we want to investigate/optimize for in our power analysis. For our scenario a function like this would do:
+
+```{r}
+simfun_anova <- function(n, n.groups) {
+  groupmeans <- rnorm(n.groups, sd = 0.2)
+  dat <- sapply(groupmeans, function(x) rnorm(n, mean = x, sd = 1))
+  dat <- gather(as.data.frame(dat))
+  res <- aov(value ~ key, data = dat)
+  summary(res)[[1]][1, 5] < 0.01
+}
+```
+
+This function takes two inputs: `n`and `n.groups`, the number of participants per group (country) and the number of groups (countries). These are the design parameters we want to optimize for in the power analysis. We want to find out how many participants we need per country and how many different countries to achieve a certain power level. 
+
+The function first generates data for each group, by generating a `groupmean` for every group. We assume the data to be normally distributed, thus `rnorm` is used on the groupmeans to generate individual observations. In line with the ANOVA assumptions we expect all groups to have the same variance \[\sigma = 1\]. We set `alpha = 0.01` to be very strict and accept the alternative hypothesis if the p-value is below that. Our function outputs the result of the hypothesis test in a TRUE/FALSE format. This is important, as the `find.design` function of mlpwr we will use for the power analysis expects this kind of output from the simulation.
+
+A similar function for an ANOVA is implemented in the example simulation function of mlpwr and can be accessed like so:
+
+```{r eval=FALSE}
+simfun_ANOVA_example <- example.simfun("anova")
+```
+
+### Cost function
+ 
+`mlpwr` allows for the option to weigh the design parameters with a cost function. When optimizing multiple parameters, submitting a cost function is necessary. This allows for easy study design optimization under cost considerations. For our example let us assume that recruiting additional participants for a country is not as expensive as recruiting people from a whole new country. We can simulate this in a cost function like so:
+
+```{r}
+costfun_anova <- function(n, n.groups) {n + n.groups*10}
+```
+
+This assumes that the cost for an additional participant in a group is 1, while an additional group costs 10 times that of an additional participant.
+
+### Power Analysis
+
+The previous section showed how we can perform a data simulation with a subsequent hypothesis test and construct a cost function for automatic weighing between the design parameters. Now we perform a power simulation with ```mlpwr```.
+
+A power simulation can be done using the ```find.design```function. For our purpose we submit 5 parameters to it:
+
+1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function described before.
+2. **boundaries**: the boundaries of the design space that are searched. This should be set to a large enough interval in order to explore the design space sufficiently.
+3. **power**: the desired power level. We set 0.8 as the desired power level.
+4. **costfun**: the costfunction that defines the weighting between the design parameters. We use the one defined before.
+5. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
+
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
+
+The ```find.design``` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes the design parameters (here `n, n.groups`) as input and must output a logical value of whether the hypothesis test was TRUE or FALSE. 
+
+With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
+
+```{r, results='hide'}
+set.seed(112)
+res <- find.design(simfun = simfun_anova, boundaries = list(n = c(5,200), n.groups = c(5,30)),
+                   power = .8, costfun = costfun_anova, evaluations = 2000)
+```
+
+Now we can summarize the results using the ```summary``` command. 
+
+```{r, echo=TRUE}
+summary(res)
+```
+
+As we can see the calculated sample size for the desired power of 0.8 is `nA =``r res$final$design$nA`, `nB =``r res$final$design$nB`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`.The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+
+```{r}
+plot(res)
+```
+
+Confidence Intervals (gray) are printed in addition to the estimated power curve (black), so we can get a feel for how the design parameter (here `n, n.groups`) influence the power level and also where the prediction is more or less uncertain. The black dots show us the simulated data. This concludes our power analysis.
+
+
