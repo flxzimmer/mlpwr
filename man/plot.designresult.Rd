@@ -21,7 +21,7 @@
 
 \item{design}{Specify a design as a list. Can be used to make a 1D plot for a two-dimensional simfun. Set NA for the dimension that should be plotted and set a value for all others. For example: design=list(n=NA,k=9)}
 
-\item{adderrorbars}{logical. Plots errorbars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL).}
+\item{adderrorbars}{logical. Plots error bars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL).}
 
 \item{addribbon}{logical. Adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).}
 
@@ -29,7 +29,7 @@
 
 \item{type}{character indicating the type of the 2D plot. Can be 'heat'(default) or 'line'.}
 
-\item{color.width}{numeric. Option for the diverging colormap in the 2D plot. Width of the blue-white colorband.}
+\item{color.width}{numeric. Option for the diverging color map in the 2D plot. Width of the blue-white color band.}
 
 \item{color.gradient}{character indicating whether the 2D plot should have a "diverging" color gradient (white-blue-white, default) or a "linear" color gradient (blue-red)}
 

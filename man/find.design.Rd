@@ -63,7 +63,7 @@ find.design(
 
 \item{silent}{logical; suppresses output during the search.}
 
-\item{autosave_dir}{character; file location for saving the dat object after each update.}
+\item{autosave_dir}{character; file location for saving the \code{dat} object after each update. The \code{dat} object is saved in \code{autosave_dir/dat_autosave.Rdata}. It can be loaded for example using \code{load(paste0(autosave_dir,"/dat_autosave.Rdata"))}.}
 
 \item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype='gauss') can be used with the gpr surrogate to use a different covariance structure than the default.}
 
