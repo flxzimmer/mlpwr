@@ -9,8 +9,9 @@ Authors@R: c(
     person("Marc", "Egli", , "eglimar@ethz.ch", role = c("ctb"))
   )
 Description: We implement a surrogate modeling algorithm to guide simulation-based
-    sample size planning. The method is described in detail in a recent preprint
-    (Zimmer & Debelak (2022) <doi:10.31234/osf.io/tnhb2>).
+    sample size planning. The method is described in detail in our paper 
+    (Zimmer & Debelak, 2023, <doi:10.1037/met0000611>). There is also a tutorial
+    paper for this package (Zimmer et al., 2023, <doi:10.3758/s13428-023-02269-0>).
     It supports multiple study design parameters and optimization with respect to a
     cost function. It can find optimal designs that correspond to a desired 
     statistical power or that fulfill a cost constraint.
@@ -26,7 +27,6 @@ Imports:
     ggplot2,
     randtoolbox,
     rlist,
-    WeightSVM,
     rgenoud
 Suggests:
     knitr,
@@ -37,7 +37,8 @@ Suggests:
     rmarkdown,
     simr,
     sn,
-    tidyr
+    tidyr,
+    WeightSVM
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1

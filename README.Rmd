@@ -21,12 +21,12 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/flxzimmer/mlpwr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/flxzimmer/mlpwr/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-We implement a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent preprint (Zimmer & Debelak (2022), http://dx.doi.org/10.31234/osf.io/tnhb2). It supports multiple study design parameters and optimization with respect to a cost function. It can find optimal designs that correspond to a desired statistical power or that fulfill a cost constraint.
+We implement a surrogate modeling algorithm to guide simulation-based sample size planning. The method is described in detail in a recent paper (Zimmer & Debelak, 2023, https://psycnet.apa.org/doi/10.1037/met0000611). It supports multiple study design parameters and optimization with respect to a cost function. It can find optimal designs that correspond to a desired statistical power or that fulfill a cost constraint.
 
 
 Below is a toy example of how to use the package. More in-depth resources are:
 
-* A tutorial paper to the package is available at https://psyarxiv.com/r9w6t/
+* A tutorial paper for this package (Zimmer et al., 2023, https://doi.org/10.3758/s13428-023-02269-0)
 * Basic walkthroughs are available in separate vignettes for ANOVA, GLM, IRT, multilevel model, and t-test. They can be accessed    [here](https://github.com/flxzimmer/mlpwr/blob/master/vignettes/).
 
 
@@ -116,7 +116,7 @@ We can get an overview of the results via summary.
 summary(ds) 
 ```
 
-The results indicate that a sample size of 201 is suitable. It shows the predicted power for this sample size, as well as an estimate of its uncertainty (SE). The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [preprint](http://dx.doi.org/10.31234/osf.io/tnhb2). 
+The results indicate that a sample size of 201 is suitable. It shows the predicted power for this sample size, as well as an estimate of its uncertainty (SE). The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in our [paper](https://psycnet.apa.org/doi/10.1037/met0000611). 
 
 Also, we can plot the fitted relationship between sample size and power. The black dots show us the simulated data. The gray ribbon indicates the uncertainty of the power at the respective sample sizes.  
 ```{r}

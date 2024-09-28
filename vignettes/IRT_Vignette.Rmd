@@ -26,7 +26,7 @@ The `mlpwr` package offers two primary types of outputs based on specified goals
 
 In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
 
-For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+For more details, refer to [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611).
 
 In this Vignette we will apply the `mlpwr` package to an Item Response problem. We will tackle two types of problems: 1) testing whether a Rasch or a 2PL model is more suitable to our data and 2) conducting a DIF analysis in a 2PL model. Both of these problems require an a-priori power analysis to ensure enough participants are recruited to appropriately test our hypothesis. To facilitate the understanding we will apply our analysis to a concrete research setting: evaluating a math test in school.
 
@@ -185,7 +185,7 @@ Now we can summarize the results using the ```summary``` command.
 ```{r, echo=TRUE}
 summary(res)
 ```
-As we can see the calculated sample size for the desired power of 0.95 is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`.The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+As we can see the calculated sample size for the desired power of 0.95 is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`.The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 
 ```{r}
 plot(res)
@@ -307,7 +307,7 @@ Now we can summarize the results using the ```summary``` command.
 summary(res)
 ```
 
-As we can see the calculated sample sizes for a cost of max. 4000 are `r res$final$design$N1` for native speakers and `r res$final$design$N2` for the non-native speakers. The estimated power for the sample sizes is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [preprint](https://psyarxiv.com/tnhb2/).
+As we can see the calculated sample sizes for a cost of max. 4000 are `r res$final$design$N1` for native speakers and `r res$final$design$N2` for the non-native speakers. The estimated power for the sample sizes is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [paper](https://psycnet.apa.org/doi/10.1037/met0000611).
 
 We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 

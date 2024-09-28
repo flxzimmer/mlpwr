@@ -26,7 +26,7 @@ The `mlpwr` package offers two primary types of outputs based on specified goals
 
 In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
 
-For more details, refer to [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/).
+For more details, refer to [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611).
 
 In this Vignette we will apply the `mlpwr` package in a mixed model setting to two problems: 1) calculating the sample size for a study investigating the points in a math test and 2) calculating the number of participants and countries for a study investigating the probability of passing a math test. Both examples work with hierarchical data (classes > participants, countries > participants)
 
@@ -178,7 +178,7 @@ Now we can summarize the results using the ```summary``` command.
 summary(res)
 ```
 
-As we can see the calculated sample size for the desired power of `r res$call$power` is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psyarxiv.com/tnhb2/) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+As we can see the calculated sample size for the desired power of `r res$call$power` is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 
 ```{r}
 plot(res)
@@ -307,7 +307,7 @@ Now we can summarize the results using the ```summary``` command.
 summary(res)
 ```
 
-As we can see the calculated sample size for a cost of max. `r res$call$cost` is `r res$final$design$n` the number of countries `r res$final$design$n.countries` with a power of `r round(res$final$power, 5)` and a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [preprint](https://psyarxiv.com/tnhb2/).We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+As we can see the calculated sample size for a cost of max. `r res$call$cost` is `r res$final$design$n` the number of countries `r res$final$design$n.countries` with a power of `r round(res$final$power, 5)` and a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [paper](https://psycnet.apa.org/doi/10.1037/met0000611).We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 
 ```{r}
 plot(res)
