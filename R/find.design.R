@@ -172,12 +172,8 @@ find.design <- function(simfun, boundaries, power = NULL,
     }
 
     # For SVR, check if necessary package is available:
-    if (surrogate == "svr") {
-      if (requireNamespace("WeightSVM", quietly = TRUE)) {
-        library(WeightSVM)
-      } else {
+    if (surrogate == "svr" && !requireNamespace("WeightSVM", quietly = TRUE)) {
         message("Package WeightSVM is not installed. Please install it to use this surrogate.")
-      }
     }
 
     # warn if ci is termination critrerion

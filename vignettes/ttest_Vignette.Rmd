@@ -42,7 +42,7 @@ Before conducting a two-sample t-test, certain assumptions should be met:
 2. Normality: The data within each group should be approximately normally distributed. However, the t-test is known to be robust to deviations from normality, especially when the sample sizes are large.
 3. Homogeneity of variances: The variances of the two groups should be approximately equal. If this assumption is violated a Welch's t-test should be conducted instead of a standard student's t-test. Performing a Welch's test instead of a standard student's test is standard practice.
 
-For further resources on the assumptions consult [Kim & Park, (2019)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6676026/#:~:text=Most%20parametric%20tests%20start%20with,size%2C%20and%20homogeneity%20of%20variance.)
+For further resources on the assumptions consult [Kim & Park, (2019)](https://doi.org/10.4097%2Fkja.d.18.00292)
 
 We will use the Welch's t-test instead of the original student's t-test for our analysis, which is standard practice and also the default in R's `t.test`.
 
@@ -165,7 +165,7 @@ A power simulation can be done using the `find.design` function. For our purpose
 4. **costfun**: the costfunction that defines the weighting between the design parameters. We use the one defined before.
 5. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
 
-**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/package=mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
 
 The `find.design` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes the design parameters (here `nA,nB`) as input and must output a logical value of whether the hypothesis test was TRUE or FALSE. 
 

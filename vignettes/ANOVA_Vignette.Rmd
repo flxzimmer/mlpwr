@@ -172,7 +172,7 @@ A power simulation can be done using the ```find.design```function. For our purp
 4. **costfun**: the costfunction that defines the weighting between the design parameters. We use the one defined before.
 5. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
 
-**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/package=mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
 
 The ```find.design``` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes the design parameters (here `n, n.groups`) as input and must output a logical value of whether the hypothesis test was TRUE or FALSE. 
 

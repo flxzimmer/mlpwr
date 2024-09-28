@@ -162,7 +162,7 @@ A power simulation can be done using the ```find.design```function. For our purp
 3. **power**: the desired power level. We set 0.8 as the desired power level.
 4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
 
-Note: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here `(N = sample size)` we don't need to submit a cost function.
+Note: additional specifications are possible (see [documentation](https://cran.r-project.org/package=mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here `(N = sample size)` we don't need to submit a cost function.
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
@@ -290,7 +290,7 @@ A power simulation can be done using the ```find.design```function. For our purp
 3. **cost**: We have a budget of 3000 USD, we want to obtain the best design parameters for maximum power under this cost constraint.
 4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
 
-Note: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. Some parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here (N = sample size) we don't need to submit a cost function.
+Note: additional specifications are possible (see [documentation](https://cran.r-project.org/package=mlpwr/mlpwr.pdf)) but not necessary. Some parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here (N = sample size) we don't need to submit a cost function.
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 

@@ -132,7 +132,7 @@ This function takes one input `N`, the number of observations in the dataset. Th
 
 4. **Hypothesis Test**: Finally, the function examines the p-value associated with the coefficient of the third level of the `road` factor (`road3`) from the summary of the `mod` model. If the p-value is less than 0.05, the function returns a logical value indicating that there is a statistically significant difference in accidents between the third level of the `road` factor and the other levels.
 
-A similar function for a poisson model is implemented in the example simulation function of mlpwr and can be seen [here](https://cran.r-project.org/web/packages/mlpwr/vignettes/simulation_functions.html).
+A similar function for a poisson model is implemented in the example simulation function of mlpwr and can be seen [here](https://cran.r-project.org/package=mlpwr/vignettes/simulation_functions.html).
 
 ### Power Analysis
 
@@ -145,7 +145,7 @@ A power simulation can be done using the ```find.design```function. For our purp
 3. **power**: the desired power level. We set 0.8 as the desired power level.
 4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
 
-**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/web/packages/mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
+**Note**: additional specifications are possible (see [documentation](https://cran.r-project.org/package=mlpwr/mlpwr.pdf)) but not necessary. For most parameters like the choice of surrogate function the default values should already be good choices. 
 
 The ```find.design``` function needs to reiterate a data simulation multiple times. For this purpose it expects a data generating function (DGF) as its main input. The DGF takes the design parameters (here `N`) as input and must output a logical value of whether the hypothesis test was TRUE or FALSE. 
 

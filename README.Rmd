@@ -27,7 +27,7 @@ We implement a surrogate modeling algorithm to guide simulation-based sample siz
 Below is a toy example of how to use the package. More in-depth resources are:
 
 * A tutorial paper for this package (Zimmer et al., 2023, https://doi.org/10.3758/s13428-023-02269-0)
-* Basic walkthroughs are available in separate vignettes for ANOVA, GLM, IRT, multilevel model, and t-test. They can be accessed    [here](https://github.com/flxzimmer/mlpwr/blob/master/vignettes/).
+* Basic walkthroughs are available in separate vignettes for ANOVA, GLM, IRT, multilevel model, and t-test. They can be accessed    [here](https://github.com/flxzimmer/mlpwr/tree/master/vignettes/).
 
 
 
