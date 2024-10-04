@@ -36,6 +36,7 @@ hush <- function(code) {
         st <- "NUL"
 
     sink(st)  # use /dev/null in UNIX
+    on.exit(sink())  # ensure sink is reset on exit
     tmp <- code
     sink()
     return(tmp)

@@ -27,7 +27,7 @@ The `mlpwr` package offers two primary types of outputs based on specified goals
 
 In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
 
-For more details, refer to [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611).
+For more details, refer to [Zimmer & Debelak (2023)](https://doi.org/10.1037/met0000611).
 
 In this Vignette we will apply the mlpwr package to an ANOVA setting. 
 
@@ -178,7 +178,22 @@ The ```find.design``` function needs to reiterate a data simulation multiple tim
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
-```{r, results='hide'}
+```{r, echo=FALSE, results='hide'}
+# The following loads the precomputed results of the next chunk to reduce the vignette creation time
+ver <- as.character(packageVersion("mlpwr"))
+file = paste0("/extdata/ANOVA_Vignette_results_", ver, ".RData")
+file_path <- paste0(system.file(package="mlpwr"),file)
+if (!file.exists(file_path)) {
+set.seed(112)
+res <- find.design(simfun = simfun_anova, boundaries = list(n = c(5,200), n.groups = c(5,30)),
+                   power = .8, costfun = costfun_anova, evaluations = 2000)
+save(res, file = paste0("../inst",file))
+} else {
+  load(file_path) 
+}
+```
+
+```{r, results='hide', eval=FALSE}
 set.seed(112)
 res <- find.design(simfun = simfun_anova, boundaries = list(n = c(5,200), n.groups = c(5,30)),
                    power = .8, costfun = costfun_anova, evaluations = 2000)
@@ -190,7 +205,7 @@ Now we can summarize the results using the ```summary``` command.
 summary(res)
 ```
 
-As we can see the calculated sample size for the desired power of 0.8 is `nA =``r res$final$design$nA`, `nB =``r res$final$design$nB`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`.The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+As we can see the calculated sample size for the desired power of 0.8 is `nA =``r res$final$design$nA`, `nB =``r res$final$design$nB`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`.The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://doi.org/10.1037/met0000611) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 
 ```{r}
 plot(res)

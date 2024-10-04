@@ -1,6 +1,6 @@
 Package: mlpwr
 Title: A Power Analysis Toolbox to Find Cost-Efficient Study Designs
-Version: 1.1.0.9000
+Version: 1.1.1
 Authors@R: c(
     person("Felix", "Zimmer", , "felix.zimmer@mail.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8127-0007")),
@@ -9,12 +9,12 @@ Authors@R: c(
     person("Marc", "Egli", , "eglimar@ethz.ch", role = c("ctb"))
   )
 Description: We implement a surrogate modeling algorithm to guide simulation-based
-    sample size planning. The method is described in detail in our paper 
-    (Zimmer & Debelak, 2023, <doi:10.1037/met0000611>). There is also a tutorial
-    paper for this package (Zimmer et al., 2023, <doi:10.3758/s13428-023-02269-0>).
-    It supports multiple study design parameters and optimization with respect to a
-    cost function. It can find optimal designs that correspond to a desired 
-    statistical power or that fulfill a cost constraint.
+    sample size planning. The method is described in detail in our paper (Zimmer &
+    Debelak (2023) <doi:10.1037/met0000611>). It supports multiple study design
+    parameters and optimization with respect to a cost function. It can find
+    optimal designs that correspond to a desired statistical power or that fulfill
+    a cost constraint. We also provide a tutorial paper (Zimmer et al. (2023)
+    <doi:10.3758/s13428-023-02269-0>).
 License: GPL (>= 3)
 LazyData: true
 URL: https://github.com/flxzimmer/mlpwr
@@ -43,4 +43,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
-Depends: R (>= 2.10)
+Depends: R (>= 3.5.0)

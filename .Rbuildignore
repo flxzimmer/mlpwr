@@ -6,3 +6,5 @@
 ^notes\.txt$
 ^\.Rproj\.user$
 ^\.github$
+^doc$
+^Meta$

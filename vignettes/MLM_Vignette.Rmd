@@ -26,7 +26,7 @@ The `mlpwr` package offers two primary types of outputs based on specified goals
 
 In conclusion, the `mlpwr` package provides a comprehensive and flexible tool for power analysis and design optimization. It guides users through the process of optimizing study designs, enhancing statistical power, and making informed decisions within their research context.
 
-For more details, refer to [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611).
+For more details, refer to [Zimmer & Debelak (2023)](https://doi.org/10.1037/met0000611).
 
 In this Vignette we will apply the `mlpwr` package in a mixed model setting to two problems: 1) calculating the sample size for a study investigating the points in a math test and 2) calculating the number of participants and countries for a study investigating the probability of passing a math test. Both examples work with hierarchical data (classes > participants, countries > participants)
 
@@ -166,11 +166,27 @@ Note: additional specifications are possible (see [documentation](https://cran.r
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results='hide'}
+# The following loads the precomputed results of the next chunk to reduce the vignette creation time
+ver <- as.character(packageVersion("mlpwr"))
+file = paste0("/extdata/MLM_Vignette_results1_", ver, ".RData")
+file_path <- paste0(system.file(package="mlpwr"),file)
+if (!file.exists(file_path)) {
+set.seed(111)
+res <- find.design(simfun = simfun_multi1, boundaries = c(20,
+    200), power = .8, evaluations = 2000)
+save(res, file = paste0("../inst",file))
+} else {
+  load(file_path) 
+}
+```
+
+```{r, warning=FALSE, eval=FALSE}
 set.seed(111)
 res <- find.design(simfun = simfun_multi1, boundaries = c(20,
     200), power = .8, evaluations = 2000)
 ```
+
 
 Now we can summarize the results using the ```summary``` command.
 
@@ -178,7 +194,7 @@ Now we can summarize the results using the ```summary``` command.
 summary(res)
 ```
 
-As we can see the calculated sample size for the desired power of `r res$call$power` is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://psycnet.apa.org/doi/10.1037/met0000611) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+As we can see the calculated sample size for the desired power of `r res$call$power` is `r res$final$design$N`. The estimated power for this sample size is `r round(res$final$power, 5)` with a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination in seconds, and the number of surrogate model updates. See [Zimmer & Debelak (2023)](https://doi.org/10.1037/met0000611) for more details. We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 
 ```{r}
 plot(res)
@@ -294,7 +310,23 @@ Note: additional specifications are possible (see [documentation](https://cran.r
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results='hide'}
+# The following loads the precomputed results of the next chunk to reduce the vignette creation time
+ver <- as.character(packageVersion("mlpwr"))
+file = paste0("/extdata/MLM_Vignette_results2_", ver, ".RData")
+file_path <- paste0(system.file(package="mlpwr"),file)
+if (!file.exists(file_path)) {
+set.seed(112)
+res <- find.design(simfun = simfun_multi2, boundaries = list(n = c(10,
+    300), n.countries = c(5, 20)), costfun = costfun_multi2,
+    cost = 2000, evaluations = 2000)
+save(res, file = paste0("../inst",file))
+} else {
+  load(file_path) 
+}
+```
+
+```{r, warning=FALSE,eval=FALSE}
 set.seed(112)
 res <- find.design(simfun = simfun_multi2, boundaries = list(n = c(10,
     300), n.countries = c(5, 20)), costfun = costfun_multi2,
@@ -307,7 +339,7 @@ Now we can summarize the results using the ```summary``` command.
 summary(res)
 ```
 
-As we can see the calculated sample size for a cost of max. `r res$call$cost` is `r res$final$design$n` the number of countries `r res$final$design$n.countries` with a power of `r round(res$final$power, 5)` and a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [paper](https://psycnet.apa.org/doi/10.1037/met0000611).We can also plot our power simulation and look at the calculated function using the ```plot``` function.
+As we can see the calculated sample size for a cost of max. `r res$call$cost` is `r res$final$design$n` the number of countries `r res$final$design$n.countries` with a power of `r round(res$final$power, 5)` and a standard error of `r round(res$final$se, 5)`. The summary additionally reports the number of simulation function evaluations, the time until termination, and the number of surrogate model updates. The details of the surrogate modeling algorithm are described in a [paper](https://doi.org/10.1037/met0000611).We can also plot our power simulation and look at the calculated function using the ```plot``` function.
 
 ```{r}
 plot(res)
