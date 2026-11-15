@@ -10,6 +10,7 @@ See NEWS.md.
 * local: Ubuntu 26.04 LTS, R 4.5.2
 * GitHub Actions: macOS (R release), Windows (R release), Ubuntu (R devel,
   release, oldrel-1)
+* win-builder: Windows, R devel and release
 
 ## R CMD check results
 
