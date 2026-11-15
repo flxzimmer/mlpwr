@@ -27,7 +27,7 @@
 
 \item{trim}{logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE.}
 
-\item{type}{character indicating the type of the 2D plot. Can be 'heat'(default) or 'line'.}
+\item{type}{character indicating the type of the 2D plot. Can be 'heat' (default) or 'line' ('hline' is accepted as a synonym).}
 
 \item{color.width}{numeric. Option for the diverging color map in the 2D plot. Width of the blue-white color band.}
 

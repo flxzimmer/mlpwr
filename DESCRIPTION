@@ -1,6 +1,6 @@
 Package: mlpwr
 Title: A Power Analysis Toolbox to Find Cost-Efficient Study Designs
-Version: 1.1.1.9000
+Version: 1.2.0
 Authors@R: c(
     person("Felix", "Zimmer", , "felix.zimmer@mail.de", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-8127-0007")),
@@ -29,18 +29,24 @@ Imports:
     rlist,
     rgenoud
 Suggests:
+    future,
+    future.apply,
     knitr,
     lme4,
     lmerTest,
     mirt,
+    parallel,
+    parallelly,
     pwr,
     rmarkdown,
     simr,
     sn,
     tidyr,
-    WeightSVM
+    WeightSVM,
+    testthat (>= 3.0.0)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
-Depends: R (>= 3.5.0)
+Config/testthat/edition: 3
+Depends: R (>= 4.1.0)

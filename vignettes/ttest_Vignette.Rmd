@@ -171,25 +171,30 @@ The `find.design` function needs to reiterate a data simulation multiple times. 
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
-```{r, echo=FALSE, results='hide'}
-# The following loads the precomputed results of the next chunk to reduce the vignette creation time
-ver <- as.character(packageVersion("mlpwr"))
-file = paste0("/extdata/ttest_Vignette_results_", ver, ".RData")
-file_path <- paste0(system.file(package="mlpwr"),file)
-if (!file.exists(file_path)) {
-set.seed(111)
-res <- find.design(simfun = simfun_ttest, boundaries = list(nA = c(5,200), nB = c(5,200)),
-                   power = .8, costfun = costfun_ttest, evaluations = 1000)
-save(res, file = paste0("../inst",file))
-} else {
-  load(file_path) 
+```{r, include=FALSE}
+# The search in the next chunk takes minutes, so it is not run when the
+# vignette is built: its result is loaded from a file that ships with mlpwr.
+# To recompute that file (a release step, with the final code installed),
+# render this vignette with MLPWR_VIGNETTE_REGENERATE=true, see
+# tools/vignettes/regenerate_results.R.
+regenerate <- identical(Sys.getenv("MLPWR_VIGNETTE_REGENERATE"), "true")
+cache <- "ttest_Vignette_results.RData"
+if (!regenerate) {
+  cache_path <- system.file("extdata", cache, package = "mlpwr")
+  if (!nzchar(cache_path))
+    stop("Precomputed results ", cache, " not found; see tools/vignettes/regenerate_results.R")
+  load(cache_path)
 }
 ```
 
-```{r, warning=FALSE, eval = FALSE}
+```{r, warning=FALSE, eval = regenerate}
 set.seed(111)
 res <- find.design(simfun = simfun_ttest, boundaries = list(nA = c(5,200), nB = c(5,200)),
                    power = .8, costfun = costfun_ttest, evaluations = 1000)
+```
+
+```{r, include=FALSE, eval = regenerate}
+save(res, file = file.path("..", "inst", "extdata", cache))
 ```
 
 Now we can summarize the results using the ```summary``` command. 

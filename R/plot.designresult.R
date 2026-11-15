@@ -7,7 +7,7 @@
 #' @param adderrorbars logical. Plots error bars in the 1D plot if TRUE. Default is FALSE (also if specified as NULL).
 #' @param addribbon logical. Adds ribbon in the 1D plot if TRUE. Default is TRUE (also if specified as NULL).
 #' @param trim logical. Option to trim the plotting area for the 2D line plot. The trimmed area is the area where the line is plotted. Default is TRUE.
-#' @param type character indicating the type of the 2D plot. Can be 'heat'(default) or 'line'.
+#' @param type character indicating the type of the 2D plot. Can be 'heat' (default) or 'line' ('hline' is accepted as a synonym).
 #' @param color.gradient character indicating whether the 2D plot should have a "diverging" color gradient (white-blue-white, default) or a "linear" color gradient (blue-red)
 #' @param color.width numeric. Option for the diverging color map in the 2D plot. Width of the blue-white color band.
 #' @param x Object of class designresult as created by the find.design function.
@@ -32,7 +32,8 @@ plot.designresult <- function(x, design = NULL, adderrorbars = NULL,
 
     if (dims == 2 & is.null(design)) {
 
-        if (type == "hline")
+        # "line" is the documented name, "hline" kept for compatibility
+        if (type %in% c("line", "hline"))
             pl <- plot2d_line(x, trim)
         if (type == "heat")
             pl <- plot2d_heat(x,color.width,color.gradient)

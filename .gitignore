@@ -5,3 +5,6 @@ notes.txt
 inst/doc
 /doc/
 /Meta/
+src/*.o
+src/*.so
+src/*.dll

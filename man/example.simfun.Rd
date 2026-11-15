@@ -7,7 +7,7 @@
 example.simfun(name)
 }
 \arguments{
-\item{name}{Name of the simulation function as a character. Currently available are: 'ttest','anova','glm2','irt1','irt2','multi2'.}
+\item{name}{Name of the simulation function as a character. Currently available are: 'ttest','anova','glm2','irt1','irt2','multi1'.}
 }
 \value{
 The returned object is the simulation function.

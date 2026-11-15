@@ -1,7 +1,7 @@
 
 
 fit.surrogate <- function(dat, surrogate, lastfit,
-    control = list(),aggregate_fun=mean,use_noise=TRUE,noise_fun="bernoulli") {
+    control = list(),aggregate_fun=mean,use_noise=TRUE,noise_fun="logistic") {
 
     switch(surrogate, reg = reg.fit(dat,aggregate_fun=aggregate_fun), logreg = logi.fit(dat,aggregate_fun=aggregate_fun, lastfit = lastfit),
         svr = svm.fit(dat, lastfit = lastfit,aggregate_fun=aggregate_fun), gpr = gauss.fit(dat,
@@ -22,8 +22,11 @@ reg.fit <- function(dat,aggregate_fun) {
     weight <- getweight(dat, weight.type = "freq")
 
     mod <- stats::lm(y ~ ., datx, weights = weight)
+    linp <- lin_cache(mod, names(xvars))
 
     fitfun <- function(x) {
+        if (!is.null(linp) && linp$accepts(x))
+            return(linp$predict(x))
         names(x) <- names(xvars)
         stats::predict(mod, newdata = data.frame(t(x)))
     }
@@ -65,10 +68,31 @@ logi.fit <- function(dat, trans = TRUE, aggregate_fun, lastfit) {
         mod <- tryCatch(stats::glm(y ~ ., datx, weights = weight,
             family = fam, control = list(maxit = 50)), error = \(e) NULL)
 
+        # The retries below start from values that can lie far from the
+        # optimum, so glm.fit's step-halving and boundary warnings ("step
+        # size truncated", "algorithm stopped at boundary value", ...) are
+        # expected there and say nothing to the user: they are suppressed
+        # in the retry fits only.
+
         # try again with starting values from previous run
         if (is.null(mod) & !is.null(lastfit$last.mod)) {
-          mod <- tryCatch(stats::glm(y ~ ., datx, weights = weight,family = fam,
-              control = list(maxit = 50),start = stats::coef(lastfit$last.mod)),
+          mod <- tryCatch(suppressWarnings(stats::glm(y ~ ., datx,
+              weights = weight, family = fam, control = list(maxit = 50),
+              start = stats::coef(lastfit$last.mod))),
+              error = \(e) NULL)
+        }
+
+        # retry from an intercept-only start (the same valid linear
+        # predictor at every design), so that a first fit that failed
+        # without a previous good fit can recover. Retry only: fits that
+        # succeed above are unchanged.
+        if (is.null(mod)) {
+          ybar <- stats::weighted.mean(datx$y, weight)
+          ybar <- min(max(ybar, 0.001), 0.999)
+          start0 <- c(linkfun.new(ybar), rep(0, ncol(xvars)))
+          mod <- tryCatch(suppressWarnings(stats::glm(y ~ ., datx,
+              weights = weight, family = fam, control = list(maxit = 50),
+              start = start0)),
               error = \(e) NULL)
         }
     }
@@ -76,7 +100,10 @@ logi.fit <- function(dat, trans = TRUE, aggregate_fun, lastfit) {
     if (!is.null(mod)) {
       last.mod = mod
       badfit = FALSE
+      linp <- lin_cache(mod, names(xvars), stats::family(mod)$linkinv)
       fitfun <- function(x) {
+        if (!is.null(linp) && linp$accepts(x))
+            return(linp$predict(x))
         names(x) <- names(xvars)
         stats::predict(mod, newdata = data.frame(t(x)),
             type = "response")
@@ -168,10 +195,23 @@ svm.fit <- function(dat, lastfit, tune = TRUE,aggregate_fun) {
     if (tune) {
         ctrl <- WeightSVM::tune.control(cross = min(10,
             nrow(datx)), error.fun = logloss)
-        a <- WeightSVM::tune_wsvm(y ~ ., data = datx,
+        # Tune on the matrix interface: the CV fits and predictions skip
+        # model.frame/model.matrix. Folds come from the same sample(n) call,
+        # and each fold sees the same rows in the same order, so the CV
+        # errors and the chosen parameters are unchanged. The final model is
+        # fitted exactly as tune_wsvm(y ~ ., ...) fits its best.model
+        # (formula interface, same call), so fitfun/predict are unchanged.
+        ctrl$best.model <- FALSE
+        a <- WeightSVM::tune_wsvm(as.matrix(xvars), datx$y,
             weight = weight, ranges = tunepars, tunecontrol = ctrl)
         pars <- a$best.parameter
-        mod <- a$best.model
+        mod <- suppressWarnings(do.call(WeightSVM::wsvm, c(list(formula = y ~
+            ., weight = weight, data = datx), lapply(a$best.parameters,
+            unlist))))
+        mod$call <- match.call(WeightSVM::tune_wsvm, quote(WeightSVM::tune_wsvm(y ~
+            ., data = datx, weight = weight, ranges = tunepars,
+            tunecontrol = ctrl)))
+        mod$call[[1]] <- as.symbol("best.tune_wsvm")
     }
 
 
@@ -196,9 +236,7 @@ svm.fit <- function(dat, lastfit, tune = TRUE,aggregate_fun) {
     # check if a plane was fitted
     badfit <- TRUE
     somevals <- apply(xvars, 1, function(x) fitfun(x))
-    isplane <- suppressWarnings(summary(stats::lm(y ~
-        ., cbind(xvars, y = somevals)))$r.squared >
-        0.999)
+    isplane <- plane_r2(xvars, somevals) > 0.999
     if (!is.na(isplane) && !isplane)
         badfit <- FALSE
 
@@ -214,13 +252,31 @@ svm.fit <- function(dat, lastfit, tune = TRUE,aggregate_fun) {
 # ---------------------------------------------------------------------
 
 
-gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise_fun="bernoulli") {
+# DiceKriging::km() with one known, harmless warning muffled: R-devel (4.7)
+# warns when a logical index is recycled to a non-multiple length,
+# and kmNuggets.init() of DiceKriging 1.6.1 indexes an n x n
+# matrix with a logical dist() vector. It only affects a starting value of the
+# variance. All other warnings pass through.
+km_quiet <- function(args) {
+    msg <- gettext("object length is not a multiple of subscript length", domain = "R")
+    withCallingHandlers(do.call(DiceKriging::km, args = args),
+        warning = function(w) {
+            if (conditionMessage(w) %in% c(msg, "object length is not a multiple of subscript length"))
+                invokeRestart("muffleWarning")
+        })
+}
+
+gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise_fun="logistic") {
 
     datx <- todataframe(dat, aggregate = TRUE,aggregate_fun = aggregate_fun)
     xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
 
-    if(!is.function(noise_fun) && noise_fun == "bernoulli") weight <- getweight(dat, weight.type = "var")
-    else weight = sapply(dat,noise_fun)
+    # noise variances ("logistic", "bernoulli" or a user function; see
+    # R/noise.R). The character methods are skipped without use_noise
+    # (they draw no random numbers, so the results are unchanged); a user
+    # function is still called, as before.
+    weight <- if (use_noise || is.function(noise_fun))
+        noise_variances(dat, xvars, noise_fun)
 
     if (any(ind <- duplicated(datx$y))) {
         a <- datx$y[ind]
@@ -242,21 +298,34 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
 
     badfit <- TRUE
 
+    # last successfully fitted model; fitfun/fitfun.sd look it up when
+    # called, so a failed later attempt must not overwrite it
+    mod <- NULL
+    kmc <- NULL
+    have_mod <- FALSE
+
     while (n.try < patience & badfit) {
 
         n.try <- n.try + 1
 
         # Fit the GPR
-        mod <- tryCatch(do.call(DiceKriging::km, args = args),
+        mod_try <- tryCatch(km_quiet(args),
             error = function(x) {
                 return(NULL)
             })
-
-        if (is.null(mod))
+        if (is.null(mod_try))
             next
+        mod <- mod_try
+        # cached predictor (R/km_cache.R; agrees with predict.km up to
+        # rounding); built only from a successful fit, so after a failed
+        # attempt it still matches mod
+        kmc <- km_cache(mod)
+        have_mod <- TRUE
 
         # setup function that outputs power
         fitfun <- function(x) {
+            if (!is.null(kmc) && kmc$accepts(x))
+                return(kmc$mean(x))
             names(x) <- names(xvars)
             DiceKriging::predict.km(mod, newdata = data.frame(t(x)),
                 type = "UK")$mean
@@ -264,16 +333,25 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
 
         # check if a plane was fitted
         somevals <- apply(xvars, 1, function(x) fitfun(x))
-        isplane <- suppressWarnings(summary(stats::lm(y ~
-            ., cbind(xvars, y = somevals)))$r.squared >
-            0.98)
+        isplane <- plane_r2(xvars, somevals) > 0.98
+        # 1-D: a nearly linear fit is a fine learning curve; reject it only
+        # if it is actually flat (deterministic, no extra random draws, and
+        # fits accepted by the R^2 rule are not affected)
+        if (ncol(xvars) == 1 && !is.na(isplane) && isplane)
+            isplane <- diff(range(somevals)) < 0.001
         if (!is.na(isplane) && !isplane)
             badfit <- FALSE
 
     }
 
+    if (!have_mod)
+        stop("The GPR surrogate could not be fitted: all ", patience,
+            " attempts of DiceKriging::km() failed.")
+
     # setup function that outputs sd
     fitfun.sd <- function(x) {
+        if (!is.null(kmc) && kmc$accepts(x))
+            return(kmc$sd(x))
         names(x) <- names(xvars)
         DiceKriging::predict.km(mod, newdata = data.frame(t(x)),
             type = "UK")$sd
@@ -293,3 +371,26 @@ gauss.fit <- function(dat, patience = 100, control,use_noise,aggregate_fun,noise
 
 
 
+
+
+# R^2 of a linear fit of y on the design parameters (the plane check),
+# i.e. summary(lm(y ~ ., cbind(xvars, y = y)))$r.squared, without the formula
+# and summary machinery: the same QR fit (lm.fit on the intercept plus the
+# columns of xvars, which is what model.matrix builds) and the same mss / rss
+# formulas as summary.lm for an unweighted model with intercept, so the value
+# is bit-identical. Uses lm() itself where its behaviour differs (missing or
+# non-finite values, a design parameter named y).
+plane_r2 <- function(xvars, y) {
+    if (!all(is.finite(y)) || "y" %in% names(xvars) ||
+        !all(vapply(xvars, is.numeric, logical(1))) ||
+        !all(vapply(xvars, function(v) all(is.finite(v)), logical(1))))
+        return(suppressWarnings(summary(stats::lm(y ~ ., cbind(xvars,
+            y = y)))$r.squared))
+    z <- stats::lm.fit(cbind(1, as.matrix(xvars)), y)
+    if (z$rank == 0)
+        return(0)
+    f <- z$fitted.values
+    mss <- sum((f - mean(f))^2)
+    rss <- sum(z$residuals^2)
+    mss/(mss + rss)
+}

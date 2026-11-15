@@ -36,10 +36,23 @@ hush <- function(code) {
         st <- "NUL"
 
     sink(st)  # use /dev/null in UNIX
-    on.exit(sink())  # ensure sink is reset on exit
+    on.exit(sink())  # reset the sink on exit (also on error), exactly once
     tmp <- code
-    sink()
     return(tmp)
+}
+
+
+# Batch version of hush() used by addval(): divert output to the null device
+# once for a whole batch of simfun evaluations. hush_end(n) removes that sink
+# so the sink stack ends up exactly as after n hush() calls.
+null_device <- function() if (.Platform$OS.type == "windows") "NUL" else "/dev/null"
+
+hush_begin <- function() sink(null_device())
+
+hush_end <- function(n) {
+    # n is kept for the call sites; hush() pops only its own sink, so a
+    # batch also pops exactly one
+    sink()
 }
 
 
@@ -119,7 +132,6 @@ getweight <- function(dat, weight.type = "freq", correct_zero = TRUE) {
         p <- mean(vec)
         n <- length(vec)
         if (correct_zero) {
-            # if (is.na(p==0)) browser()
             if (p == 0)
                 vec <- c(vec, 1)
             if (p == 1)
@@ -164,16 +176,61 @@ print_progress <- function(n_updates, evaluations_used,
 relu <- function(x) ifelse(x > 0, x, 0)
 
 
-fix.argtype <- function(fun, boundaries) {
+fix.argtype <- function(fun, boundaries, vectorise = FALSE) {
 
     ismulti <- length(boundaries) > 1
-    islist <- length(as.list(args(fun))) - 1 > 1
 
-    if (islist & ismulti)
+    # Does fun take the design parameters as separate arguments (fun(n, k))
+    # or as one vector (fun(x))? Arguments with defaults that are not design
+    # parameters (e.g. fun(x, verbose = FALSE)) must not count as design
+    # arguments.
+    fmls <- formals(args(fun))
+    nondots <- fmls[names(fmls) != "..."]
+    required <- vapply(nondots, function(a) identical(a, quote(expr = )),
+        logical(1))
+    bnames <- names(boundaries)
+    if (sum(required) > 1) {
+        islist <- TRUE
+    } else if (!is.null(bnames) && all(nzchar(bnames))) {
+        # named design parameters: separate arguments iff fun has them all
+        islist <- all(bnames %in% names(nondots))
+    } else {
+        # unnamed boundaries: count all arguments, as before
+        islist <- length(fmls) > 1
+    }
+
+    if (islist & ismulti) {
         re <- function(x) {
             do.call(fun, as.list(x))
-        } else {
+        }
+        # the same call for all rows of a matrix at once, with whole columns
+        # as arguments (named like the elements of a row, as in re); used by
+        # grid_costs() only if it reproduces re exactly
+        attr(re, "vectorised") <- function(X) {
+            cols <- lapply(seq_len(ncol(X)), function(j) X[, j])
+            names(cols) <- colnames(X)
+            do.call(fun, cols)
+        }
+    } else {
         re <- fun
+        # with vectorise = TRUE (the costfun), the same for a function of
+        # one argument, called with all rows at once: the column vector (one
+        # design parameter, if that gives one value per row) or a data frame
+        # of the columns without names, so that x[1], x[[2]], as.list(x) give
+        # whole columns (used only if it reproduces re exactly, as above)
+        if (vectorise && is.null(attr(re, "vectorised", exact = TRUE))) {
+            attr(re, "vectorised") <- function(X) {
+                if (ncol(X) == 1) {
+                    v <- tryCatch(fun(X[, 1]), error = function(e) NULL)
+                    if (is.numeric(v) && length(v) == nrow(X))
+                        return(v)
+                }
+                cols <- as.data.frame(X)
+                names(cols) <- rep("", ncol(X))
+                v <- fun(cols)
+                if (is.data.frame(v) && length(v) == 1L) v[[1L]] else v
+            }
+        }
     }
 
     # points =
@@ -181,7 +238,7 @@ fix.argtype <- function(fun, boundaries) {
     # 3)[1,] names(points) = c() islist =
     # is.na(tryCatch(hush(fun(as.numeric(points))),error=function(e)NA))
     # suppressWarnings(sink());suppressWarnings(sink())
-    # if (islist) re = function(x) { browser()
+    # if (islist) re = function(x) {
     # do.call(fun,as.list(x)) } else { re = fun }
 
     return(re)

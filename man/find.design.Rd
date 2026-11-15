@@ -25,17 +25,19 @@ find.design(
   control = list(),
   goodvals = "high",
   aggregate_fun = mean,
-  noise_fun = "bernoulli",
+  noise_fun = "logistic",
   integer = TRUE,
-  use_noise = TRUE
+  use_noise = TRUE,
+  optimizer = c("auto", "genoud"),
+  parallel = FALSE
 )
 }
 \arguments{
-\item{simfun}{function to generate hypothesis test results with. Takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k).}
+\item{simfun}{function to generate hypothesis test results with. Takes design parameters as input and outputs a logical (result of the hypothesis test). The function can take the designs through one argument as a vector or through multiple arguments. For example, function(x) where x is later used with x=c(n,k) for two design parameters n and k is valid. Also valid is a definition using function(n,k). Further arguments with default values (e.g. function(x, verbose = FALSE)) are left at their defaults.}
 
 \item{boundaries}{list containing lower and upper bounds of the design space. The list should consist of named vectors, each containing the upper and lower bound for the respective design parameter dimensions. For one design parameter dimension, can also be a vector containing the upper and lower bounds.}
 
-\item{power}{numeric; desired statistical power}
+\item{power}{numeric; desired statistical power, strictly between 0 and 1. With a custom \code{aggregate_fun} or a \code{noise_fun} function, the desired value of the aggregated criterion instead (e.g. a ratio, which can be 1 or larger).}
 
 \item{evaluations}{integer; number of simfun evaluations to be performed before termination}
 
@@ -45,37 +47,41 @@ find.design(
 
 \item{time}{integer; seconds until termination}
 
-\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Necessary for simfuns with multiple input dimensions.}
+\item{costfun}{function that takes a vector of design parameters as input and outputs a cost, e.g. monetary costs. Necessary for simfuns with multiple input dimensions. For the exhaustive search over integer grids (see \code{optimizer}), costfun is evaluated for all grid points in one call where that gives exactly the pointwise values, e.g. for \code{function(n, k) 5 * n + 20 * k} or \code{function(x) 5 * x[1] + 20 * x[2]}. A costfun that cannot be evaluated that way (e.g. \code{function(x) sum(x)} or one with \code{if}) is used in the exhaustive search only on grids of at most 100 points; larger grids then use \code{rgenoud::genoud}.}
 
 \item{cost}{numeric; cost threshold. Design parameter set with highest power is searched among sets that fulfill this cost threshold.}
 
-\item{surrogate}{character; which surrogate model should be used. The default is 'logreg' for one design parameter and 'gpr' for multiple design parameters. The current options are: 'gpr', 'svr', 'logreg', 'reg' for one-dimensional designs and 'gpr' and 'svr' for multi-dimensional designs.}
+\item{surrogate}{character; which surrogate model should be used. The default is 'logreg' for one design parameter and 'gpr' for multiple design parameters. The current options are: 'gpr', 'svr', 'logreg', 'reg' for one-dimensional designs and 'gpr' and 'svr' for multi-dimensional designs. Other values give an error.}
 
-\item{n.startsets}{integer; number of startsets used per dimension of simfun}
+\item{n.startsets}{integer; number of startsets used per dimension of simfun. \code{n.startsets} times the number of design parameters must be at least 3.}
 
 \item{init.perc}{numeric; percentage of evaluations used for the initialization phase}
 
-\item{setsize}{The number of draws from the simfun in each iteration}
+\item{setsize}{The number of draws from the simfun in each iteration. By default, \code{evaluations} times \code{init.perc} divided by the number of initial designs (\code{n.startsets} times the number of design parameters); without \code{evaluations} (e.g. \code{evaluations = NULL} with \code{time} or \code{ci} as the only termination rule), the value for the default \code{evaluations = 4000} is used.}
 
-\item{continue}{Object of class designresult as created by the find.design function. Will be used to continue the search, using all collected simulation results so far.}
+\item{continue}{Object of class designresult as created by the find.design function. Will be used to continue the search, using all collected simulation results so far. The settings of the previous search (e.g. \code{setsize}, \code{ci}, \code{time}, \code{control}, \code{aggregate_fun}, \code{noise_fun}, \code{integer}, \code{use_noise}, \code{autosave_dir}, \code{optimizer}, \code{parallel}) are reused unless they are given explicitly; so is the target (\code{power} or \code{cost}). \code{evaluations} is the number of additional evaluations. Results from mlpwr 1.1.1 and earlier store no settings (except \code{aggregate_fun}): for them, \code{continue} uses \code{noise_fun = "bernoulli"} and \code{optimizer = "genoud"}, the methods of those versions (unless given explicitly), so the continued search keeps its method; other settings take their defaults.}
 
 \item{dat}{list of data from a previous design result.}
 
 \item{silent}{logical; suppresses output during the search.}
 
-\item{autosave_dir}{character; file location for saving the \code{dat} object after each update. The \code{dat} object is saved in \code{autosave_dir/dat_autosave.Rdata}. It can be loaded for example using \code{load(paste0(autosave_dir,"/dat_autosave.Rdata"))}.}
+\item{autosave_dir}{character; a directory in which the \code{dat} object is saved after each update, as the file \code{dat_autosave.RData} (an existing file of that name is overwritten). The directory is created if it does not exist. It can be loaded for example using \code{load(file.path(autosave_dir, "dat_autosave.RData"))}.}
 
 \item{control}{list specifying arguments passed to the surrogate models. For example, list(covtype='gauss') can be used with the gpr surrogate to use a different covariance structure than the default.}
 
-\item{goodvals}{character indicating whether higher or lower criterion values are preferable given equal cost; the default is "high" for statistical power, the other option is "low".}
+\item{goodvals}{currently unused; kept for backward compatibility. The search always treats higher criterion values (e.g. statistical power) as better, which corresponds to the value "high" (default). Other values give a warning.}
 
 \item{aggregate_fun}{function to aggregate results of the evaluations of the simulation function; the default is \code{mean}, as for statistical power.}
 
-\item{noise_fun}{function to calculate the noise or variance of the aggregated results of the Monte Carlo evaluations; can also be the character value "bernoulli" (default) to indicate the variance of the Bernoulli distribution used for statistical power. This function is \eqn{p(1-p)/n}, where \eqn{p} is the statistical power and \eqn{n} is the number of performed evaluations.}
+\item{noise_fun}{how the noise variance of the aggregated Monte Carlo results at each design is obtained. Either a function, which is applied to each element of the simulation data (a list with the design \code{x} and the simulation results \code{y}) and returns the variance of the aggregate, or one of the character values \code{"logistic"} (default) and \code{"bernoulli"} for the variance \eqn{p(1-p)/n} of statistical power, where \eqn{n} is the number of performed evaluations at a design and \eqn{p} its power. With \code{"bernoulli"}, \eqn{p} is the design's own proportion of successes, as in mlpwr 1.1.1 and earlier (the default there). With \code{"logistic"}, the GPR surrogate takes \eqn{p} from a logistic regression of all simulation results on the design parameters instead: the design's own proportion gives designs with lucky draws more weight and biases the surrogate (upwards for power above .5). \code{"logistic"} only changes the fit of the GPR surrogate; elsewhere (the other surrogates, which do not use the noise variance, and the additional GPR that supplies the standard error for them and for the \code{ci} rule) it acts like \code{"bernoulli"}. Both character values are meant for statistical power, i.e. the mean of 0/1 (or \code{TRUE}/\code{FALSE}) simulation results: they ignore \code{aggregate_fun} (\code{p} is the mean of the results). The logistic regression of \code{"logistic"} needs 0/1 results; if \code{simfun} returns other results (e.g. proportions), a GPR search with \code{"logistic"} (and \code{use_noise = TRUE}) uses \code{"bernoulli"} instead, as mlpwr 1.1.1 did, says so in a message and stores \code{"bernoulli"} in the settings of the result. Use \code{noise_fun = "bernoulli"} to reproduce results of mlpwr 1.1.1; \code{continue} also uses it for results from mlpwr 1.1.1 (see \code{continue}).}
 
 \item{integer}{logical  indicating whether the design parameters are integers or not; the default is \code{TRUE}, which is suitable for sample size, for example.}
 
 \item{use_noise}{logical indicating whether noise variance should be used; the default is \code{TRUE}.}
+
+\item{optimizer}{character; how the next design is chosen from the surrogate model in each update. With \code{"auto"} (default), integer designs are searched exhaustively when the grid of integer design parameter combinations within the boundaries is small enough that this is faster than \code{rgenoud::genoud} (the number of grid points times the number of simulated designs is at most 100,000): the objective is evaluated at every grid point and the best one is taken (ties go to the point with the smallest first design parameter, then the smallest second, and so on). Larger grids and continuous designs (\code{integer = FALSE}) use \code{rgenoud::genoud}. With \code{"genoud"}, \code{rgenoud::genoud} alone is used, as in mlpwr 1.1.1 and earlier, e.g. to reproduce earlier results. Both settings use the random number stream in the same way, so they give identical results whenever \code{genoud} finds the best grid point (nearly always for one design parameter).}
+
+\item{parallel}{run the simulations on several CPU cores. \code{FALSE} (default): one after the other, as in earlier versions. \code{TRUE}: use all cores but one. A whole number: use that many cores (\code{1} is the same as \code{FALSE}). Needs the packages future, future.apply and parallelly. See the section "Parallel computation".}
 }
 \value{
 function returns an object of class designresult
@@ -83,6 +89,43 @@ function returns an object of class designresult
 \description{
 Perform a surrogate modeling approach to search for optimal study design parameters. For further guidance on how to use the package and the \code{find.design} function specifically, see the \href{https://github.com/flxzimmer/mlpwr}{Readme.md file}.
 }
+\section{Parallel computation}{
+
+When one call of \code{simfun} takes a noticeable time (roughly 10 milliseconds
+or more, e.g. fitting a mixed model with lme4, an IRT model with mirt, or a
+glmer), most of the search time is spent in the simulations. \code{parallel = TRUE}
+then runs the simulations of each step on all CPU cores but one, which can
+make the search several times faster. For fast simulation functions such as
+a t-test, starting the workers and sending them work costs more than it
+saves, so leave the default.
+
+No other setup is needed. Install the packages once with
+\code{install.packages(c("future", "future.apply", "parallelly"))}. Objects and
+packages that \code{simfun} uses are sent to the workers automatically, and it
+works the same on Windows, macOS and Linux (the workers are background R
+sessions). Only the simulations run in parallel; fitting the surrogate model
+and choosing the next designs stay in your R session. Changes that \code{simfun}
+makes outside itself (e.g. with \verb{<<-}) are lost, because it runs in another
+R session.
+
+Results are reproducible: with the same \code{\link[=set.seed]{set.seed()}} you get the same
+result, whatever the number of cores (\code{parallel = 2} and \code{parallel = 8} give
+identical designs). The simulations use different random numbers than the
+sequential mode, though (each simulation gets its own L'Ecuyer-CMRG random
+number stream), so a parallel run does not reproduce a run with
+\code{parallel = FALSE}; both are equally valid. The setting is stored in the
+result, and \code{continue} reuses it.
+
+Advanced: to run the simulations elsewhere, e.g. on several machines or a
+cluster, set a plan with the future package before the search, e.g.
+\code{future::plan(future::cluster, workers = c("host1", "host2"))}, and use
+\code{parallel = TRUE}. A non-sequential plan set by you is then used as it is.
+With a number, \code{find.design()} sets up its own local workers for the call
+and restores your plan afterwards. mlpwr has to be installed on the workers.
+
+A walkthrough with timings is in \code{vignette("parallel", package = "mlpwr")}.
+}
+
 \examples{
 \donttest{
 ## T-test example:
@@ -108,6 +151,19 @@ ds <- find.design(simfun = simfun,
 summary(ds)
 # Plot results
 plot(ds)
+
+## Parallel computation: the simulations on 2 CPU cores (needs the packages
+## future, future.apply and parallelly; pays off for slow simfuns only,
+## see vignette("parallel", package = "mlpwr")):
+if (requireNamespace("future.apply", quietly = TRUE) &&
+    requireNamespace("parallelly", quietly = TRUE)) {
+  set.seed(1)
+  ds <- find.design(simfun = simfun,
+   costfun = function(n,n.groups) 5*n+20*n.groups,
+   boundaries = list(n = c(10, 150), n.groups = c(5, 30)),
+   power = .95, evaluations = 300, parallel = 2)
+  summary(ds)
+}
 
 
 ##  Mixed model example with a custom, two-dimensional simulation function:
