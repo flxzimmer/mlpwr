@@ -2,9 +2,9 @@
 #'
 #' Output a data frame that, for each set of design parameters, includes the cost, the estimated power and SE, the surrogate model estimated power and SE, and the number of performed evaluations.
 #'
-#' The raw power is estimated using the ratio of significant hypothesis tests among the performed evaluations. The raw SE is estimated using \eqn{p(1-p)/n} with \eqn{p} being the raw power and \eqn{n} being the number of performed evaluations.
+#' The raw power is estimated using the ratio of significant hypothesis tests among the performed evaluations (or, more generally, the `aggregate_fun` of the search). The raw SE is estimated using \eqn{p(1-p)/n} with \eqn{p} being the raw power and \eqn{n} being the number of performed evaluations; if the search used a `noise_fun` function, the raw SE is the square root of its variance instead.
 #'
-#' For the estimation of SE using a surrogate model, GPR is employed because it is capable of variance estimation, unlike the other surrogate models.
+#' For the estimation of SE using a surrogate model, GPR is employed because it is capable of variance estimation, unlike the other surrogate models. The surrogate SE is `NA` if no GPR SD is available (e.g. with `use_noise = FALSE`).
 #'
 #' @param ds Object of class designresult as created by the find.design function
 #'
@@ -27,7 +27,10 @@ simulations_data <- function(ds) {
   fitfun = ds$fit$fitfun
   fitfun.sd = ds$fit$fitfun.sd
 
-  datx = todataframe(dat)
+  aggregate_fun = ds$aggregate_fun
+  if (is.null(aggregate_fun)) aggregate_fun = mean
+
+  datx = todataframe(dat, aggregate_fun = aggregate_fun)
   xvars <- datx[, 1:(length(datx) - 1), drop = FALSE]
   # use user-defined design parameter names
   names(xvars) = names(ds$boundaries)
@@ -36,9 +39,14 @@ simulations_data <- function(ds) {
   re = list()
   re$cost = apply(xvars,1,costfun)
   re$power_surrogate = apply(xvars,1,fitfun)
-  re$SE_surrogate = apply(xvars,1,fitfun.sd)
+  # NA if the surrogate has no SD function (e.g. use_noise = FALSE)
+  re$SE_surrogate = if (is.null(fitfun.sd)) NA_real_ else apply(xvars,1,fitfun.sd)
   re$power = datx$y
-  re$SE = getweight(dat, weight.type = "sd")
+  # with a noise_fun function, the SE is the square root of its variance
+  # (as used by the search); otherwise the binomial SE of power
+  noise_fun = ds$settings$noise_fun
+  re$SE = if (is.function(noise_fun)) sqrt(vapply(dat, noise_fun, numeric(1))) else
+    getweight(dat, weight.type = "sd")
   re$Evaluations = getweight(dat, weight.type = "freq")
 
   re = as.data.frame(re)

@@ -14,7 +14,7 @@ plot2d_heat <- function(ds,color.width,color.gradient) {
     vals <- lapply(boundaries, function(x) x[1]:x[2])
     powerfit <- as.data.frame(expand.grid(vals))
     names(powerfit) <- c("n", "k")
-    powerfit$power <- apply(powerfit, 1, fit$fitfun)
+    powerfit$power <- predict_rows(fit$fitfun, powerfit)
 
     # control color band width (only for diverging)
     if (color.gradient == "diverging") {

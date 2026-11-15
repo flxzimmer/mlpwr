@@ -16,9 +16,9 @@ A data frame
 Output a data frame that, for each set of design parameters, includes the cost, the estimated power and SE, the surrogate model estimated power and SE, and the number of performed evaluations.
 }
 \details{
-The raw power is estimated using the ratio of significant hypothesis tests among the performed evaluations. The raw SE is estimated using \eqn{p(1-p)/n} with \eqn{p} being the raw power and \eqn{n} being the number of performed evaluations.
+The raw power is estimated using the ratio of significant hypothesis tests among the performed evaluations (or, more generally, the \code{aggregate_fun} of the search). The raw SE is estimated using \eqn{p(1-p)/n} with \eqn{p} being the raw power and \eqn{n} being the number of performed evaluations; if the search used a \code{noise_fun} function, the raw SE is the square root of its variance instead.
 
-For the estimation of SE using a surrogate model, GPR is employed because it is capable of variance estimation, unlike the other surrogate models.
+For the estimation of SE using a surrogate model, GPR is employed because it is capable of variance estimation, unlike the other surrogate models. The surrogate SE is \code{NA} if no GPR SD is available (e.g. with \code{use_noise = FALSE}).
 }
 \examples{
 

@@ -13,15 +13,26 @@ plot2d_line <- function(ds, trim) {
         0.5)
     kstart <- mean(boundaries[[2]])
 
+    # iso-power line: for each n, the smallest k where the predicted power
+    # reaches the final power. The surrogate need not be monotone in k, so
+    # scan a coarse grid for the first crossing and refine it with uniroot.
+    # (L-BFGS-B from the midpoint, used before, usually stopped at its start
+    # value and found almost no points.)
+    klo <- boundaries[[2]][[1]]
+    khi <- boundaries[[2]][[2]]
+    kgrid <- seq(klo, khi, length.out = 21)
     eqpower.k <- sapply(ns, function(n) {
-        fn <- function(k) abs(fit$fitfun(c(n, k)) -
-            final$power)
-        a <- stats::optim(kstart, fn, method = "L-BFGS-B",
-            lower = boundaries[[2]][[1]], upper = boundaries[[2]][[2]],
-            control = list(factr = 1e+11))
-        valid <- a$value < 0.001
-        if (valid)
-            return(a$par) else return(NA)
+        fn <- function(k) fit$fitfun(c(n, k)) - final$power
+        vals <- vapply(kgrid, fn, numeric(1))
+        hit <- which(abs(vals) < 0.001)
+        cross <- which(vals[-length(vals)] * vals[-1] < 0)
+        first <- min(c(hit, cross, Inf))
+        if (!is.finite(first))
+            return(NA)
+        if (first %in% hit)
+            return(kgrid[first])
+        stats::uniroot(fn, lower = kgrid[first], upper = kgrid[first + 1],
+            f.lower = vals[first], f.upper = vals[first + 1])$root
     })
 
     eqpower <- data.frame(n = ns, k = eqpower.k)
@@ -69,8 +80,9 @@ plot2d_line <- function(ds, trim) {
             maxs))
         dat_obs <- dat_obs[ind1 & ind2, ]
 
-        if (nrow(eqpower) == 0 | nrow(eqcost) == 0 |
-            nrow(dat_obs) == 0)
+        # (no observed designs in the trimmed area is fine, the lines are
+        # still plotted)
+        if (nrow(eqpower) == 0 | nrow(eqcost) == 0)
             stop("Plotting area is trimmed by default, leading to a too small area in this case. Try setting trim=FALSE")
     }
 

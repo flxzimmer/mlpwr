@@ -2,7 +2,7 @@
 #'
 #' These simulation functions can be loaded as examples or templates. They correspond to the functions in the 'simulation_functions' vignette. The vignette contains the code and a description of the simfuns.
 #'
-#' @param name Name of the simulation function as a character. Currently available are: 'ttest','anova','glm2','irt1','irt2','multi2'.
+#' @param name Name of the simulation function as a character. Currently available are: 'ttest','anova','glm2','irt1','irt2','multi1'.
 #'
 #' @return The returned object is the simulation function.
 #' @export

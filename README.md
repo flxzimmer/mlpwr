@@ -22,7 +22,10 @@ resources are:
   <https://doi.org/10.3758/s13428-023-02269-0>)
 - Basic walkthroughs are available in separate vignettes for ANOVA, GLM,
   IRT, multilevel model, and t-test. They can be accessed
-  [here](https://github.com/flxzimmer/mlpwr/tree/master/vignettes/).
+  [here](https://github.com/flxzimmer/mlpwr/tree/main/vignettes/).
+- Slow simulation functions (e.g. lme4, mirt) can run on several CPU
+  cores with `find.design(..., parallel = TRUE)`; see the parallel
+  computation vignette, `vignette("parallel", package = "mlpwr")`.
 
 ## Installation
 
@@ -151,4 +154,4 @@ plot(ds)
 
 Some templates for simulation functions can be found in the
 `simulation_functions` vignette. It can be accessed at
-<https://github.com/flxzimmer/mlpwr/blob/master/vignettes/simulation_functions.Rmd>.
+<https://github.com/flxzimmer/mlpwr/blob/main/vignettes/simulation_functions.Rmd>.

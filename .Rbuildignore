@@ -8,3 +8,7 @@
 ^\.github$
 ^doc$
 ^Meta$
+^tools$
+^notes$
+^\.git$
+^src/.*\.(o|so|dll)$

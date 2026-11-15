@@ -365,7 +365,7 @@ simfun_multi2 <- function(n, n.countries) {
 
 As a cost function, we can use
 ```{r}
-costfun_multi2 <- function(n, n.countries) 5 * m +
+costfun_multi2 <- function(n, n.countries) 5 * n +
     100 * n.countries
 
 ```

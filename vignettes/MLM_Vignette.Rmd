@@ -166,25 +166,30 @@ Note: additional specifications are possible (see [documentation](https://cran.r
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
-```{r, echo=FALSE, results='hide'}
-# The following loads the precomputed results of the next chunk to reduce the vignette creation time
-ver <- as.character(packageVersion("mlpwr"))
-file = paste0("/extdata/MLM_Vignette_results1_", ver, ".RData")
-file_path <- paste0(system.file(package="mlpwr"),file)
-if (!file.exists(file_path)) {
-set.seed(111)
-res <- find.design(simfun = simfun_multi1, boundaries = c(20,
-    200), power = .8, evaluations = 2000)
-save(res, file = paste0("../inst",file))
-} else {
-  load(file_path) 
+```{r, include=FALSE}
+# The search in the next chunk takes minutes, so it is not run when the
+# vignette is built: its result is loaded from a file that ships with mlpwr.
+# To recompute that file (a release step, with the final code installed),
+# render this vignette with MLPWR_VIGNETTE_REGENERATE=true, see
+# tools/vignettes/regenerate_results.R.
+regenerate <- identical(Sys.getenv("MLPWR_VIGNETTE_REGENERATE"), "true")
+cache <- "MLM_Vignette_results1.RData"
+if (!regenerate) {
+  cache_path <- system.file("extdata", cache, package = "mlpwr")
+  if (!nzchar(cache_path))
+    stop("Precomputed results ", cache, " not found; see tools/vignettes/regenerate_results.R")
+  load(cache_path)
 }
 ```
 
-```{r, warning=FALSE, eval=FALSE}
+```{r, warning=FALSE, eval = regenerate}
 set.seed(111)
 res <- find.design(simfun = simfun_multi1, boundaries = c(20,
     200), power = .8, evaluations = 2000)
+```
+
+```{r, include=FALSE, eval = regenerate}
+save(res, file = file.path("..", "inst", "extdata", cache))
 ```
 
 
@@ -279,11 +284,7 @@ This function follows the following steps:
 2. **Model Fit**: A binomial `glmer`model from ```lme4```is fit to the data.
 3. **Hypothesis testing**: If the p-value of the "cortisol" coefficient is significant at an alpha of 0.01, we deem a statistically significant effect of stress on the performance in the math test has been found and return TRUE.
 
-This function is also implemented the same way in the ```mlpwr``` package and can be accessed using:
-
-```{r, eval = FALSE}
-example.simfun("multi2")
-```
+This function is not included in ```example.simfun()```, so copy it from this vignette.
 
 ### Cost function
 Now that the data generation and hypothesis test is done, we also need to specify a cost function. The committee told us that recruiting in a lot of different countries is costly because recruitment has to be set up multiple times, while just recruiting one additional participant is less expensive. We incorporate this in the following cost function:
@@ -303,34 +304,38 @@ A power simulation can be done using the ```find.design```function. For our purp
 
 1. **simfun**: a simulation function, that generates the data and does the hypothesis test, outputting a logical value. We use the function defined above.
 2. **boundaries**: the boundaries of the design space (number of participants, number of countries) that are searched. This should be set to a large enough value such that a large enough space is searched. We need to submit a named vector as we have multiple design parameters like so: list(n = c(10,100), n.countries = c(5, 20))
-3. **cost**: We have a budget of 3000 USD, we want to obtain the best design parameters for maximum power under this cost constraint.
+3. **cost**: We have a budget of 2000 USD, we want to obtain the best design parameters for maximum power under this cost constraint.
 4. **evaluations** (optional): this optional parameter makes the computation faster by limiting the number of reevaluations. But this also makes the computation less stable and precise. 
 
 Note: additional specifications are possible (see [documentation](https://cran.r-project.org/package=mlpwr/mlpwr.pdf)) but not necessary. Some parameters like the choice of surrogate function the default values should already be good choices. As we are working with only 1 design parameter here (N = sample size) we don't need to submit a cost function.
 
 With the specified parameters we can perform the power analysis. We set a random seed for reproducibility reasons.
 
-```{r, echo=FALSE, results='hide'}
-# The following loads the precomputed results of the next chunk to reduce the vignette creation time
-ver <- as.character(packageVersion("mlpwr"))
-file = paste0("/extdata/MLM_Vignette_results2_", ver, ".RData")
-file_path <- paste0(system.file(package="mlpwr"),file)
-if (!file.exists(file_path)) {
-set.seed(112)
-res <- find.design(simfun = simfun_multi2, boundaries = list(n = c(10,
-    300), n.countries = c(5, 20)), costfun = costfun_multi2,
-    cost = 2000, evaluations = 2000)
-save(res, file = paste0("../inst",file))
-} else {
-  load(file_path) 
+```{r, include=FALSE}
+# The search in the next chunk takes minutes, so it is not run when the
+# vignette is built: its result is loaded from a file that ships with mlpwr.
+# To recompute that file (a release step, with the final code installed),
+# render this vignette with MLPWR_VIGNETTE_REGENERATE=true, see
+# tools/vignettes/regenerate_results.R.
+regenerate <- identical(Sys.getenv("MLPWR_VIGNETTE_REGENERATE"), "true")
+cache <- "MLM_Vignette_results2.RData"
+if (!regenerate) {
+  cache_path <- system.file("extdata", cache, package = "mlpwr")
+  if (!nzchar(cache_path))
+    stop("Precomputed results ", cache, " not found; see tools/vignettes/regenerate_results.R")
+  load(cache_path)
 }
 ```
 
-```{r, warning=FALSE,eval=FALSE}
+```{r, warning=FALSE,eval = regenerate}
 set.seed(112)
 res <- find.design(simfun = simfun_multi2, boundaries = list(n = c(10,
     300), n.countries = c(5, 20)), costfun = costfun_multi2,
     cost = 2000, evaluations = 2000)
+```
+
+```{r, include=FALSE, eval = regenerate}
+save(res, file = file.path("..", "inst", "extdata", cache))
 ```
 
 Now we can summarize the results using the ```summary``` command.
@@ -347,4 +352,4 @@ plot(res)
 
 The black dots show us the simulated data. The red line corresponds to the cost constraint. The violet cross corresponds to the optimal design. The power level is indicated by the blue color. More fine grained results can be obtained using more evaluations.
 
-We report back to the committee that under their cost constraint of `r res$call$cost` their sample size is`r res$final$design$n` participants and the number of countries to recruit in is `r res$final$design$n.countries`. This results in an estimated power of `r res$final$power`.
+We report back to the committee that under their cost constraint of `r res$call$cost` their sample size is `r res$final$design$n` participants and the number of countries to recruit in is `r res$final$design$n.countries`. This results in an estimated power of `r res$final$power`.

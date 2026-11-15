@@ -1,0 +1,208 @@
+---
+title: "Parallel computation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parallel computation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+# Only the tiny example at the end of "How to use it" runs when the vignette
+# is built (with 2 workers, the limit on CRAN). The timings are precomputed
+# with tools/vignettes/parallel_results.R.
+has_par <- requireNamespace("future.apply", quietly = TRUE) &&
+  requireNamespace("parallelly", quietly = TRUE)
+```
+
+`find.design()` runs your simulation function many times, usually thousands of
+times. By default these simulations run one after the other on a single CPU
+core. Most computers have several cores, and with `parallel = TRUE` the
+simulations are spread over them.
+
+## When does it help?
+
+It helps when a single call of your simulation function takes a noticeable
+time, roughly 10 milliseconds or more. This is typical for simulation functions
+that fit a model, for example a mixed model with `lme4::lmer()` or
+`lme4::glmer()`, or an IRT model with `mirt::mirt()`. Then almost all of the
+search time is spent in the simulations, and the search gets several times
+faster.
+
+For very fast simulation functions, such as a t-test, starting the workers and
+sending them work costs more time than it saves. Keep the default
+(`parallel = FALSE`) there.
+
+You can time one call of your function to decide:
+
+```{r}
+system.time(for (i in 1:20) simfun(100))["elapsed"] / 20  # seconds per call
+```
+
+## How to use it
+
+Install three helper packages once:
+
+```{r}
+install.packages(c("future", "future.apply", "parallelly"))
+```
+
+Then add `parallel = TRUE` to your call:
+
+```{r}
+library(mlpwr)
+simfun <- example.simfun("multi1")  # a generalized linear mixed model (lme4::glmer)
+
+set.seed(1)
+ds <- find.design(simfun = simfun, boundaries = c(20, 200), power = .8,
+                  evaluations = 1000, parallel = TRUE)
+#> Running simulations on 7 parallel workers
+summary(ds)
+```
+
+That is all. `parallel = TRUE` uses all CPU cores but one, so your computer
+stays responsive. To choose the number yourself, give a number, e.g.
+`parallel = 4`.
+
+A tiny search on 2 cores (it is too small to be faster, it only shows the
+mechanics):
+
+```{r, eval = has_par}
+library(mlpwr)
+set.seed(1)
+ds_small <- find.design(simfun = example.simfun("ttest"), boundaries = c(20, 200),
+                        power = .8, evaluations = 200, parallel = 2, silent = TRUE)
+ds_small$final$design
+ds_small$settings$parallel
+```
+
+You don't need to do anything else: objects and packages that your simulation
+function uses (for example a data set or `lme4`) are sent to the workers
+automatically. It works the same way on Windows, macOS and Linux; the workers
+are R sessions that run in the background and are closed when the search ends.
+
+Only the simulations run in parallel. Fitting the surrogate model and choosing
+the next designs happen in your R session as before, and the progress display
+is the same.
+
+## How much faster?
+
+```{r, echo = FALSE, eval = TRUE}
+# Precomputed results (see tools/vignettes/parallel_results.R); if they are not
+# available, a small comparison is run on 2 cores (nothing is written).
+file_path <- system.file("extdata", "parallel_Vignette_results.RData",
+                         package = "mlpwr")
+if (nzchar(file_path)) {
+  load(file_path)
+} else if (has_par) {
+  bench <- do.call(rbind, lapply(list(FALSE, 2), function(p) {
+    set.seed(1)
+    t <- system.time(ds <- suppressWarnings(mlpwr::find.design(mlpwr::example.simfun("ttest"),
+      boundaries = c(20, 200), power = .8, evaluations = 200, silent = TRUE,
+      parallel = p)))[["elapsed"]]
+    data.frame(workload = "ttest", simfun = "t-test (example.simfun(\"ttest\"))",
+      ms_per_eval = NA, evaluations = ds$evaluations_used,
+      parallel = if (isFALSE(p)) "FALSE" else "2", seconds = round(t, 1),
+      design = ds$final$design[[1]], power = round(ds$final$power, 4))
+  }))
+  attr(bench, "machine") <- "the machine that built this vignette"
+} else {
+  bench <- NULL
+}
+tab <- function(wl) {
+  b <- bench[bench$workload == wl, ]
+  seq_time <- b$seconds[b$parallel == "FALSE"]
+  data.frame(parallel = ifelse(b$parallel == "FALSE", "FALSE (sequential)",
+                               ifelse(b$parallel == "1", "1 (sequential)", b$parallel)),
+             seconds = b$seconds, speedup = ifelse(seq_time / b$seconds < .05, "< 0.1x",
+                              paste0(round(seq_time / b$seconds, 1), "x")),
+             design = b$design)
+}
+```
+
+```{r, echo = FALSE, eval = TRUE, results = "asis"}
+if (!is.null(bench)) {
+  cat("The tables show the time of the same search (seed 1) with different numbers of ",
+      "cores, on ", attr(bench, "machine"), ".\n\n", sep = "")
+  for (wl in unique(bench$workload)) {
+    b <- bench[bench$workload == wl, ]
+    cat("**", b$simfun[1], "**, ", b$evaluations[1], " evaluations",
+        if (!is.na(b$ms_per_eval[1])) if (b$ms_per_eval[1] < 1) ", less than 1 ms per simulation" else
+        paste0(", about ", round(b$ms_per_eval[1]), " ms per simulation"), ":\n\n", sep = "")
+    print(knitr::kable(tab(wl), align = "lrrr"))
+    cat("\n\n")
+  }
+  slow <- intersect(c("multi1", "irt1"), bench$workload)
+  if (length(slow) > 0) {
+    cat("For the slow simulation functions (",
+        paste(c(multi1 = "glmer", irt1 = "mirt")[slow], collapse = ", "),
+        ") the search gets faster with more cores. ", sep = "")
+  }
+  if ("ttest" %in% bench$workload) {
+    cat("For the t-test, each simulation takes only a few milliseconds or ",
+        "less, and sending the work to the workers costs more than it saves. ",
+        sep = "")
+  }
+  cat("How much you gain depends on your computer and on how busy it is ",
+      "(other computations running at the same time share the cores).\n\n",
+      sep = "")
+  cat("Note also the **design** column: all parallel runs (2 or more cores) ",
+      "found exactly the same design, whatever the number of cores. The ",
+      "sequential runs (`parallel = FALSE` or `1`) can find a slightly ",
+      "different one, because they use different random numbers ",
+      "(see the next section).\n", sep = "")
+} else {
+  cat("Timings are not shown here, because the packages future.apply and ",
+      "parallelly were not installed when this vignette was built.\n", sep = "")
+}
+```
+
+## Reproducibility
+
+With the same `set.seed()` a parallel search gives the same result every time,
+and the result does not depend on the number of cores: `parallel = 2` and
+`parallel = 8` find the same design. This is because every single simulation
+gets its own stream of random numbers (L'Ecuyer-CMRG streams), no matter which
+core runs it.
+
+The random numbers are not the same as in a search with `parallel = FALSE`,
+though, so a parallel search will not reproduce the exact numbers of a
+sequential search with the same seed. Both are equally valid; they are just
+different random draws. To reproduce a result, use the same seed and again a
+sequential (`parallel = FALSE` or `1`) or a parallel search (any number of
+cores from 2 up).
+
+The setting is stored in the result, and `find.design(continue = ds)` keeps
+using it unless you give `parallel` again.
+
+## Things to know
+
+* A simulation function runs in a separate R session, so changes it makes
+  outside itself (for example a counter updated with `<<-`) are lost.
+* If your simulation function fails, the error message names the design at
+  which it failed.
+* Printed output, messages and warnings of the simulation function are
+  suppressed, as in the sequential mode.
+
+## Advanced: your own future plan
+
+The workers are managed by the [future](https://future.futureverse.org/)
+package. If you want the simulations to run somewhere else, for example on
+several machines, set a plan before the search and use `parallel = TRUE`:
+
+```{r}
+future::plan(future::cluster, workers = c("machine1", "machine2"))
+ds <- find.design(simfun = simfun, boundaries = c(20, 200), power = .8,
+                  parallel = TRUE)
+#> Running simulations on 2 parallel workers (using your future::plan())
+```
+
+A plan that you set yourself (any plan other than the default sequential one)
+is used as it is when `parallel = TRUE`. mlpwr has to be installed on all
+workers. With a number, e.g. `parallel = 4`, `find.design()` starts its own
+local workers for this call and switches back to your plan afterwards.
